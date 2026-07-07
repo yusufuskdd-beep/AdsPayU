@@ -12,6 +12,7 @@
       --accent: #22c55e;
       --text: #e5e7eb;
       --muted: #9ca3af;
+      --danger: #ef4444;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -21,7 +22,6 @@
       padding-bottom: 80px;
     }
 
-    /* SPLASH SCREEN */
     #splash {
       position: fixed;
       top: 0; left: 0;
@@ -78,6 +78,21 @@
     .balance-card .label { color: var(--muted); font-size: 14px; }
     .balance-card .amount { font-size: 32px; font-weight: 700; color: var(--accent); margin: 8px 0; }
     
+    .stats {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .stat-box {
+      flex: 1;
+      background: #1f2937;
+      padding: 10px;
+      border-radius: 10px;
+    }
+    .stat-box .val { font-size: 18px; font-weight: 700; color: var(--accent); }
+    .stat-box .lbl { font-size: 11px; color: var(--muted); }
+    .stat-box.danger .val { color: var(--danger); }
+
     .tabs {
       display: flex;
       background: var(--card);
@@ -112,7 +127,7 @@
       width: 100%;
       cursor: pointer;
     }
-    button.primary:disabled { background: #374151; color: var(--muted); }
+    button.primary:disabled { background: #374151; color: var(--muted); cursor: not-allowed; }
 
     .card {
       background: var(--card);
@@ -147,14 +162,12 @@
   </style>
 </head>
 <body>
-  <!-- SPLASH SCREEN -->
   <div id="splash">
     <img src="splash.jpg" alt="AdsPayU">
     <div class="loader"></div>
     <div class="powered">Powered by AdsGram</div>
   </div>
 
-  <!-- MAIN APP -->
   <div id="app">
     <div class="header">
       <h1>💰 AdsPayU Rewards</h1>
@@ -162,8 +175,18 @@
 
     <div class="balance-card">
       <div class="label">Your Balance</div>
-      <div class="amount" id="balance">$0.00</div>
+      <div class="amount" id="balance">$0.0000</div>
       <div class="label">Min withdraw: $1.00</div>
+      <div class="stats">
+        <div class="stat-box">
+          <div class="val" id="adsCount">0/400</div>
+          <div class="lbl">Today</div>
+        </div>
+        <div class="stat-box">
+          <div class="val" id="refCountTop">0</div>
+          <div class="lbl">Referrals</div>
+        </div>
+      </div>
     </div>
 
     <div class="tabs">
@@ -174,16 +197,16 @@
     </div>
 
     <div id="earn" class="tab-content active">
-      <button id="adBtn" class="primary">Watch Ad +$0.02</button>
+      <button id="adBtn" class="primary">Watch Ad +$0.0006</button>
       <p style="text-align:center; color:var(--muted); margin-top:12px; font-size:13px;">
-        Watch a short rewarded ad to earn
+        Daily limit: 400 ads. Resets at 12AM UTC
       </p>
     </div>
 
     <div id="referrals" class="tab-content">
       <div class="card">
         <h3>Invite Friends 💸</h3>
-        <p style="color:var(--muted); font-size:14px;">Get $0.05 for each friend who watches 1 ad</p>
+        <p style="color:var(--muted); font-size:14px;">Get $0.0015 for each friend who watches 1 ad</p>
         <div class="ref-link" id="refLink">Loading...</div>
         <button class="primary" onclick="copyRef()">Copy Link</button>
       </div>
@@ -214,18 +237,49 @@
     </div>
   </div>
 
-  <!-- AdsGram SDK -->
   <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
     const user = tg.initDataUnsafe.user || {id: 123, first_name: "Guest"};
 
-    // HIDE SPLASH AFTER 2.5s WITH JS
+    const DAILY_LIMIT = 400;
+    const REWARD = 0.0006; // CHANGED
+    const REF_REWARD = 0.0015; // CHANGED - 2.5x ad reward
+
+    function getToday() {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    let data = JSON.parse(localStorage.getItem('adsPayUData')) || {};
+    if (data.date !== getToday()) {
+      data = { date: getToday(), adsWatched: 0, balance: data.balance || 0 };
+    }
+
+    function saveData() {
+      localStorage.setItem('adsPayUData', JSON.stringify(data));
+    }
+
+    function updateUI() {
+      document.getElementById('adsCount').innerText = `${data.adsWatched}/${DAILY_LIMIT}`;
+      document.getElementById('balance').innerText = '$' + data.balance.toFixed(4);
+      
+      const adBtn = document.getElementById('adBtn');
+      if (data.adsWatched >= DAILY_LIMIT) {
+        adBtn.disabled = true;
+        adBtn.innerText = "Daily Limit Reached";
+        document.querySelector('.stat-box .val').parentElement.classList.add('danger');
+      } else {
+        adBtn.disabled = false;
+        adBtn.innerText = "Watch Ad +$0.0006";
+      }
+    }
+
     window.addEventListener('load', () => {
       setTimeout(() => {
         document.getElementById('splash').classList.add('hide');
         document.getElementById('app').style.display = 'block';
+        updateUI();
       }, 2500);
     });
 
@@ -239,17 +293,28 @@
     const AdController = window.Adsgram.init({ blockId: "37657" });
     const adBtn = document.getElementById('adBtn');
     adBtn.onclick = async () => {
+      if (data.adsWatched >= DAILY_LIMIT) return tg.showAlert("You've reached your daily limit of 400 ads. Come back tomorrow!");
+      
       adBtn.disabled = true;
       adBtn.innerText = "Loading ad...";
       try {
         await AdController.show();
-        alert('Ad finished ✅ \n\nRailway not setup yet, so no $0.02 was credited');
+        
+        data.adsWatched += 1;
+        data.balance += REWARD;
+        saveData();
+        updateUI();
+
+        tg.showAlert(`Ad finished ✅ \n+$${REWARD.toFixed(4)} credited! \nAds today: ${data.adsWatched}/${DAILY_LIMIT}`);
       } catch (e) {
         if(e.message?.includes("Domain")) alert("Domain not whitelisted yet. Waiting for support");
         else alert("Ad skipped or no fill");
       }
-      adBtn.innerText = "Watch Ad +$0.02";
-      adBtn.disabled = false;
+      
+      if (data.adsWatched < DAILY_LIMIT) {
+        adBtn.innerText = "Watch Ad +$0.0006";
+        adBtn.disabled = false;
+      }
     }
 
     const botUsername = "AdsPayU"; 
@@ -265,7 +330,7 @@
       lbList.innerHTML += `
         <div class="leaderboard-item">
           <div><span class="rank">#${i}</span> User${i}</div>
-          <div>$${((51-i)*0.84).toFixed(2)}</div>
+          <div>$${((51-i)*0.0006).toFixed(4)}</div>
         </div>
       `;
     }
@@ -273,7 +338,7 @@
     function requestWithdraw() {
       const wallet = document.getElementById('wallet').value;
       if(!wallet) return alert("Enter wallet address");
-      if(0 < 1.00) return alert("Min withdraw is $1.00");
+      if(data.balance < 1.00) return alert("Min withdraw is $1.00");
       alert("Withdraw request sent! \nRailway not setup yet so this is just a test");
     }
   </script>
