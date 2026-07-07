@@ -35,43 +35,43 @@
     }
     #splash.hide { opacity: 0; pointer-events: none; }
     #splash img { width: 80%; max-width: 400px; }
-   .loader {
+  .loader {
       border: 4px solid rgba(255,255,255,0.2);
       border-top: 4px solid #fff; border-radius: 50%;
       width: 40px; height: 40px; animation: spin 1s linear infinite;
       margin-top: 20px;
     }
-   .powered { color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 12px; }
+  .powered { color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 12px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
     #app { display: none; }
-   .header { text-align: center; padding: 20px; background: linear-gradient(135deg, #22c55e, #16a34a); }
-   .header h1 { font-size: 22px; }
-   .balance-card {
+  .header { text-align: center; padding: 20px; background: linear-gradient(135deg, #22c55e, #16a34a); }
+  .header h1 { font-size: 22px; }
+  .balance-card {
       background: var(--card); margin: -30px 16px 20px;
       padding: 20px; border-radius: 16px; text-align: center;
       box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     }
-   .balance-card.label { color: var(--muted); font-size: 14px; }
-   .balance-card.amount { font-size: 32px; font-weight: 700; color: var(--accent); margin: 8px 0; }
+  .balance-card.label { color: var(--muted); font-size: 14px; }
+  .balance-card.amount { font-size: 32px; font-weight: 700; color: var(--accent); margin: 8px 0; }
 
-   .stats { display: flex; gap: 10px; margin-top: 12px; }
-   .stat-box { flex: 1; background: #1f2937; padding: 10px; border-radius: 10px; }
-   .stat-box.val { font-size: 18px; font-weight: 700; color: var(--accent); }
-   .stat-box.lbl { font-size: 11px; color: var(--muted); }
-   .stat-box.danger.val { color: var(--danger); }
+  .stats { display: flex; gap: 10px; margin-top: 12px; }
+  .stat-box { flex: 1; background: #1f2937; padding: 10px; border-radius: 10px; }
+  .stat-box.val { font-size: 18px; font-weight: 700; color: var(--accent); }
+  .stat-box.lbl { font-size: 11px; color: var(--muted); }
+  .stat-box.danger.val { color: var(--danger); }
 
-   .tabs {
+  .tabs {
       display: flex; background: var(--card); margin: 0 16px;
       border-radius: 12px; padding: 4px; overflow-x: auto;
     }
-   .tab-btn {
+  .tab-btn {
       flex: 1; padding: 10px 8px; border: none; background: transparent;
       color: var(--muted); border-radius: 8px; font-weight: 600; font-size: 14px;
     }
-   .tab-btn.active { background: var(--accent); color: #000; }
-   .tab-content { display: none; padding: 20px 16px; }
-   .tab-content.active { display: block; }
+  .tab-btn.active { background: var(--accent); color: #000; }
+  .tab-content { display: none; padding: 20px 16px; }
+  .tab-content.active { display: block; }
 
     button.primary {
       background: var(--accent); color: #000; border: none;
@@ -85,24 +85,28 @@
     }
     button:disabled { background: #374151; color: var(--muted); cursor: not-allowed; }
 
-   .card { background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 12px; }
-   .ref-link {
+  .card { background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 12px; }
+  .ref-link {
       background: #1f2937; padding: 12px; border-radius: 8px;
       word-break: break-all; font-size: 13px; margin: 10px 0;
     }
-   .leaderboard-item {
+  .leaderboard-item {
       display: flex; justify-content: space-between;
       padding: 12px 0; border-bottom: 1px solid #1f2937;
     }
-   .rank { color: var(--accent); font-weight: 700; width: 30px; }
+  .rank { color: var(--accent); font-weight: 700; width: 30px; }
     input {
       width: 100%; padding: 12px; background: #1f2937;
       border: 1px solid #374151; border-radius: 8px; color: var(--text); margin: 8px 0;
     }
-   .ref-item { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
-   .badge { font-size: 10px; padding: 3px 6px; border-radius: 6px; }
-   .badge.pending { background: var(--warning); color: #000; }
-   .badge.confirmed { background: var(--accent); color: #000; }
+  .ref-item { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+  .badge { font-size: 10px; padding: 3px 6px; border-radius: 6px; }
+  .badge.pending { background: var(--warning); color: #000; }
+  .badge.confirmed { background: var(--accent); color: #000; }
+  .warning-note {
+      background: #451a03; color: #fbbf24; padding: 10px;
+      border-radius: 8px; font-size: 12px; margin-bottom: 10px; text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -142,8 +146,11 @@
 
     <!-- EARN TAB -->
     <div id="earn" class="tab-content active">
+      <div class="warning-note">
+        GigaPub in TEST MODE. Real token needed for real earnings
+      </div>
       <button id="adBtn" class="primary">Watch AdsGram Ad +$0.0006</button>
-      <button id="gigaBtn" class="giga">Watch GigaPub Ad +$0.0006</button>
+      <button id="gigaBtn" class="giga">Watch GigaPub TEST Ad +$0.0006</button>
       <p style="text-align:center; color:var(--muted); margin-top:12px; font-size:13px;">
         Daily limit: 400 ads total. Resets at 12AM UTC
       </p>
@@ -193,6 +200,7 @@
     const DAILY_LIMIT = 400;
     const REWARD = 0.0006;
     const REF_REWARD = 0.0015;
+    const GIGAPUB_TEST_TOKEN = "test_rewarded_token"; // TEST TOKEN
 
     function getToday() {
       return new Date().toISOString().split('T')[0];
@@ -231,7 +239,6 @@
       data.adsWatched += 1;
       data.balance += REWARD;
 
-      // Confirm referral on first ad from any network
       if (data.adsWatched === 1 && data.referrer) {
         let referrerData = JSON.parse(localStorage.getItem(`adsPayU_ref_${data.referrer}`)) || {};
         if (referrerData[user.id] && referrerData[user.id].status === 'pending') {
@@ -282,7 +289,7 @@
       } else {
         adBtn.disabled = false; gigaBtn.disabled = false;
         adBtn.innerText = "Watch AdsGram Ad +$0.0006";
-        gigaBtn.innerText = "Watch GigaPub Ad +$0.0006";
+        gigaBtn.innerText = "Watch GigaPub TEST Ad +$0.0006";
       }
     }
 
@@ -319,25 +326,24 @@
       }
     }
 
-    // GIGAPUB
+    // GIGAPUB - TEST MODE
     const GigaPub = window.GigaPub;
     document.getElementById('gigaBtn').onclick = async () => {
       if (data.adsWatched >= DAILY_LIMIT) return tg.showAlert("Daily limit reached!");
       document.getElementById('gigaBtn').disabled = true;
-      document.getElementById('gigaBtn').innerText = "Loading ad...";
-      
+      document.getElementById('gigaBtn').innerText = "Loading test ad...";
+
       try {
-        // Replace YOUR_GIGAPUB_TOKEN with your real token from GigaPub dashboard
-        await GigaPub.showRewardedAd({ 
-          token: "YOUR_GIGAPUB_TOKEN",
-          userId: user.id 
+        await GigaPub.showRewardedAd({
+          token: GIGAPUB_TEST_TOKEN, // TEST TOKEN
+          userId: user.id
         });
-        creditUser("GigaPub");
+        creditUser("GigaPub TEST");
       } catch (e) {
-        alert("GigaPub ad skipped or no fill");
+        alert("GigaPub test ad error: " + e.message);
       }
       if (data.adsWatched < DAILY_LIMIT) {
-        document.getElementById('gigaBtn').innerText = "Watch GigaPub Ad +$0.0006";
+        document.getElementById('gigaBtn').innerText = "Watch GigaPub TEST Ad +$0.0006";
         document.getElementById('gigaBtn').disabled = false;
       }
     }
