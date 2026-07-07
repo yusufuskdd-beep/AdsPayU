@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>AdsPayU Rewards</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src='//lib.gigapub.tech/gigapub.min.js'></script> <!-- GIGAPUB SDK -->
   <style>
     :root {
       --bg: #0a0f1e;
@@ -14,6 +15,7 @@
       --muted: #9ca3af;
       --danger: #ef4444;
       --warning: #f59e0b;
+      --giga: #7c3aed;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -54,9 +56,7 @@
    .balance-card.amount { font-size: 32px; font-weight: 700; color: var(--accent); margin: 8px 0; }
 
    .stats { display: flex; gap: 10px; margin-top: 12px; }
-   .stat-box {
-      flex: 1; background: #1f2937; padding: 10px; border-radius: 10px;
-    }
+   .stat-box { flex: 1; background: #1f2937; padding: 10px; border-radius: 10px; }
    .stat-box.val { font-size: 18px; font-weight: 700; color: var(--accent); }
    .stat-box.lbl { font-size: 11px; color: var(--muted); }
    .stat-box.danger.val { color: var(--danger); }
@@ -76,9 +76,14 @@
     button.primary {
       background: var(--accent); color: #000; border: none;
       padding: 16px; font-size: 16px; font-weight: 700;
+      border-radius: 12px; width: 100%; cursor: pointer; margin-bottom: 10px;
+    }
+    button.giga {
+      background: var(--giga); color: #fff; border: none;
+      padding: 16px; font-size: 16px; font-weight: 700;
       border-radius: 12px; width: 100%; cursor: pointer;
     }
-    button.primary:disabled { background: #374151; color: var(--muted); cursor: not-allowed; }
+    button:disabled { background: #374151; color: var(--muted); cursor: not-allowed; }
 
    .card { background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 12px; }
    .ref-link {
@@ -104,7 +109,7 @@
   <div id="splash">
     <img src="splash.jpg" alt="AdsPayU">
     <div class="loader"></div>
-    <div class="powered">Powered by AdsGram</div>
+    <div class="powered">Powered by AdsGram + GigaPub</div>
   </div>
 
   <div id="app">
@@ -135,13 +140,16 @@
       <button class="tab-btn" onclick="openTab('withdraw')">Withdraw</button>
     </div>
 
+    <!-- EARN TAB -->
     <div id="earn" class="tab-content active">
-      <button id="adBtn" class="primary">Watch Ad +$0.0006</button>
+      <button id="adBtn" class="primary">Watch AdsGram Ad +$0.0006</button>
+      <button id="gigaBtn" class="giga">Watch GigaPub Ad +$0.0006</button>
       <p style="text-align:center; color:var(--muted); margin-top:12px; font-size:13px;">
-        Daily limit: 400 ads. Resets at 12AM UTC
+        Daily limit: 400 ads total. Resets at 12AM UTC
       </p>
     </div>
 
+    <!-- REFERRALS TAB -->
     <div id="referrals" class="tab-content">
       <div class="card">
         <h3>Invite Friends 💸</h3>
@@ -157,6 +165,7 @@
       </div>
     </div>
 
+    <!-- LEADERBOARD TAB -->
     <div id="leaderboard" class="tab-content">
       <div class="card">
         <h3>🏆 Top 50 Earners</h3>
@@ -164,6 +173,7 @@
       </div>
     </div>
 
+    <!-- WITHDRAW TAB -->
     <div id="withdraw" class="tab-content">
       <div class="card">
         <h3>Withdraw Funds</h3>
@@ -188,29 +198,26 @@
       return new Date().toISOString().split('T')[0];
     }
 
-    // DATA STRUCTURE
     let data = JSON.parse(localStorage.getItem('adsPayUData')) || {
       date: getToday(),
       adsWatched: 0,
       balance: 0,
-      referrals: {}, // { "refUserId": {status: "pending", name: "User"} }
-      referrer: null // who referred me
+      referrals: {},
+      referrer: null
     };
 
-    // Check if user came with referral link
+    // Check referral
     const startParam = tg.initDataUnsafe.start_param;
     if (startParam && startParam.startsWith('ref') &&!data.referrer) {
       const referrerId = startParam.replace('ref', '');
       if (referrerId!== String(user.id)) {
         data.referrer = referrerId;
-        // Tell referrer I joined - pending
         let referrerData = JSON.parse(localStorage.getItem(`adsPayU_ref_${referrerId}`)) || {};
         referrerData[user.id] = { status: 'pending', name: user.first_name };
         localStorage.setItem(`adsPayU_ref_${referrerId}`, JSON.stringify(referrerData));
       }
     }
 
-    // Reset daily
     if (data.date!== getToday()) {
       data = {...data, date: getToday(), adsWatched: 0 };
     }
@@ -219,16 +226,38 @@
       localStorage.setItem('adsPayUData', JSON.stringify(data));
     }
 
+    function creditUser(source) {
+      if (data.adsWatched >= DAILY_LIMIT) return false;
+      data.adsWatched += 1;
+      data.balance += REWARD;
+
+      // Confirm referral on first ad from any network
+      if (data.adsWatched === 1 && data.referrer) {
+        let referrerData = JSON.parse(localStorage.getItem(`adsPayU_ref_${data.referrer}`)) || {};
+        if (referrerData[user.id] && referrerData[user.id].status === 'pending') {
+          referrerData[user.id].status = 'confirmed';
+          localStorage.setItem(`adsPayU_ref_${data.referrer}`, JSON.stringify(referrerData));
+          let referrerMain = JSON.parse(localStorage.getItem('adsPayUData')) || {};
+          if(referrerMain.balance!== undefined) {
+            referrerMain.balance += REF_REWARD;
+            localStorage.setItem('adsPayUData', JSON.stringify(referrerMain));
+          }
+        }
+      }
+      saveData();
+      updateUI();
+      tg.showAlert(`${source} finished ✅ \n+$${REWARD.toFixed(4)} credited! \nAds today: ${data.adsWatched}/${DAILY_LIMIT}`);
+      return true;
+    }
+
     function updateUI() {
       document.getElementById('adsCount').innerText = `${data.adsWatched}/${DAILY_LIMIT}`;
       document.getElementById('balance').innerText = '$' + data.balance.toFixed(4);
 
-      // Load confirmed referrals
       let refData = JSON.parse(localStorage.getItem(`adsPayU_ref_${user.id}`)) || {};
       let confirmed = Object.values(refData).filter(r => r.status === 'confirmed').length;
       document.getElementById('refCountTop').innerText = confirmed;
 
-      // Render referral list
       const refList = document.getElementById('refList');
       if (Object.keys(refData).length === 0) {
         refList.innerHTML = '<p style="color:var(--muted);">No referrals yet</p>';
@@ -245,12 +274,15 @@
       }
 
       const adBtn = document.getElementById('adBtn');
+      const gigaBtn = document.getElementById('gigaBtn');
       if (data.adsWatched >= DAILY_LIMIT) {
-        adBtn.disabled = true;
+        adBtn.disabled = true; gigaBtn.disabled = true;
         adBtn.innerText = "Daily Limit Reached";
+        gigaBtn.innerText = "Daily Limit Reached";
       } else {
-        adBtn.disabled = false;
-        adBtn.innerText = "Watch Ad +$0.0006";
+        adBtn.disabled = false; gigaBtn.disabled = false;
+        adBtn.innerText = "Watch AdsGram Ad +$0.0006";
+        gigaBtn.innerText = "Watch GigaPub Ad +$0.0006";
       }
     }
 
@@ -269,49 +301,48 @@
       event.target.classList.add('active');
     }
 
+    // ADSGRAM
     const AdController = window.Adsgram.init({ blockId: "37657" });
-    const adBtn = document.getElementById('adBtn');
-    adBtn.onclick = async () => {
-      if (data.adsWatched >= DAILY_LIMIT) return tg.showAlert("You've reached your daily limit of 400 ads. Come back tomorrow!");
-
-      adBtn.disabled = true;
-      adBtn.innerText = "Loading ad...";
+    document.getElementById('adBtn').onclick = async () => {
+      if (data.adsWatched >= DAILY_LIMIT) return tg.showAlert("Daily limit reached!");
+      document.getElementById('adBtn').disabled = true;
+      document.getElementById('adBtn').innerText = "Loading ad...";
       try {
         await AdController.show();
-
-        data.adsWatched += 1;
-        data.balance += REWARD;
-
-        // ANTI-CHEAT: If this is my first ad and I have a referrer, confirm them
-        if (data.adsWatched === 1 && data.referrer) {
-          let referrerData = JSON.parse(localStorage.getItem(`adsPayU_ref_${data.referrer}`)) || {};
-          if (referrerData[user.id] && referrerData[user.id].status === 'pending') {
-            referrerData[user.id].status = 'confirmed';
-            localStorage.setItem(`adsPayU_ref_${data.referrer}`, JSON.stringify(referrerData));
-            // Credit referrer
-            let referrerMain = JSON.parse(localStorage.getItem('adsPayUData')) || {};
-            if(referrerMain.balance!== undefined) {
-              referrerMain.balance += REF_REWARD;
-              localStorage.setItem('adsPayUData', JSON.stringify(referrerMain));
-            }
-          }
-        }
-
-        saveData();
-        updateUI();
-
-        tg.showAlert(`Ad finished ✅ \n+$${REWARD.toFixed(4)} credited! \nAds today: ${data.adsWatched}/${DAILY_LIMIT}`);
+        creditUser("AdsGram");
       } catch (e) {
-        if(e.message?.includes("Domain")) alert("Domain not whitelisted yet. Waiting for support");
-        else alert("Ad skipped or no fill");
+        alert("Ad skipped or no fill");
       }
-
       if (data.adsWatched < DAILY_LIMIT) {
-        adBtn.innerText = "Watch Ad +$0.0006";
-        adBtn.disabled = false;
+        document.getElementById('adBtn').innerText = "Watch AdsGram Ad +$0.0006";
+        document.getElementById('adBtn').disabled = false;
       }
     }
 
+    // GIGAPUB
+    const GigaPub = window.GigaPub;
+    document.getElementById('gigaBtn').onclick = async () => {
+      if (data.adsWatched >= DAILY_LIMIT) return tg.showAlert("Daily limit reached!");
+      document.getElementById('gigaBtn').disabled = true;
+      document.getElementById('gigaBtn').innerText = "Loading ad...";
+      
+      try {
+        // Replace YOUR_GIGAPUB_TOKEN with your real token from GigaPub dashboard
+        await GigaPub.showRewardedAd({ 
+          token: "YOUR_GIGAPUB_TOKEN",
+          userId: user.id 
+        });
+        creditUser("GigaPub");
+      } catch (e) {
+        alert("GigaPub ad skipped or no fill");
+      }
+      if (data.adsWatched < DAILY_LIMIT) {
+        document.getElementById('gigaBtn').innerText = "Watch GigaPub Ad +$0.0006";
+        document.getElementById('gigaBtn').disabled = false;
+      }
+    }
+
+    // REFERRALS
     const botUsername = "AdsPayU";
     const refLink = `https://t.me/${botUsername}?start=ref${user.id}`;
     document.getElementById('refLink').innerText = refLink;
@@ -320,6 +351,7 @@
       tg.showAlert("Referral link copied!");
     }
 
+    // LEADERBOARD
     const lbList = document.getElementById('leaderboardList');
     for(let i=1; i<=50; i++){
       lbList.innerHTML += `
@@ -330,11 +362,12 @@
       `;
     }
 
+    // WITHDRAW
     function requestWithdraw() {
       const wallet = document.getElementById('wallet').value;
       if(!wallet) return alert("Enter wallet address");
       if(data.balance < 1.00) return alert("Min withdraw is $1.00");
-      alert("Withdraw request sent! \nRailway not setup yet so this is just a test");
+      alert("Withdraw request sent!");
     }
   </script>
 </body>
