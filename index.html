@@ -13,6 +13,7 @@
       --text: #e5e7eb;
       --muted: #9ca3af;
       --danger: #ef4444;
+      --warning: #f59e0b;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -23,142 +24,80 @@
     }
 
     #splash {
-      position: fixed;
-      top: 0; left: 0;
+      position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
       background: linear-gradient(135deg, #0047ff, #0030aa);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      transition: opacity 0.5s ease;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 9999; transition: opacity 0.5s ease;
     }
-    #splash.hide {
-      opacity: 0;
-      pointer-events: none;
-    }
-    #splash img {
-      width: 80%;
-      max-width: 400px;
-    }
-    .loader {
+    #splash.hide { opacity: 0; pointer-events: none; }
+    #splash img { width: 80%; max-width: 400px; }
+   .loader {
       border: 4px solid rgba(255,255,255,0.2);
-      border-top: 4px solid #fff;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
+      border-top: 4px solid #fff; border-radius: 50%;
+      width: 40px; height: 40px; animation: spin 1s linear infinite;
       margin-top: 20px;
     }
-    .powered {
-      color: rgba(255,255,255,0.7);
-      font-size: 12px;
-      margin-top: 12px;
-      letter-spacing: 0.5px;
-    }
+   .powered { color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 12px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
     #app { display: none; }
-
-    .header {
-      text-align: center;
-      padding: 20px;
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-    }
-    .header h1 { font-size: 22px; }
-    .balance-card {
-      background: var(--card);
-      margin: -30px 16px 20px;
-      padding: 20px;
-      border-radius: 16px;
-      text-align: center;
+   .header { text-align: center; padding: 20px; background: linear-gradient(135deg, #22c55e, #16a34a); }
+   .header h1 { font-size: 22px; }
+   .balance-card {
+      background: var(--card); margin: -30px 16px 20px;
+      padding: 20px; border-radius: 16px; text-align: center;
       box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     }
-    .balance-card .label { color: var(--muted); font-size: 14px; }
-    .balance-card .amount { font-size: 32px; font-weight: 700; color: var(--accent); margin: 8px 0; }
-    
-    .stats {
-      display: flex;
-      gap: 10px;
-      margin-top: 12px;
-    }
-    .stat-box {
-      flex: 1;
-      background: #1f2937;
-      padding: 10px;
-      border-radius: 10px;
-    }
-    .stat-box .val { font-size: 18px; font-weight: 700; color: var(--accent); }
-    .stat-box .lbl { font-size: 11px; color: var(--muted); }
-    .stat-box.danger .val { color: var(--danger); }
+   .balance-card.label { color: var(--muted); font-size: 14px; }
+   .balance-card.amount { font-size: 32px; font-weight: 700; color: var(--accent); margin: 8px 0; }
 
-    .tabs {
-      display: flex;
-      background: var(--card);
-      margin: 0 16px;
-      border-radius: 12px;
-      padding: 4px;
-      overflow-x: auto;
+   .stats { display: flex; gap: 10px; margin-top: 12px; }
+   .stat-box {
+      flex: 1; background: #1f2937; padding: 10px; border-radius: 10px;
     }
-    .tab-btn {
-      flex: 1;
-      padding: 10px 8px;
-      border: none;
-      background: transparent;
-      color: var(--muted);
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 14px;
-      white-space: nowrap;
+   .stat-box.val { font-size: 18px; font-weight: 700; color: var(--accent); }
+   .stat-box.lbl { font-size: 11px; color: var(--muted); }
+   .stat-box.danger.val { color: var(--danger); }
+
+   .tabs {
+      display: flex; background: var(--card); margin: 0 16px;
+      border-radius: 12px; padding: 4px; overflow-x: auto;
     }
-    .tab-btn.active { background: var(--accent); color: #000; }
-    .tab-content { display: none; padding: 20px 16px; }
-    .tab-content.active { display: block; }
+   .tab-btn {
+      flex: 1; padding: 10px 8px; border: none; background: transparent;
+      color: var(--muted); border-radius: 8px; font-weight: 600; font-size: 14px;
+    }
+   .tab-btn.active { background: var(--accent); color: #000; }
+   .tab-content { display: none; padding: 20px 16px; }
+   .tab-content.active { display: block; }
 
     button.primary {
-      background: var(--accent);
-      color: #000;
-      border: none;
-      padding: 16px;
-      font-size: 16px;
-      font-weight: 700;
-      border-radius: 12px;
-      width: 100%;
-      cursor: pointer;
+      background: var(--accent); color: #000; border: none;
+      padding: 16px; font-size: 16px; font-weight: 700;
+      border-radius: 12px; width: 100%; cursor: pointer;
     }
     button.primary:disabled { background: #374151; color: var(--muted); cursor: not-allowed; }
 
-    .card {
-      background: var(--card);
-      padding: 16px;
-      border-radius: 12px;
-      margin-bottom: 12px;
+   .card { background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 12px; }
+   .ref-link {
+      background: #1f2937; padding: 12px; border-radius: 8px;
+      word-break: break-all; font-size: 13px; margin: 10px 0;
     }
-    .ref-link {
-      background: #1f2937;
-      padding: 12px;
-      border-radius: 8px;
-      word-break: break-all;
-      font-size: 13px;
-      margin: 10px 0;
+   .leaderboard-item {
+      display: flex; justify-content: space-between;
+      padding: 12px 0; border-bottom: 1px solid #1f2937;
     }
-    .leaderboard-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 12px 0;
-      border-bottom: 1px solid #1f2937;
-    }
-    .rank { color: var(--accent); font-weight: 700; width: 30px; }
+   .rank { color: var(--accent); font-weight: 700; width: 30px; }
     input {
-      width: 100%;
-      padding: 12px;
-      background: #1f2937;
-      border: 1px solid #374151;
-      border-radius: 8px;
-      color: var(--text);
-      margin: 8px 0;
+      width: 100%; padding: 12px; background: #1f2937;
+      border: 1px solid #374151; border-radius: 8px; color: var(--text); margin: 8px 0;
     }
+   .ref-item { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+   .badge { font-size: 10px; padding: 3px 6px; border-radius: 6px; }
+   .badge.pending { background: var(--warning); color: #000; }
+   .badge.confirmed { background: var(--accent); color: #000; }
   </style>
 </head>
 <body>
@@ -184,7 +123,7 @@
         </div>
         <div class="stat-box">
           <div class="val" id="refCountTop">0</div>
-          <div class="lbl">Referrals</div>
+          <div class="lbl">Confirmed</div>
         </div>
       </div>
     </div>
@@ -206,12 +145,15 @@
     <div id="referrals" class="tab-content">
       <div class="card">
         <h3>Invite Friends 💸</h3>
-        <p style="color:var(--muted); font-size:14px;">Get $0.0015 for each friend who watches 1 ad</p>
+        <p style="color:var(--muted); font-size:14px;">Earn $0.0015 when your friend watches 1 ad</p>
         <div class="ref-link" id="refLink">Loading...</div>
         <button class="primary" onclick="copyRef()">Copy Link</button>
       </div>
       <div class="card">
-        <h3>Your Referrals: <span id="refCount">0</span></h3>
+        <h3>Your Referrals</h3>
+        <div id="refList">
+          <p style="color:var(--muted);">No referrals yet</p>
+        </div>
       </div>
     </div>
 
@@ -228,11 +170,6 @@
         <p style="color:var(--muted); font-size:14px;">Min $1.00 • Paid via Binance ID or USDT TRC20</p>
         <input type="text" id="wallet" placeholder="Enter Binance ID or USDT Wallet">
         <button class="primary" onclick="requestWithdraw()">Request Withdraw</button>
-        <p style="color:var(--muted); font-size:12px; margin-top:10px;">Withdrawals processed manually within 24h</p>
-      </div>
-      <div class="card">
-        <h3>Withdraw History</h3>
-        <p style="color:var(--muted);">No withdrawals yet</p>
       </div>
     </div>
   </div>
@@ -244,16 +181,38 @@
     const user = tg.initDataUnsafe.user || {id: 123, first_name: "Guest"};
 
     const DAILY_LIMIT = 400;
-    const REWARD = 0.0006; // CHANGED
-    const REF_REWARD = 0.0015; // CHANGED - 2.5x ad reward
+    const REWARD = 0.0006;
+    const REF_REWARD = 0.0015;
 
     function getToday() {
       return new Date().toISOString().split('T')[0];
     }
 
-    let data = JSON.parse(localStorage.getItem('adsPayUData')) || {};
-    if (data.date !== getToday()) {
-      data = { date: getToday(), adsWatched: 0, balance: data.balance || 0 };
+    // DATA STRUCTURE
+    let data = JSON.parse(localStorage.getItem('adsPayUData')) || {
+      date: getToday(),
+      adsWatched: 0,
+      balance: 0,
+      referrals: {}, // { "refUserId": {status: "pending", name: "User"} }
+      referrer: null // who referred me
+    };
+
+    // Check if user came with referral link
+    const startParam = tg.initDataUnsafe.start_param;
+    if (startParam && startParam.startsWith('ref') &&!data.referrer) {
+      const referrerId = startParam.replace('ref', '');
+      if (referrerId!== String(user.id)) {
+        data.referrer = referrerId;
+        // Tell referrer I joined - pending
+        let referrerData = JSON.parse(localStorage.getItem(`adsPayU_ref_${referrerId}`)) || {};
+        referrerData[user.id] = { status: 'pending', name: user.first_name };
+        localStorage.setItem(`adsPayU_ref_${referrerId}`, JSON.stringify(referrerData));
+      }
+    }
+
+    // Reset daily
+    if (data.date!== getToday()) {
+      data = {...data, date: getToday(), adsWatched: 0 };
     }
 
     function saveData() {
@@ -263,12 +222,32 @@
     function updateUI() {
       document.getElementById('adsCount').innerText = `${data.adsWatched}/${DAILY_LIMIT}`;
       document.getElementById('balance').innerText = '$' + data.balance.toFixed(4);
-      
+
+      // Load confirmed referrals
+      let refData = JSON.parse(localStorage.getItem(`adsPayU_ref_${user.id}`)) || {};
+      let confirmed = Object.values(refData).filter(r => r.status === 'confirmed').length;
+      document.getElementById('refCountTop').innerText = confirmed;
+
+      // Render referral list
+      const refList = document.getElementById('refList');
+      if (Object.keys(refData).length === 0) {
+        refList.innerHTML = '<p style="color:var(--muted);">No referrals yet</p>';
+      } else {
+        refList.innerHTML = '';
+        for (let [id][r] of Object.entries(refData)) {
+          refList.innerHTML += `
+            <div class="ref-item">
+              <span>${r.name}</span>
+              <span class="badge ${r.status}">${r.status}</span>
+            </div>
+          `;
+        }
+      }
+
       const adBtn = document.getElementById('adBtn');
       if (data.adsWatched >= DAILY_LIMIT) {
         adBtn.disabled = true;
         adBtn.innerText = "Daily Limit Reached";
-        document.querySelector('.stat-box .val').parentElement.classList.add('danger');
       } else {
         adBtn.disabled = false;
         adBtn.innerText = "Watch Ad +$0.0006";
@@ -294,14 +273,30 @@
     const adBtn = document.getElementById('adBtn');
     adBtn.onclick = async () => {
       if (data.adsWatched >= DAILY_LIMIT) return tg.showAlert("You've reached your daily limit of 400 ads. Come back tomorrow!");
-      
+
       adBtn.disabled = true;
       adBtn.innerText = "Loading ad...";
       try {
         await AdController.show();
-        
+
         data.adsWatched += 1;
         data.balance += REWARD;
+
+        // ANTI-CHEAT: If this is my first ad and I have a referrer, confirm them
+        if (data.adsWatched === 1 && data.referrer) {
+          let referrerData = JSON.parse(localStorage.getItem(`adsPayU_ref_${data.referrer}`)) || {};
+          if (referrerData[user.id] && referrerData[user.id].status === 'pending') {
+            referrerData[user.id].status = 'confirmed';
+            localStorage.setItem(`adsPayU_ref_${data.referrer}`, JSON.stringify(referrerData));
+            // Credit referrer
+            let referrerMain = JSON.parse(localStorage.getItem('adsPayUData')) || {};
+            if(referrerMain.balance!== undefined) {
+              referrerMain.balance += REF_REWARD;
+              localStorage.setItem('adsPayUData', JSON.stringify(referrerMain));
+            }
+          }
+        }
+
         saveData();
         updateUI();
 
@@ -310,14 +305,14 @@
         if(e.message?.includes("Domain")) alert("Domain not whitelisted yet. Waiting for support");
         else alert("Ad skipped or no fill");
       }
-      
+
       if (data.adsWatched < DAILY_LIMIT) {
         adBtn.innerText = "Watch Ad +$0.0006";
         adBtn.disabled = false;
       }
     }
 
-    const botUsername = "AdsPayU"; 
+    const botUsername = "AdsPayU";
     const refLink = `https://t.me/${botUsername}?start=ref${user.id}`;
     document.getElementById('refLink').innerText = refLink;
     function copyRef() {
