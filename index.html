@@ -3,95 +3,92 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RewardApp</title>
+  <title>Reward App</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-  <script src='https://sad.adsgram.ai/js/sad.min.js'></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI'; background: #0f172a; color: white; padding: 16px; max-width: 500px; margin: auto; }
-    h2 { text-align: center; margin-bottom: 10px; }
-    .card { background: #1e293b; padding: 20px; border-radius: 16px; margin: 15px 0; }
-    button { background: #22c55e; border: none; padding: 14px; border-radius: 12px; color: white; width: 100%; font-weight: 600; cursor: pointer; font-size: 16px; }
-    button:disabled { background: #334155; cursor: not-allowed; }
-    .balance { font-size: 32px; color: #22c55e; font-weight: bold; text-align: center; }
-    #status { font-size:12px; margin-top:8px; text-align:center; color:#94a3b8; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    h1 { color: #22c55e; }
+    .balance {
+      font-size: 24px;
+      margin: 20px 0;
+      padding: 15px;
+      background: #1e293b;
+      border-radius: 12px;
+    }
+    button {
+      background: #22c55e;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      font-size: 18px;
+      border-radius: 12px;
+      cursor: pointer;
+      width: 80%;
+      max-width: 300px;
+    }
+    button:disabled {
+      background: #475569;
+      cursor: not-allowed;
+    }
+    p { color: #94a3b8; font-size: 14px; }
   </style>
 </head>
 <body>
-  <h2>💰 RewardApp</h2>
-
-  <div class="card">
-    <p style="text-align:center;">Your Earnings</p>
-    <div class="balance" id="balance">$0.00</div>
-    <p style="text-align:center; font-size:12px; color:#94a3b8;"><small>$1.00 minimum to cashout</small></p>
+  <h1>💰 Reward App</h1>
+  
+  <div class="balance">
+    Your Balance: $0.00
+    <br><small>Railway not setup yet</small>
   </div>
 
-  <div class="card">
-    <p style="text-align:center; margin-bottom:10px;">Watch Ad +$0.02</p>
-    <button id="adBtn">Show Ad</button>
-    <p id="status"></p>
-  </div>
+  <button id="adBtn">Watch Ad +$0.02</button>
+  <p>Watch a short ad to earn</p>
 
-  <div class="card">
-    <div id="ton-connect"></div>
-    <button id="requestBtn" disabled>Request Payout</button>
-  </div>
+  <!-- AdsGram SDK -->
+  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+  <script>
+    // 1. Init Telegram WebApp
+    const tg = window.Telegram.WebApp;
+    tg.expand();
 
-<script>
-  const tg = window.Telegram.WebApp;
-  tg.expand();
-  const userId = tg.initDataUnsafe.user?.id;
-  const initData = tg.initData;
-
-  const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({ 
-    buttonRootId: 'ton-connect', 
-    manifestUrl: 'https://YOUR-VERCEL-URL.vercel.app/tonconnect-manifest.json' 
-  });
-
-  // CHANGE THIS: YOUR ADSGRAM BLOCK ID
-  const AdController = window.Adsgram.init({ blockId: "37657" });
-
-  async function load() {
-    const res = await fetch(`https://YOUR-RAILWAY-URL.up.railway.app/api/balance?userId=${userId}&initData=${encodeURIComponent(initData)}`);
-    const data = await res.json();
-    document.getElementById('balance').innerText = '$' + (data.balance/100).toFixed(2);
-    document.getElementById('requestBtn').disabled = data.balance < 100 ||!tonConnectUI.connected;
-  }
-  load();
-
-  adBtn.onclick = async () => {
-    adBtn.disabled = true;
-    document.getElementById('status').innerText = 'Loading ad...';
-    try {
-      await AdController.show();
-      document.getElementById('status').innerText = 'Ad watched! Crediting $0.02...';
-      await fetch('https://YOUR-RAILWAY-URL.up.railway.app/api/earn', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({userId, initData, cents: 2})
-      });
-      document.getElementById('status').innerText = '+$0.02 credited!';
-      load();
-    } catch (error) {
-      document.getElementById('status').innerText = 'Ad skipped';
-    }
-    adBtn.disabled = false;
-  }
-
-  requestBtn.onclick = async () => {
-    const wallet = tonConnectUI.account;
-    if(!wallet) return alert('Connect wallet first');
-    const res = await fetch('https://YOUR-RAILWAY-URL.up.railway.app/api/request', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({userId, initData, wallet: wallet.address})
+    // 2. Init AdsGram with YOUR Block ID
+    const AdController = window.Adsgram.init({ 
+      blockId: "37657" 
     });
-    const data = await res.json();
-    alert(data.ok? 'Request sent! Admin will pay you manually.' : data.error);
-    load();
-  }
-  tonConnectUI.onStatusChange(() => load());
-</script>
+
+    const adBtn = document.getElementById('adBtn');
+
+    adBtn.onclick = async () => {
+      adBtn.disabled = true;
+      adBtn.innerText = "Loading ad...";
+      
+      try {
+        // 3. Show the rewarded ad
+        await AdController.show(); 
+        
+        // 4. If user watched till end
+        alert('Ad finished ✅ \n\nRailway not setup yet, so no $0.02 was credited');
+        
+      } catch (e) {
+        console.log(e);
+        if(e.message && e.message.includes("Domain")){
+          alert("Domain not whitelisted yet. \nWaiting for AdsGram support");
+        } else if(e.message && e.message.includes("No fill")){
+          alert("No ads available right now. \nTry again in 1 min");
+        } else {
+          alert("Ad skipped or closed");
+        }
+      }
+      
+      adBtn.innerText = "Watch Ad +$0.02";
+      adBtn.disabled = false;
+    }
+  </script>
 </body>
 </html>
