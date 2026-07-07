@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Reward App</title>
+  <title>AdsPayU Rewards</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
@@ -20,6 +20,46 @@
       color: var(--text);
       padding-bottom: 80px;
     }
+
+    /* SPLASH SCREEN */
+    #splash {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: linear-gradient(135deg, #0047ff, #0030aa);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: fadeOut 0.5s ease 2.5s forwards;
+    }
+    #splash img {
+      width: 80%;
+      max-width: 400px;
+      animation: pop 0.6s ease;
+    }
+    .loader {
+      border: 4px solid rgba(255,255,255,0.2);
+      border-top: 4px solid #fff;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin-top: 20px;
+    }
+    .powered {
+      color: rgba(255,255,255,0.7);
+      font-size: 12px;
+      margin-top: 12px;
+      letter-spacing: 0.5px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); }
+    @keyframes pop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; }
+    @keyframes fadeOut { to { opacity: 0; visibility: hidden; }
+    #app { opacity: 0; animation: showApp 0.5s ease 2.7s forwards; }
+    @keyframes showApp { to { opacity: 1; } }
+
     .header {
       text-align: center;
       padding: 20px;
@@ -56,10 +96,7 @@
       font-size: 14px;
       white-space: nowrap;
     }
-    .tab-btn.active {
-      background: var(--accent);
-      color: #000;
-    }
+    .tab-btn.active { background: var(--accent); color: #000; }
     .tab-content { display: none; padding: 20px 16px; }
     .tab-content.active { display: block; }
 
@@ -109,64 +146,74 @@
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>💰 AdsPayU Rewards</h1>
+  <!-- SPLASH SCREEN -->
+  <div id="splash">
+    <img src="splash.jpg" alt="AdsPayU">
+    <div class="loader"></div>
+    <div class="powered">Powered by AdsGram</div>
   </div>
 
-  <div class="balance-card">
-    <div class="label">Your Balance</div>
-    <div class="amount" id="balance">$0.00</div>
-    <div class="label">Min withdraw: $1.00</div>
-  </div>
-
-  <div class="tabs">
-    <button class="tab-btn active" onclick="openTab('earn')">Earn</button>
-    <button class="tab-btn" onclick="openTab('referrals')">Referrals</button>
-    <button class="tab-btn" onclick="openTab('leaderboard')">Top 50</button>
-    <button class="tab-btn" onclick="openTab('withdraw')">Withdraw</button>
-  </div>
-
-  <!-- EARN TAB -->
-  <div id="earn" class="tab-content active">
-    <button id="adBtn" class="primary">Watch Ad +$0.02</button>
-    <p style="text-align:center; color:var(--muted); margin-top:12px; font-size:13px;">
-      Watch a short rewarded ad to earn
-    </p>
-  </div>
-
-  <!-- REFERRALS TAB -->
-  <div id="referrals" class="tab-content">
-    <div class="card">
-      <h3>Invite Friends 💸</h3>
-      <p style="color:var(--muted); font-size:14px;">Get $0.05 for each friend who watches 1 ad</p>
-      <div class="ref-link" id="refLink">Loading...</div>
-      <button class="primary" onclick="copyRef()">Copy Link</button>
+  <!-- MAIN APP -->
+  <div id="app">
+    <div class="header">
+      <h1>💰 AdsPayU Rewards</h1>
     </div>
-    <div class="card">
-      <h3>Your Referrals: <span id="refCount">0</span></h3>
-    </div>
-  </div>
 
-  <!-- LEADERBOARD TAB -->
-  <div id="leaderboard" class="tab-content">
-    <div class="card">
-      <h3>🏆 Top 50 Earners</h3>
-      <div id="leaderboardList"></div>
+    <div class="balance-card">
+      <div class="label">Your Balance</div>
+      <div class="amount" id="balance">$0.00</div>
+      <div class="label">Min withdraw: $1.00</div>
     </div>
-  </div>
 
-  <!-- WITHDRAW TAB -->
-  <div id="withdraw" class="tab-content">
-    <div class="card">
-      <h3>Withdraw Funds</h3>
-      <p style="color:var(--muted); font-size:14px;">Min $1.00 • Paid via Binance ID or USDT TRC20</p>
-      <input type="text" id="wallet" placeholder="Enter Binance ID or USDT Wallet">
-      <button class="primary" onclick="requestWithdraw()">Request Withdraw</button>
-      <p style="color:var(--muted); font-size:12px; margin-top:10px;">Withdrawals processed manually within 24h</p>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="openTab('earn')">Earn</button>
+      <button class="tab-btn" onclick="openTab('referrals')">Referrals</button>
+      <button class="tab-btn" onclick="openTab('leaderboard')">Top 50</button>
+      <button class="tab-btn" onclick="openTab('withdraw')">Withdraw</button>
     </div>
-    <div class="card">
-      <h3>Withdraw History</h3>
-      <p style="color:var(--muted);">No withdrawals yet</p>
+
+    <!-- EARN TAB -->
+    <div id="earn" class="tab-content active">
+      <button id="adBtn" class="primary">Watch Ad +$0.02</button>
+      <p style="text-align:center; color:var(--muted); margin-top:12px; font-size:13px;">
+        Watch a short rewarded ad to earn
+      </p>
+    </div>
+
+    <!-- REFERRALS TAB -->
+    <div id="referrals" class="tab-content">
+      <div class="card">
+        <h3>Invite Friends 💸</h3>
+        <p style="color:var(--muted); font-size:14px;">Get $0.05 for each friend who watches 1 ad</p>
+        <div class="ref-link" id="refLink">Loading...</div>
+        <button class="primary" onclick="copyRef()">Copy Link</button>
+      </div>
+      <div class="card">
+        <h3>Your Referrals: <span id="refCount">0</span></h3>
+      </div>
+    </div>
+
+    <!-- LEADERBOARD TAB -->
+    <div id="leaderboard" class="tab-content">
+      <div class="card">
+        <h3>🏆 Top 50 Earners</h3>
+        <div id="leaderboardList"></div>
+      </div>
+    </div>
+
+    <!-- WITHDRAW TAB -->
+    <div id="withdraw" class="tab-content">
+      <div class="card">
+        <h3>Withdraw Funds</h3>
+        <p style="color:var(--muted); font-size:14px;">Min $1.00 • Paid via Binance ID or USDT TRC20</p>
+        <input type="text" id="wallet" placeholder="Enter Binance ID or USDT Wallet">
+        <button class="primary" onclick="requestWithdraw()">Request Withdraw</button>
+        <p style="color:var(--muted); font-size:12px; margin-top:10px;">Withdrawals processed manually within 24h</p>
+      </div>
+      <div class="card">
+        <h3>Withdraw History</h3>
+        <p style="color:var(--muted);">No withdrawals yet</p>
+      </div>
     </div>
   </div>
 
@@ -177,7 +224,6 @@
     tg.expand();
     const user = tg.initDataUnsafe.user || {id: 123, first_name: "Guest"};
 
-    // Tabs
     function openTab(tabName) {
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -185,7 +231,6 @@
       event.target.classList.add('active');
     }
 
-    // AdsGram with YOUR Block ID
     const AdController = window.Adsgram.init({ blockId: "37657" });
     const adBtn = document.getElementById('adBtn');
     adBtn.onclick = async () => {
@@ -202,7 +247,6 @@
       adBtn.disabled = false;
     }
 
-    // Referrals - NOW WITH YOUR BOT
     const botUsername = "AdsPayU"; 
     const refLink = `https://t.me/${botUsername}?start=ref${user.id}`;
     document.getElementById('refLink').innerText = refLink;
@@ -211,7 +255,6 @@
       tg.showAlert("Referral link copied!");
     }
 
-    // Leaderboard - dummy top 50
     const lbList = document.getElementById('leaderboardList');
     for(let i=1; i<=50; i++){
       lbList.innerHTML += `
@@ -222,11 +265,10 @@
       `;
     }
 
-    // Withdraw
     function requestWithdraw() {
       const wallet = document.getElementById('wallet').value;
       if(!wallet) return alert("Enter wallet address");
-      if(0 < 1.00) return alert("Min withdraw is $1.00"); // 0 is balance for now
+      if(0 < 1.00) return alert("Min withdraw is $1.00");
       alert("Withdraw request sent! \nRailway not setup yet so this is just a test");
     }
   </script>
