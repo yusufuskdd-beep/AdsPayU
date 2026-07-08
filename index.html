@@ -12,42 +12,43 @@
     #splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0047ff, #0030aa); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.5s ease; }
     #splash.hide { opacity: 0; pointer-events: none; }
     #splash h1 { font-size: 32px; margin-bottom: 10px; }
- .loader { border: 4px solid rgba(255,255,255,0.2); border-top: 4px solid #fff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-top: 20px; }
- .powered { color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 12px; }
+.loader { border: 4px solid rgba(255,255,255,0.2); border-top: 4px solid #fff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-top: 20px; }
+.powered { color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 12px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     #app { display: none; }
- .header { text-align: center; padding: 20px; background: linear-gradient(135deg, #22c55e, #16a34a); }
- .header h1 { font-size: 22px; }
- .balance-card { background: var(--card); margin: -30px 16px 20px; padding: 20px; border-radius: 16px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
- .balance-card.label { color: var(--muted); font-size: 14px; }
- .balance-card.amount { font-size: 32px; font-weight: 700; color: var(--accent); margin: 8px 0; }
- .stats { display: flex; gap: 10px; margin-top: 12px; }
- .stat-box { flex: 1; background: #1f2937; padding: 10px; border-radius: 10px; }
- .stat-box.val { font-size: 18px; font-weight: 700; color: var(--accent); }
- .stat-box.lbl { font-size: 11px; color: var(--muted); }
- .tabs { display: flex; background: var(--card); margin: 0 16px; border-radius: 12px; padding: 4px; overflow-x: auto; }
- .tab-btn { flex: 1; padding: 10px 8px; border: none; background: transparent; color: var(--muted); border-radius: 8px; font-weight: 600; font-size: 13px; white-space: nowrap; }
- .tab-btn.active { background: var(--accent); color: #000; }
- .tab-content { display: none; padding: 20px 16px; }
- .tab-content.active { display: block; }
+.header { text-align: center; padding: 20px; background: linear-gradient(135deg, #22c55e, #16a34a); }
+.header h1 { font-size: 22px; }
+.balance-card { background: var(--card); margin: -30px 16px 20px; padding: 20px; border-radius: 16px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+.balance-card.label { color: var(--muted); font-size: 14px; }
+.balance-card.amount { font-size: 32px; font-weight: 700; color: var(--accent); margin: 8px 0; }
+.stats { display: flex; gap: 10px; margin-top: 12px; }
+.stat-box { flex: 1; background: #1f2937; padding: 10px; border-radius: 10px; }
+.stat-box.val { font-size: 18px; font-weight: 700; color: var(--accent); }
+.stat-box.lbl { font-size: 11px; color: var(--muted); }
+.tabs { display: flex; background: var(--card); margin: 0 16px; border-radius: 12px; padding: 4px; overflow-x: auto; }
+.tab-btn { flex: 1; padding: 10px 8px; border: none; background: transparent; color: var(--muted); border-radius: 8px; font-weight: 600; font-size: 13px; white-space: nowrap; }
+.tab-btn.active { background: var(--accent); color: #000; }
+.tab-content { display: none; padding: 20px 16px; }
+.tab-content.active { display: block; }
     button.primary { background: var(--accent); color: #000; border: none; padding: 16px; font-size: 16px; font-weight: 700; border-radius: 12px; width: 100%; cursor: pointer; margin-bottom: 10px; }
     button.giga { background: var(--giga); color: #fff; border: none; padding: 16px; font-size: 16px; font-weight: 700; border-radius: 12px; width: 100%; cursor: not-allowed; margin-bottom: 10px; opacity: 0.6; }
     button.wheel-btn { padding: 12px; font-size: 14px; margin-bottom: 0; }
     button:disabled { background: #374151; color: var(--muted); cursor: not-allowed; }
- .card { background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 12px; }
- .ref-link { background: #1f2937; padding: 12px; border-radius: 8px; word-break: break-all; font-size: 13px; margin: 10px 0; }
- .leaderboard-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #1f2937; }
- .rank { color: var(--accent); font-weight: 700; width: 30px; }
+.card { background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 12px; }
+.ref-link { background: #1f2937; padding: 12px; border-radius: 8px; word-break: break-all; font-size: 13px; margin: 10px 0; }
+.leaderboard-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #1f2937; }
+.rank { color: var(--accent); font-weight: 700; width: 30px; }
     input { width: 100%; padding: 12px; background: #1f2937; border: 1px solid #374151; border-radius: 8px; color: var(--text); margin: 8px 0; }
- .ref-item { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
- .badge { font-size: 10px; padding: 3px 6px; border-radius: 6px; }
- .badge.pending { background: var(--warning); color: #000; }
- .badge.confirmed { background: var(--accent); color: #000; }
+.ref-item { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+.badge { font-size: 10px; padding: 3px 6px; border-radius: 6px; }
+.badge.pending { background: var(--warning); color: #000; }
+.badge.confirmed { background: var(--accent); color: #000; }
     #wheelContainer { position: relative; width: 280px; height: 280px; margin: 0 auto; }
     #wheelCanvas { background: #1f2937; border-radius: 50%; border: 4px solid var(--accent); display: block; transition: transform 5s cubic-bezier(0.17, 0.67, 0.12, 0.99); }
- .wheel-pin { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 20px solid var(--danger); z-index: 10; }
- .timer { text-align: center; font-size: 24px; font-weight: 700; color: var(--warning); margin-bottom: 12px; }
- .player-item { display: flex; justify-content: space-between; background: #1f2937; padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; font-size: 14px; }
+.wheel-pin { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 20px solid var(--danger); z-index: 10; }
+.timer { text-align: center; font-size: 24px; font-weight: 700; color: var(--warning); margin-bottom: 12px; }
+.player-item { display: flex; justify-content: space-between; background: #1f2937; padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; font-size: 14px; }
+.player-item.me { border: 2px solid var(--accent); }
   </style>
 </head>
 <body>
@@ -86,12 +87,12 @@
           <canvas id="wheelCanvas" width="280" height="280"></canvas>
         </div>
         <div id="playersList" style="margin: 16px 0;"></div>
-        <div style="display:flex; gap:8px;">
+        <div id="wheelButtons" style="display:flex; gap:8px;">
           <button class="primary wheel-btn" onclick="joinWheel(0.01)">Join $0.01</button>
           <button class="primary wheel-btn" onclick="joinWheel(0.10)">Join $0.10</button>
           <button class="primary wheel-btn" onclick="joinWheel(1.00)">Join $1.00</button>
         </div>
-        <p style="color:var(--muted); font-size:12px; text-align:center; margin-top:8px;">Bots will join to start the game</p>
+        <p style="color:var(--muted); font-size:12px; text-align:center; margin-top:8px;">You can add more during timer to increase odds</p>
       </div>
     </div>
     <div id="referrals" class="tab-content">
@@ -142,7 +143,6 @@
       const adBtn = document.getElementById('adBtn');
       if (data.adsWatched >= DAILY_LIMIT) { adBtn.disabled = true; adBtn.innerText = "Daily Limit Reached"; }
       else { adBtn.disabled = false; adBtn.innerText = "Watch AdsGram Ad +$0.0006"; }
-      // TEST MODE: button never disables
       document.getElementById('dailyBtn').innerText = "🎁 Claim $0.05 TEST";
       updateWheelUI();
     }
@@ -151,7 +151,6 @@
 
     function openTab(tabName) { document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); document.getElementById(tabName).classList.add('active'); event.target.classList.add('active'); }
 
-    // TEST MODE: NO LIMIT CHECK
     document.getElementById('dailyBtn').onclick = () => {
       data.balance += DAILY_REWARD;
       saveData(); updateUI();
@@ -179,33 +178,37 @@
 
     function requestWithdraw() { const wallet = document.getElementById('wallet').value; if(!wallet) return alert("Enter wallet address"); if(data.balance < 1.00) return alert("Min withdraw is $1.00"); alert("Withdraw request sent!"); }
 
-    // ===== WHEEL GAME LOGIC - WITH SPIN ANIMATION =====
+    // ===== WHEEL GAME LOGIC - FIXED ANIMATION =====
     let wheelState = JSON.parse(localStorage.getItem('wheelState')) || { players: [], timer: null, spinning: false, rotation: 0 };
-    const botNames = ["Alex", "Sarah", "Mike", "Emma", "John", "Lisa"];
-    const colors = ['#22c55e', '#7c3aed', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
+    const botNames = ["Alex", "Sarah", "Mike", "Emma", "John", "Lisa", "David", "Anna"];
+    const colors = ['#22c55e', '#7c3aed', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899', '#14b8a6', '#f97316'];
 
     function saveWheel() { localStorage.setItem('wheelState', JSON.stringify(wheelState)); }
 
     function joinWheel(betAmount) {
       if (data.balance < betAmount) return tg.showAlert("Not enough balance");
-      if (wheelState.players.find(p => p.id === user.id)) return tg.showAlert("You already joined this round");
       if (wheelState.spinning) return tg.showAlert("Wheel is spinning");
+
+      let me = wheelState.players.find(p => p.id === user.id);
+      if (me) { me.bet += betAmount; } // ADD MORE TO EXISTING BET
+      else { wheelState.players.push({ id: user.id, name: user.first_name, bet: betAmount }); }
+
       data.balance -= betAmount;
-      wheelState.players.push({ id: user.id, name: user.first_name, bet: betAmount });
       saveData(); saveWheel(); updateWheelUI();
+
       if (wheelState.players.length >= 2 &&!wheelState.timer) { startTimer(); }
-      if (wheelState.players.length < 4) { addBots(); }
+      if (wheelState.players.length < 8) { addBots(); } // 8 BOTS MAX
     }
 
     function addBots() {
       setTimeout(() => {
-        if (wheelState.players.length >= 4) return;
+        if (wheelState.players.length >= 8) return;
         const botBet = [0.01, 0.10, 1.00][Math.floor(Math.random() * 3)];
-        const botName = botNames[Math.floor(Math.random() * botNames.length)];
+        const botName = botNames[Math.floor(Math.random() * botNames.length)] + Math.floor(Math.random()*100);
         wheelState.players.push({ id: 'bot'+Date.now(), name: botName, bet: botBet });
         saveWheel(); updateWheelUI();
         if (wheelState.players.length >= 2 &&!wheelState.timer) { startTimer(); }
-      }, 2000 + Math.random()*3000);
+      }, 1000 + Math.random()*2000); // FASTER BOTS
     }
 
     function startTimer() {
@@ -220,23 +223,33 @@
 
     function spinWheel() {
       wheelState.spinning = true;
+      document.querySelectorAll('.wheel-btn').forEach(b => b.disabled = true);
+
       const totalPool = wheelState.players.reduce((s, p) => s + p.bet, 0);
       let rand = Math.random() * totalPool;
       let winnerIndex = 0;
       for (let i=0; i<wheelState.players.length; i++) { rand -= wheelState.players[i].bet; if (rand <= 0) { winnerIndex = i; break; } }
       const winner = wheelState.players[winnerIndex];
+
       const segmentAngle = 360 / wheelState.players.length;
       const targetAngle = 270 - (winnerIndex * segmentAngle) - (segmentAngle / 2);
-      const spins = 3 * 360;
+      const spins = 4 * 360; // 4 FULL SPINS
       const finalRotation = wheelState.rotation + spins + targetAngle;
+
       const wheelCanvas = document.getElementById('wheelCanvas');
-      wheelCanvas.style.transform = `rotate(${finalRotation}deg)`;
+      wheelCanvas.style.transform = `rotate(${finalRotation}deg)`; // THIS MAKES IT SPIN
       wheelState.rotation = finalRotation % 360;
+
       setTimeout(() => {
         const winAmount = (totalPool * (1 - FEE)).toFixed(4);
         if (winner.id === user.id) { data.balance += parseFloat(winAmount); saveData(); tg.showAlert(`🎉 YOU WON $${winAmount}!`); }
         else { tg.showAlert(`${winner.name} won $${winAmount}`); }
-        setTimeout(() => { wheelState = { players: [], timer: null, spinning: false, rotation: 0 }; saveWheel(); updateWheelUI(); drawWheel(0); }, 3000);
+
+        setTimeout(() => {
+          wheelState = { players: [], timer: null, spinning: false, rotation: 0 };
+          saveWheel(); updateWheelUI(); drawWheel(0);
+          document.querySelectorAll('.wheel-btn').forEach(b => b.disabled = false);
+        }, 3000);
       }, 5200);
     }
 
@@ -247,7 +260,8 @@
       else {
         list.innerHTML = wheelState.players.map((p,i) => {
           const chance = totalPool > 0? ((p.bet / totalPool) * 100).toFixed(1) : 0;
-          return `<div class="player-item" style="border-left:3px solid ${colors[i%colors.length]}"><span>${p.name}</span><span>$${p.bet.toFixed(2)} - ${chance}%</span></div>`;
+          const isMe = p.id === user.id? 'me' : '';
+          return `<div class="player-item ${isMe}" style="border-left:3px solid ${colors[i%colors.length]}"><span>${p.name}</span><span>$${p.bet.toFixed(2)} - ${chance}%</span></div>`;
         }).join('');
       }
       drawWheel(wheelState.rotation);
@@ -255,11 +269,9 @@
 
     function drawWheel(rotation) {
       const canvas = document.getElementById('wheelCanvas'); const ctx = canvas.getContext('2d');
+      canvas.style.transform = `rotate(${rotation}deg)`; // SET INITIAL ROTATION
       ctx.clearRect(0, 0, 280, 280);
-      ctx.save();
-      ctx.translate(140, 140);
-      ctx.rotate(rotation * Math.PI / 180);
-      ctx.translate(-140, -140);
+
       ctx.beginPath(); ctx.arc(140, 140, 135, 0, 2 * Math.PI); ctx.fillStyle = '#1f2937'; ctx.fill();
       wheelState.players.forEach((p, i) => {
         const angle = (2 * Math.PI) / wheelState.players.length;
@@ -268,11 +280,10 @@
         ctx.save();
         ctx.translate(140, 140);
         ctx.rotate(i * angle + angle/2);
-        ctx.fillStyle = '#fff'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText(p.name, 0, -90);
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(p.name.substring(0,6), 0, -90); // SHORTEN NAME
         ctx.restore();
       });
-      ctx.restore();
     }
   </script>
 </body>
