@@ -47,8 +47,8 @@ tg.expand();
 const user = tg.initDataUnsafe.user;
 const user_id = user?.id || 'guest';
 
-const API = "https://adspayu-backend-5y7g.onrender.com"; // ✅ YOUR BACKEND
-const GIGAPUB_ZONE = "1076478";
+const API = "https://adspayu-backend-5y7g.onrender.com";
+const GIGAPUB_ZONE = "7204"; // ✅ YOUR REAL ZONE
 
 let balance = 0;
 
@@ -59,7 +59,7 @@ async function loadBalance() {
     balance = Number(data.balance) || 0;
     document.getElementById('balance').innerText = balance.toFixed(4);
   } catch(e) {
-    document.getElementById('status').innerText = "❌ Can't connect to server. Wake it up at " + API;
+    document.getElementById('status').innerText = "❌ Can't connect to server";
   }
 }
 
@@ -68,7 +68,14 @@ function showGigaAd() {
   showGigaPub(GIGAPUB_ZONE).then(() => {
     creditUser(0.0006, 'GigaPub');
   }).catch(() => {
-    document.getElementById('status').innerText = "❌ GigaPub: No ads";
+    document.getElementById('status').innerText = "GigaPub no fill. Trying Monetag...";
+    setTimeout(() => {
+      show_11258922().then(() => {
+        creditUser(0.0006, 'Monetag');
+      }).catch(() => {
+        document.getElementById('status').innerText = "❌ No ads from both networks";
+      });
+    }, 1000);
   });
 }
 
