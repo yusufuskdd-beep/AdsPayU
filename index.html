@@ -19,158 +19,74 @@
     }
     .container { padding: 20px; padding-bottom: 90px; }
     
-    h1 { 
-      color: white; 
-      text-align: center; 
-      font-weight: 700;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
+    h1 { color: white; text-align: center; font-weight: 700; text-shadow: 0 2px 8px rgba(0,0,0,0.2); }
     
-   .balance { 
-      font-size: 36px; 
-      margin: 10px 0; 
-      color: #00FF88; 
-      text-align: center; 
-      font-weight: 700;
-      text-shadow: 0 2px 10px rgba(0,255,136,0.4);
-    }
+   .balance { font-size: 36px; margin: 10px 0; color: #00FF88; text-align: center; font-weight: 700; text-shadow: 0 2px 10px rgba(0,255,136,0.4); }
     
-   .card { 
-      background: rgba(255,255,255,0.95); 
-      padding: 20px; 
-      border-radius: 20px; 
-      margin: 15px 0; 
-      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.3);
-    }
+   .card { background: rgba(255,255,255,0.95); padding: 20px; border-radius: 20px; margin: 15px 0; box-shadow: 0 8px 25px rgba(0,0,0,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); }
     
-    button { 
-      padding: 16px; 
-      font-size: 16px; 
-      background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%); 
-      color: white; 
-      border: none; 
-      border-radius: 15px; 
-      width: 100%; 
-      cursor: pointer; 
-      margin-top: 10px; 
-      font-weight: 600;
-      box-shadow: 0 4px 15px rgba(0,114,255,0.4);
-      transition: transform 0.1s;
-    }
+    button { padding: 16px; font-size: 16px; background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%); color: white; border: none; border-radius: 15px; width: 100%; cursor: pointer; margin-top: 10px; font-weight: 600; box-shadow: 0 4px 15px rgba(0,114,255,0.4); transition: transform 0.1s; }
     button:active { transform: scale(0.97); }
-    button:disabled { 
-      background: #ccc; 
-      box-shadow: none;
-    }
+    button:disabled { background: #ccc; box-shadow: none; }
 
-    /* TABS */
-   .tabs { 
-      position: fixed; 
-      bottom: 15px; 
-      left: 50%; 
-      transform: translateX(-50%);
-      width: 95%; 
-      display: flex; 
-      background: rgba(255,255,255,0.95); 
-      border-radius: 20px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-      padding: 5px;
-    }
-   .tab-btn { 
-      flex: 1; 
-      padding: 12px; 
-      background: none; 
-      border: none; 
-      color: #666; 
-      font-size: 12px; 
-      cursor: pointer; 
-      border-radius: 15px;
-      font-weight: 600;
-    }
-   .tab-btn.active { 
-      color: white; 
-      background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%);
-      box-shadow: 0 4px 12px rgba(0,114,255,0.4);
-    }
+   .tabs { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); width: 95%; display: flex; background: rgba(255,255,255,0.95); border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.2); padding: 5px; z-index: 999; }
+   .tab-btn { flex: 1; padding: 12px; background: none; border: none; color: #666; font-size: 12px; cursor: pointer; border-radius: 15px; font-weight: 600; }
+   .tab-btn.active { color: white; background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%); box-shadow: 0 4px 12px rgba(0,114,255,0.4); }
    .tab-content { display: none; }
    .tab-content.active { display: block; }
 
-    /* LEADERBOARD */
-   .lb-row { 
-      display: flex; 
-      justify-content: space-between; 
-      padding: 12px; 
-      border-bottom: 1px solid #eee; 
-      border-radius: 10px;
-      margin: 5px 0;
-    }
-   .lb-rank { 
-      color: #0072FF; 
-      font-weight: 700; 
-      font-size: 16px;
-    }
+   .lb-row { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; border-radius: 10px; margin: 5px 0; font-size: 14px; }
+   .lb-rank { color: #0072FF; font-weight: 700; font-size: 16px; }
     
-    input {
-      width: 93%; 
-      padding: 14px; 
-      margin: 10px 0; 
-      border-radius: 12px; 
-      border: 2px solid #00C6FF;
-      font-size: 14px;
-    }
-    #status, #w-status { color: #0072FF; font-weight: 600; }
+    input { width: 93%; padding: 14px; margin: 10px 0; border-radius: 12px; border: 2px solid #00C6FF; font-size: 14px; outline: none; }
+    input:focus { border-color: #0072FF; }
+    #status, #w-status { color: #0072FF; font-weight: 600; text-align:center; margin-top:10px; }
   </style>
 </head>
 <body>
   <div class="container">
     
-    <!-- TAB 1: HOME -->
     <div id="home" class="tab-content active">
       <h1>AdsPayU VC 🇻🇨</h1>
       <div class="card">
         <p style="text-align:center; margin:0; color:#666">Your Balance</p>
         <div class="balance" id="balance">$0.0000</div>
-        <p style="text-align:center; font-size:12px; color:#666">Min Withdraw: $1.00</p>
+        <p style="text-align:center; font-size:12px; color:#666">Min Withdraw: $1.00 in TON</p>
       </div>
       <div class="card">
         <h3 style="color:#0072FF; margin-top:0">How it works</h3>
-        <p>1. Watch Ads 🎁<br>2. Earn $0.0006 per ad<br>3. Withdraw at $1.00 💰</p>
+        <p>1. Watch Ads 🎁<br>2. Earn $0.0006 per ad<br>3. Withdraw at $1.00 to TON 💎</p>
       </div>
     </div>
 
-    <!-- TAB 2: ADS -->
     <div id="ads" class="tab-content">
       <h1>Earn Coins</h1>
       <div class="card">
         <h3 style="color:#0072FF; margin-top:0">🎁 Rewarded Ad</h3>
-        <p>Earn $0.0006 per ad</p>
+        <p>Earn $0.0006 per ad. 10s cooldown.</p>
         <button id="adBtn" onclick="showAd()">Watch Ad</button>
         <p id="status"></p>
       </div>
     </div>
 
-    <!-- TAB 3: LEADERBOARD -->
     <div id="leaderboard" class="tab-content">
       <h1>🏆 Top Earners</h1>
       <div class="card" id="lb-list">Loading...</div>
     </div>
 
-    <!-- TAB 4: WITHDRAW -->
     <div id="withdraw" class="tab-content">
-      <h1>💰 Withdraw</h1>
+      <h1>💎 Withdraw</h1>
       <div class="card">
         <p>Current Balance: <b id="w-balance" style="color:#00FF88">$0.0000</b></p>
-        <input type="text" id="faucetpay" placeholder="FaucetPay Email">
-        <button onclick="requestWithdraw()">Request Withdraw</button>
-        <p id="w-status" style="font-size:12px"></p>
+        <p style="font-size:12px; color:#666">Min: $1.00 | Network: TON | Paid within 24h</p>
+        <input type="text" id="tonwallet" placeholder="Your TON Wallet: UQ... or EQ...">
+        <button onclick="requestWithdraw()">Request Withdraw to TON</button>
+        <p id="w-status"></p>
       </div>
     </div>
 
   </div>
 
-  <!-- BOTTOM TABS -->
   <div class="tabs">
     <button class="tab-btn active" onclick="openTab('home', this)">🏠 Home</button>
     <button class="tab-btn" onclick="openTab('ads', this)">🎁 Ads</button>
@@ -184,6 +100,9 @@
     tg.ready();
     const userId = tg.initDataUnsafe.user?.id || "guest";
     let isLoading = false;
+    
+    // ✅ YOUR RENDER BACKEND URL - CHANGE THIS
+    const API = "https://your-app-name.onrender.com"; 
 
     function openTab(tabName, el) {
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -195,12 +114,12 @@
     }
 
     function loadBalance() {
-      fetch(`https://adspayu-backend-5y7g.onrender.com/api/balance?user_id=${userId}`)
+      fetch(`${API}/api/balance?user_id=${userId}`)
        .then(res => res.json())
        .then(data => {
           document.getElementById('balance').innerText = `$${data.balance.toFixed(4)}`;
           document.getElementById('w-balance').innerText = `$${data.balance.toFixed(4)}`;
-        })
+        }).catch(e => console.log(e))
     }
     loadBalance();
 
@@ -215,7 +134,7 @@
       window.showGiga()
        .then(() => {
           status.innerText = "Ad completed! Crediting...";
-          return fetch(`https://adspayu-backend-5y7g.onrender.com/api/credit?user_id=${userId}&amount=0.0006`)
+          return fetch(`${API}/api/credit?user_id=${userId}&amount=0.0006`)
         })
        .then(res => res.json())
        .then(data => {
@@ -234,12 +153,12 @@
     }
 
     function loadLeaderboard() {
-      fetch(`https://adspayu-backend-5y7g.onrender.com/api/leaderboard`)
+      fetch(`${API}/api/leaderboard`)
        .then(res => res.json())
        .then(data => {
           let html = '';
           data.forEach((user, i) => {
-            html += `<div class="lb-row"><span class="lb-rank">#${i+1}</span> <span>User ${user.user_id}</span> <span style="color:#00FF88; font-weight:700">$${user.balance.toFixed(4)}</span></div>`;
+            html += `<div class="lb-row"><span class="lb-rank">#${i+1}</span> <span>User ${String(user.user_id).slice(0,6)}...</span> <span style="color:#00FF88; font-weight:700">$${user.balance.toFixed(4)}</span></div>`;
           });
           document.getElementById('lb-list').innerHTML = html || "No users yet";
         })
@@ -247,12 +166,19 @@
 
     function updateWithdrawBalance() { loadBalance(); }
     function requestWithdraw() {
-      const email = document.getElementById('faucetpay').value;
+      const wallet = document.getElementById('tonwallet').value.trim();
       const status = document.getElementById('w-status');
-      if(!email) return status.innerText = "Enter FaucetPay email";
-      fetch(`https://adspayu-backend-5y7g.onrender.com/api/withdraw?user_id=${userId}&email=${email}`)
+      if(!wallet || wallet.length < 40) return status.innerText = "❌ Enter valid TON wallet address";
+      if(!wallet.startsWith('UQ') && !wallet.startsWith('EQ') && !wallet.startsWith('kQ')) return status.innerText = "❌ Wallet must start with UQ, EQ, or kQ";
+      
+      status.innerText = "Sending request...";
+      fetch(`${API}/api/withdraw?user_id=${userId}&wallet=${wallet}`)
        .then(res => res.json())
-       .then(data => { status.innerText = data.message; })
+       .then(data => { 
+          status.innerText = data.message; 
+          if(data.message.includes('✅')) document.getElementById('tonwallet').value = '';
+          loadBalance();
+       })
     }
   </script>
 </body>
