@@ -7,13 +7,15 @@
   <style>
     body { font-family: Arial; text-align: center; padding: 20px; background: #17212b; color: white; }
     h1 { color: #0088cc; }
-    button { padding: 15px 30px; font-size: 16px; background: #0088cc; color: white; border: none; border-radius: 10px; width: 90%; margin-top: 20px; }
+    .btn { display: block; padding: 15px 30px; font-size: 16px; background: #0088cc; color: white; border: none; border-radius: 10px; width: 90%; margin: 20px auto; text-decoration: none; }
   </style>
 </head>
 <body>
   <h1>AdsPayU VC 🇻🇨</h1>
   <p>Earn $0.0006 per ad</p>
-  <button onclick="watchAd()">🎁 Watch Ad</button>
+  
+  <!-- DIRECT LINK - ALWAYS WORKS -->
+  <a id="adLink" class="btn">🎁 Watch Ad</a>
   <p id="status" style="color:#aaa; font-size:12px;"></p>
 
   <script>
@@ -21,12 +23,16 @@
     tg.expand();
     tg.ready();
     const userId = tg.initDataUnsafe.user?.id || "guest";
-
-    function watchAd() {
-      // YOUR AD ID: 7204
-      const adUrl = `https://link.gigapub.tech/7204?sub1=${userId}`;
+    
+    // SET THE 7204 LINK WITH USER ID
+    const adUrl = `https://link.gigapub.tech/7204?sub1=${userId}`;
+    document.getElementById('adLink').href = adUrl;
+    
+    // MAKE IT OPEN IN TELEGRAM
+    document.getElementById('adLink').onclick = function(e) {
+      e.preventDefault();
       tg.openTelegramLink(adUrl);
-      document.getElementById('status').innerText = "Watch 15s. Reward will auto credit.";
+      document.getElementById('status').innerText = "Opening ad... Watch 15s";
     }
   </script>
 </body>
