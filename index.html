@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>AdsPayU Rewards</title>
+  <title>AdsPayU Rewards v11.1</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root { --bg: #0a0f1e; --card: #111827; --accent: #22c55e; --text: #e5e7eb; --muted: #9ca3af; --danger: #ef4444; --warning: #f59e0b; --giga: #7c3aed; }
@@ -15,7 +15,7 @@
     #splash h1 { font-size: 32px; margin-bottom: 10px; }
    .loader { border: 4px solid rgba(255,255,255,0.2); border-top: 4px solid #fff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-top: 20px; }
    .powered { color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 12px; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
     #app { display: none; }
    .header { text-align: center; padding: 20px; background: linear-gradient(135deg, #22c55e, #16a34a); }
@@ -57,7 +57,7 @@
   </style>
 </head>
 <body>
-  <div id="splash"><h1>💰 AdsPayU</h1><div class="loader"></div><div class="powered">Powered by AdsGram + GigaPub</div></div>
+  <div id="splash"><h1>💰 AdsPayU v11.1</h1><div class="loader"></div><div class="powered">Powered by AdsGram + GigaPub</div></div>
 
   <div id="app">
     <div class="header"><h1>💰 AdsPayU Rewards</h1></div>
@@ -73,11 +73,11 @@
     </div>
 
     <div class="tabs">
-      <button class="tab-btn active" onclick="openTab('earn')">Earn</button>
-      <button class="tab-btn" onclick="openTab('wheel')">🎡 Wheel</button>
-      <button class="tab-btn" onclick="openTab('referrals')">Referrals</button>
-      <button class="tab-btn" onclick="openTab('leaderboard')">Top 50</button>
-      <button class="tab-btn" onclick="openTab('withdraw')">Withdraw</button>
+      <button class="tab-btn active" onclick="openTab('earn', event)">Earn</button>
+      <button class="tab-btn" onclick="openTab('wheel', event)">🎡 Wheel</button>
+      <button class="tab-btn" onclick="openTab('referrals', event)">Referrals</button>
+      <button class="tab-btn" onclick="openTab('leaderboard', event)">Top 50</button>
+      <button class="tab-btn" onclick="openTab('withdraw', event)">Withdraw</button>
     </div>
 
     <div id="earn" class="tab-content active">
@@ -152,7 +152,7 @@
       document.getElementById('refCountTop').innerText = confirmed;
       const refList = document.getElementById('refList');
       if (Object.keys(refData).length === 0) { refList.innerHTML = '<p style="color:var(--muted);">No referrals yet</p>'; }
-      else { refList.innerHTML = ''; for (let [id, r] of Object.entries(refData)) { refList.innerHTML += `<div class="ref-item"><span>${r.name}</span><span class="badge ${r.status}">${r.status}</span></div>`; } }
+      else { refList.innerHTML = ''; for (let [id, r] of Object.entries(refData)) { refList.innerHTML += `<div class="ref-item"><span>${r.name}</span><span class="badge ${r.status}">${r.status}</span></div>`; }
       const adBtn = document.getElementById('adBtn');
       if (data.adsWatched >= DAILY_LIMIT) { adBtn.disabled = true; adBtn.innerText = "Daily Limit Reached"; }
       else { adBtn.disabled = false; adBtn.innerText = "Watch AdsGram Ad +$0.0006"; }
