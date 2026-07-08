@@ -5,55 +5,25 @@
   <title>AdsPayU</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    body { 
-      font-family: Arial; 
-      text-align: center; 
-      padding: 20px; 
-      background: #17212b; 
-      color: white;
-      margin: 0;
-    }
-    h1 { color: #0088cc; }
-    button { 
-      padding: 15px 30px; 
-      font-size: 16px; 
-      background: #0088cc; 
-      color: white; 
-      border: none; 
-      border-radius: 10px; 
-      margin: 10px;
-      width: 90%;
-      cursor: pointer;
-    }
-    button:active { background: #006699; }
-    .note { font-size: 12px; color: #aaa; margin-top: 20px; }
+    body { font-family: Arial; text-align: center; padding: 20px; background: #17212b; color: white; }
+    button { padding: 15px 30px; font-size: 16px; background: #0088cc; color: white; border: none; border-radius: 10px; width: 90%; }
   </style>
 </head>
 <body>
   <h1>AdsPayU</h1>
   <p>Earn $0.0006 per ad</p>
-  
   <button id="watchBtn">🎁 Watch Ad</button>
   <p id="status"></p>
-  
-  <p class="note">1. Click button<br>2. Ad opens<br>3. Stay 15s<br>4. Go back to app</p>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
-    tg.ready();
-
-    const user = tg.initDataUnsafe.user;
-    const userId = user ? user.id : "guest";
+    const userId = tg.initDataUnsafe.user?.id || "guest";
 
     document.getElementById('watchBtn').onclick = () => {
-      // This opens GigaPub INSIDE Telegram browser and passes your user_id
       const adUrl = `https://link.gigapub.tech/7204?sub1=${userId}`;
-      
-      tg.openLink(adUrl);
-      
-      document.getElementById('status').innerText = "Ad opened. Stay 15 seconds then come back here.";
-      tg.HapticFeedback.impactOccurred('medium');
+      tg.openTelegramLink(adUrl); // opens inside telegram
+      document.getElementById('status').innerText = "Ad opened. Stay 15s then return.";
     }
   </script>
 </body>
