@@ -6,54 +6,51 @@
   <title>AdsPayU Rewards</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    :root {
-      --bg: #0a0f1e; --card: #111827; --accent: #22c55e; --text: #e5e7eb;
-      --muted: #9ca3af; --danger: #ef4444; --warning: #f59e0b; --giga: #7c3aed;
-    }
+    :root { --bg: #0a0f1e; --card: #111827; --accent: #22c55e; --text: #e5e7eb; --muted: #9ca3af; --danger: #ef4444; --warning: #f59e0b; --giga: #7c3aed; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 80px; }
 
     #splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0047ff, #0030aa); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.5s ease; }
     #splash.hide { opacity: 0; pointer-events: none; }
     #splash h1 { font-size: 32px; margin-bottom: 10px; }
-    .loader { border: 4px solid rgba(255,255,255,0.2); border-top: 4px solid #fff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-top: 20px; }
-    .powered { color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 12px; }
+   .loader { border: 4px solid rgba(255,255,255,0.2); border-top: 4px solid #fff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-top: 20px; }
+   .powered { color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 12px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
     #app { display: none; }
-    .header { text-align: center; padding: 20px; background: linear-gradient(135deg, #22c55e, #16a34a); }
-    .header h1 { font-size: 22px; }
-    .balance-card { background: var(--card); margin: -30px 16px 20px; padding: 20px; border-radius: 16px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-    .balance-card .label { color: var(--muted); font-size: 14px; }
-    .balance-card .amount { font-size: 32px; font-weight: 700; color: var(--accent); margin: 8px 0; }
-    .stats { display: flex; gap: 10px; margin-top: 12px; }
-    .stat-box { flex: 1; background: #1f2937; padding: 10px; border-radius: 10px; }
-    .stat-box .val { font-size: 18px; font-weight: 700; color: var(--accent); }
-    .stat-box .lbl { font-size: 11px; color: var(--muted); }
+   .header { text-align: center; padding: 20px; background: linear-gradient(135deg, #22c55e, #16a34a); }
+   .header h1 { font-size: 22px; }
+   .balance-card { background: var(--card); margin: -30px 16px 20px; padding: 20px; border-radius: 16px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+   .balance-card.label { color: var(--muted); font-size: 14px; }
+   .balance-card.amount { font-size: 32px; font-weight: 700; color: var(--accent); margin: 8px 0; }
+   .stats { display: flex; gap: 10px; margin-top: 12px; }
+   .stat-box { flex: 1; background: #1f2937; padding: 10px; border-radius: 10px; }
+   .stat-box.val { font-size: 18px; font-weight: 700; color: var(--accent); }
+   .stat-box.lbl { font-size: 11px; color: var(--muted); }
 
-    .tabs { display: flex; background: var(--card); margin: 0 16px; border-radius: 12px; padding: 4px; overflow-x: auto; }
-    .tab-btn { flex: 1; padding: 10px 8px; border: none; background: transparent; color: var(--muted); border-radius: 8px; font-weight: 600; font-size: 13px; white-space: nowrap; }
-    .tab-btn.active { background: var(--accent); color: #000; }
-    .tab-content { display: none; padding: 20px 16px; }
-    .tab-content.active { display: block; }
+   .tabs { display: flex; background: var(--card); margin: 0 16px; border-radius: 12px; padding: 4px; overflow-x: auto; }
+   .tab-btn { flex: 1; padding: 10px 8px; border: none; background: transparent; color: var(--muted); border-radius: 8px; font-weight: 600; font-size: 13px; white-space: nowrap; }
+   .tab-btn.active { background: var(--accent); color: #000; }
+   .tab-content { display: none; padding: 20px 16px; }
+   .tab-content.active { display: block; }
 
     button.primary { background: var(--accent); color: #000; border: none; padding: 16px; font-size: 16px; font-weight: 700; border-radius: 12px; width: 100%; cursor: pointer; margin-bottom: 10px; }
     button.giga { background: var(--giga); color: #fff; border: none; padding: 16px; font-size: 16px; font-weight: 700; border-radius: 12px; width: 100%; cursor: not-allowed; margin-bottom: 10px; opacity: 0.6; }
     button.wheel-btn { padding: 12px; font-size: 14px; margin-bottom: 0; }
     button:disabled { background: #374151; color: var(--muted); cursor: not-allowed; }
-    .card { background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 12px; }
-    .ref-link { background: #1f2937; padding: 12px; border-radius: 8px; word-break: break-all; font-size: 13px; margin: 10px 0; }
-    .leaderboard-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #1f2937; }
-    .rank { color: var(--accent); font-weight: 700; width: 30px; }
+   .card { background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 12px; }
+   .ref-link { background: #1f2937; padding: 12px; border-radius: 8px; word-break: break-all; font-size: 13px; margin: 10px 0; }
+   .leaderboard-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #1f2937; }
+   .rank { color: var(--accent); font-weight: 700; width: 30px; }
     input { width: 100%; padding: 12px; background: #1f2937; border: 1px solid #374151; border-radius: 8px; color: var(--text); margin: 8px 0; }
-    .ref-item { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
-    .badge { font-size: 10px; padding: 3px 6px; border-radius: 6px; }
-    .badge.pending { background: var(--warning); color: #000; }
-    .badge.confirmed { background: var(--accent); color: #000; }
-    
+   .ref-item { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+   .badge { font-size: 10px; padding: 3px 6px; border-radius: 6px; }
+   .badge.pending { background: var(--warning); color: #000; }
+   .badge.confirmed { background: var(--accent); color: #000; }
+
     #wheelCanvas { background: #1f2937; border-radius: 50%; border: 4px solid var(--accent); display: block; margin: 0 auto; }
-    .timer { text-align: center; font-size: 24px; font-weight: 700; color: var(--warning); margin-bottom: 12px; }
-    .player-item { display: flex; justify-content: space-between; background: #1f2937; padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; font-size: 14px; }
+   .timer { text-align: center; font-size: 24px; font-weight: 700; color: var(--warning); margin-bottom: 12px; }
+   .player-item { display: flex; justify-content: space-between; background: #1f2937; padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -81,6 +78,7 @@
     </div>
 
     <div id="earn" class="tab-content active">
+      <button id="dailyBtn" class="primary" style="background:var(--warning);">🎁 Claim Daily $0.02</button>
       <button id="adBtn" class="primary">Watch AdsGram Ad +$0.0006</button>
       <button id="gigaBtn" class="giga" disabled>Watch GigaPub Ad +$0.0006 [Coming Soon]</button>
       <p style="text-align:center; color:var(--muted); margin-top:12px; font-size:13px;">Daily limit: 400 ads. Resets at 12AM UTC</p>
@@ -116,11 +114,11 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
     const user = tg.initDataUnsafe.user || {id: 123, first_name: "Guest"};
-    const DAILY_LIMIT = 400; const REWARD = 0.0006; const REF_REWARD = 0.0015; const FEE = 0.05;
+    const DAILY_LIMIT = 400; const REWARD = 0.0006; const REF_REWARD = 0.0015; const FEE = 0.05; const DAILY_REWARD = 0.02;
 
     function getToday() { return new Date().toISOString().split('T')[0]; }
-    let data = JSON.parse(localStorage.getItem('adsPayUData')) || { date: getToday(), adsWatched: 0, balance: 0, referrals: {}, referrer: null };
-    if (data.date !== getToday()) { data = {...data, date: getToday(), adsWatched: 0 }; }
+    let data = JSON.parse(localStorage.getItem('adsPayUData')) || { date: getToday(), adsWatched: 0, balance: 0, referrals: {}, referrer: null, lastDaily: null };
+    if (data.date!== getToday()) { data = {...data, date: getToday(), adsWatched: 0 }; }
 
     function saveData() { localStorage.setItem('adsPayUData', JSON.stringify(data)); }
 
@@ -146,17 +144,30 @@
       let confirmed = Object.values(refData).filter(r => r.status === 'confirmed').length;
       document.getElementById('refCountTop').innerText = confirmed;
       const refList = document.getElementById('refList');
-      if (Object.keys(refData).length === 0) { refList.innerHTML = '<p style="color:var(--muted);">No referrals yet</p>'; } 
+      if (Object.keys(refData).length === 0) { refList.innerHTML = '<p style="color:var(--muted);">No referrals yet</p>'; }
       else { refList.innerHTML = ''; for (let [id, r] of Object.entries(refData)) { refList.innerHTML += `<div class="ref-item"><span>${r.name}</span><span class="badge ${r.status}">${r.status}</span></div>`; } }
       const adBtn = document.getElementById('adBtn');
-      if (data.adsWatched >= DAILY_LIMIT) { adBtn.disabled = true; adBtn.innerText = "Daily Limit Reached"; } 
+      if (data.adsWatched >= DAILY_LIMIT) { adBtn.disabled = true; adBtn.innerText = "Daily Limit Reached"; }
       else { adBtn.disabled = false; adBtn.innerText = "Watch AdsGram Ad +$0.0006"; }
+
+      const dailyBtn = document.getElementById('dailyBtn');
+      if (data.lastDaily === getToday()) { dailyBtn.disabled = true; dailyBtn.innerText = "Daily Claimed"; }
+      else { dailyBtn.disabled = false; dailyBtn.innerText = "🎁 Claim Daily $0.02"; }
       updateWheelUI();
     }
 
     window.addEventListener('load', () => { setTimeout(() => { document.getElementById('splash').classList.add('hide'); document.getElementById('app').style.display = 'block'; updateUI(); drawWheel(); }, 2000); });
 
     function openTab(tabName) { document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); document.getElementById(tabName).classList.add('active'); event.target.classList.add('active'); }
+
+    // DAILY REWARD
+    document.getElementById('dailyBtn').onclick = () => {
+      if (data.lastDaily === getToday()) return tg.showAlert("Already claimed today");
+      data.balance += DAILY_REWARD;
+      data.lastDaily = getToday();
+      saveData(); updateUI();
+      tg.showAlert(`🎁 Daily Reward Claimed! \n+$${DAILY_REWARD.toFixed(2)} added to balance`);
+    }
 
     const AdController = window.Adsgram.init({ blockId: "37657" });
     document.getElementById('adBtn').onclick = async () => {
@@ -182,18 +193,18 @@
     // ===== WHEEL GAME LOGIC - FAKE MULTIPLAYER =====
     let wheelState = JSON.parse(localStorage.getItem('wheelState')) || { players: [], timer: null, spinning: false };
     const botNames = ["Alex", "Sarah", "Mike", "Emma", "John", "Lisa"];
-    
+
     function saveWheel() { localStorage.setItem('wheelState', JSON.stringify(wheelState)); }
 
     function joinWheel(betAmount) {
       if (data.balance < betAmount) return tg.showAlert("Not enough balance");
       if (wheelState.players.find(p => p.id === user.id)) return tg.showAlert("You already joined this round");
-      
+
       data.balance -= betAmount;
       wheelState.players.push({ id: user.id, name: user.first_name, bet: betAmount });
       saveData(); saveWheel(); updateWheelUI();
-      
-      if (wheelState.players.length >= 2 && !wheelState.timer) { startTimer(); }
+
+      if (wheelState.players.length >= 2 &&!wheelState.timer) { startTimer(); }
       if (wheelState.players.length < 4) { addBots(); }
     }
 
@@ -204,7 +215,7 @@
         const botName = botNames[Math.floor(Math.random() * botNames.length)];
         wheelState.players.push({ id: 'bot'+Date.now(), name: botName, bet: botBet });
         saveWheel(); updateWheelUI();
-        if (wheelState.players.length >= 2 && !wheelState.timer) { startTimer(); }
+        if (wheelState.players.length >= 2 &&!wheelState.timer) { startTimer(); }
       }, 2000 + Math.random()*3000);
     }
 
@@ -224,21 +235,21 @@
       let rand = Math.random() * totalPool;
       let winner = wheelState.players[0];
       for (let p of wheelState.players) { rand -= p.bet; if (rand <= 0) { winner = p; break; } }
-      
+
       const winAmount = (totalPool * (1 - FEE)).toFixed(4);
-      if (winner.id === user.id) { data.balance += parseFloat(winAmount); saveData(); tg.showAlert(`🎉 YOU WON $${winAmount}!`); } 
+      if (winner.id === user.id) { data.balance += parseFloat(winAmount); saveData(); tg.showAlert(`🎉 YOU WON $${winAmount}!`); }
       else { tg.showAlert(`${winner.name} won $${winAmount}`); }
-      
+
       setTimeout(() => { wheelState = { players: [], timer: null, spinning: false }; saveWheel(); updateWheelUI(); drawWheel(); }, 4000);
     }
 
     function updateWheelUI() {
       const list = document.getElementById('playersList');
       const totalPool = wheelState.players.reduce((s, p) => s + p.bet, 0);
-      if (wheelState.players.length === 0) { list.innerHTML = '<p style="color:var(--muted); text-align:center;">No players yet</p>'; } 
+      if (wheelState.players.length === 0) { list.innerHTML = '<p style="color:var(--muted); text-align:center;">No players yet</p>'; }
       else {
         list.innerHTML = wheelState.players.map(p => {
-          const chance = totalPool > 0 ? ((p.bet / totalPool) * 100).toFixed(1) : 0;
+          const chance = totalPool > 0? ((p.bet / totalPool) * 100).toFixed(1) : 0;
           return `<div class="player-item"><span>${p.name}</span><span>$${p.bet.toFixed(2)} - ${chance}%</span></div>`;
         }).join('');
       }
