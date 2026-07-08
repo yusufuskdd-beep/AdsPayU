@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>AdsPayU v11.8</title>
+  <title>AdsPayU v11.9</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root { --bg: #0a0f1e; --card: #111827; --text: #e5e7eb; --muted: #9ca3af; --warning: #f59e0b; --giga: #7c3aed; }
@@ -24,6 +24,7 @@
     button.primary { background: var(--giga); color: #fff; border: none; padding: 16px; font-size: 16px; font-weight: 700; border-radius: 12px; width: 100%; cursor: pointer; margin-bottom: 10px; }
     button:disabled { background: #374151; color: var(--muted); cursor: not-allowed; }
  .card { background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 12px; }
+ .info { background: #1f2937; padding: 12px; border-radius: 8px; font-size: 13px; color: var(--muted); margin-bottom: 12px; }
   </style>
 </head>
 <body>
@@ -40,17 +41,17 @@
 
     <div class="card">
       <button id="dailyBtn" class="primary" style="background:var(--warning); color:#000;">🎁 Claim $0.05 TEST</button>
+      
+      <div class="info">⚠️ Ad will open in new tab. Watch full ad to get reward</div>
       <button id="gigaBtn" class="primary">Watch GigaPub Ad +$0.0006</button>
       <p style="text-align:center; color:var(--muted); margin-top:12px; font-size:13px;">400 ads per day limit</p>
     </div>
-
-    <!-- HIDDEN IFRAME FOR GIGAPUB -->
-    <iframe id="gigaFrame" style="display:none; width:100%; height:600px; border:none;" src=""></iframe>
   </div>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.ready(); tg.expand();
+    const user = tg.initDataUnsafe.user || {id: Date.now(), first_name: "Guest"};
     
     const DAILY_LIMIT = 400;
     const REWARD = 0.0006; 
@@ -58,7 +59,7 @@
     const GIGAPUB_ID = "7204";
 
     function getToday() { return new Date().toISOString().split('T')[0]; }
-    let data = JSON.parse(localStorage.getItem('adsPayUData')) || { date: getToday(), adsWatched: 0, balance: 0 };
+    let data = JSON.parse(localStorage.getItem('adsPayUData')) || { date: getToday(), adsWatched: 0, balance: 0, lastAdTime: 0 };
     if (data.date!== getToday()) { data = {...data, date: getToday(), adsWatched: 0 }; }
 
     function saveData() { localStorage.setItem('adsPayUData', JSON.stringify(data)); }
@@ -68,7 +69,7 @@
       data.adsWatched += 1; 
       data.balance += REWARD;
       saveData(); updateUI();
-      tg.showAlert(`Ad watched ✅ \n+$${REWARD.toFixed(4)} credited!`);
+      tg.showAlert(`✅ Ad Completed! \n+$${REWARD.toFixed(4)} credited! \nToday: ${data.adsWatched}/${DAILY_LIMIT}`);
       return true;
     }
 
@@ -84,6 +85,14 @@
         document.getElementById('splash').classList.add('hide'); 
         document.getElementById('app').style.display = 'block'; 
         updateUI(); 
+        
+        // CHECK IF USER RETURNED FROM AD
+        const urlParams = new URLSearchParams(window.location.search);
+        if(urlParams.get('reward') === '1') {
+          creditUser();
+          // Clean URL
+          window.history.replaceState({}, document.title, "/");
+        }
       }, 800); 
     });
 
@@ -93,37 +102,31 @@
       tg.showAlert(`🎁 $0.05 Added!`);
     }
 
-    // GIGAPUB IFRAME METHOD
+    // GIGAPUB EXTERNAL LINK
     document.getElementById('gigaBtn').onclick = () => {
       if(data.adsWatched >= DAILY_LIMIT) return tg.showAlert("Daily limit reached");
+      if(Date.now() - data.lastAdTime < 5000) return tg.showAlert("Wait 5 seconds between ads");
+      
+      data.lastAdTime = Date.now();
+      saveData();
       
       const btn = document.getElementById('gigaBtn');
       btn.disabled = true;
-      btn.innerText = "Loading Ad...";
+      btn.innerText = "Opening Ad...";
       
-      // GigaPub direct link - this works in Telegram
-      const frame = document.getElementById('gigaFrame');
-      frame.style.display = 'block';
-      frame.src = `https://gigapub.tech/iframe/${GIGAPUB_ID}?tg_id=${user.id}`;
+      // Get your webapp URL
+      const returnUrl = encodeURIComponent(window.location.href + '?reward=1');
       
-      // Listen for ad completion
-      window.addEventListener('message', function handler(e) {
-        if(e.data === 'gigapub_reward') {
-          creditUser();
-          frame.style.display = 'none';
-          frame.src = '';
-          btn.disabled = false;
-          btn.innerText = "Watch GigaPub Ad +$0.0006";
-          window.removeEventListener('message', handler);
-        }
-        if(e.data === 'gigapub_close') {
-          frame.style.display = 'none';
-          frame.src = '';
-          btn.disabled = false;
-          btn.innerText = "Watch GigaPub Ad +$0.0006";
-          window.removeEventListener('message', handler);
-        }
-      });
+      // GigaPub direct ad link with return
+      const adUrl = `https://gigapub.tech/show/${GIGAPUB_ID}?tg=${user.id}&back=${returnUrl}`;
+      
+      // Open in Telegram browser
+      tg.openLink(adUrl);
+      
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.innerText = "Watch GigaPub Ad +$0.0006";
+      }, 3000);
     }
   </script>
 </body>
