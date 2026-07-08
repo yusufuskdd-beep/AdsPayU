@@ -8,55 +8,35 @@
     body { font-family: Arial; text-align: center; padding: 20px; background: #17212b; color: white; }
     h1 { color: #0088cc; }
     button { padding: 15px 30px; font-size: 16px; background: #0088cc; color: white; border: none; border-radius: 10px; width: 90%; margin-top: 20px; }
-    button:disabled { background: #555; }
-    #debug { font-size: 11px; color: #ffcc00; margin-top: 15px; text-align: left; background: #000; padding: 10px; border-radius: 5px; }
   </style>
 </head>
 <body>
   <h1>AdsPayU VC 🇻🇨</h1>
   <p>Earn $0.0006 per ad</p>
-  <button id="watchBtn">🎁 Watch Ad</button>
+  
+  <!-- CLICK DIRECTLY ON BUTTON -->
+  <button onclick="watchAd()">🎁 Watch Ad</button>
   <p id="status"></p>
-  <div id="debug">Loading...</div>
 
   <script>
-    const debug = document.getElementById('debug');
-    const status = document.getElementById('status');
-    const btn = document.getElementById('watchBtn');
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.ready();
 
-    function log(msg) {
-      debug.innerHTML += "<br>" + msg;
-      console.log(msg);
-    }
+    const userId = tg.initDataUnsafe.user?.id || "guest";
 
-    // 1. CHECK IF TELEGRAM LOADED
-    if (window.Telegram && Telegram.WebApp) {
-      const tg = Telegram.WebApp;
-      tg.expand();
-      tg.ready();
-      log("Telegram WebApp OK");
-
-      const userId = tg.initDataUnsafe.user?.id || "guest";
-      log("User ID: " + userId);
-
-      btn.disabled = false;
-
-      // 2. BUTTON CLICK
-      btn.onclick = () => {
-        log("Button clicked");
-        const adUrl = `https://link.gigapub.tech/7304?sub1=${userId}`;
-        log("Opening: " + adUrl);
-        
-        status.innerText = "Opening ad... Stay 15s then come back";
-        tg.HapticFeedback.impactOccurred('medium');
-        
-        // THIS IS THE KEY LINE
-        tg.openTelegramLink(adUrl); 
+    function watchAd() {
+      const adUrl = `https://link.gigapub.tech/7304?sub1=${userId}`;
+      document.getElementById('status').innerText = "Opening ad...";
+      
+      tg.HapticFeedback.impactOccurred('light');
+      
+      // TRY BOTH METHODS. ANDROID = openTelegramLink, IPHONE = openLink
+      try {
+        tg.openTelegramLink(adUrl);
+      } catch(e) {
+        tg.openLink(adUrl);
       }
-    } else {
-      log("ERROR: Not opened in Telegram. Open via bot button.");
-      btn.disabled = true;
-      status.innerText = "Must open from Telegram bot";
     }
   </script>
 </body>
