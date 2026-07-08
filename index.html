@@ -80,7 +80,7 @@
     <div id="wheel" class="tab-content">
       <div class="card">
         <h3>🎡 USDT Wheel</h3>
-        <p style="color:var(--muted); font-size:14px;">Bet your ad earnings. Bigger bet = higher win chance. 5% fee</p>
+        <p style="color:var(--muted); font-size:14px;">Bet your ad earnings. Bigger bet = bigger slice. 5% fee</p>
         <div class="timer" id="timer">Waiting for players...</div>
         <div id="wheelContainer">
           <div class="wheel-pin"></div>
@@ -92,7 +92,7 @@
           <button class="primary wheel-btn" onclick="joinWheel(0.10)">Join $0.10</button>
           <button class="primary wheel-btn" onclick="joinWheel(1.00)">Join $1.00</button>
         </div>
-        <p style="color:var(--muted); font-size:12px; text-align:center; margin-top:8px;">You can add more during timer to increase odds</p>
+        <p style="color:var(--muted); font-size:12px; text-align:center; margin-top:8px;">Add more to increase your slice size</p>
       </div>
     </div>
     <div id="referrals" class="tab-content">
@@ -178,7 +178,7 @@
 
     function requestWithdraw() { const wallet = document.getElementById('wallet').value; if(!wallet) return alert("Enter wallet address"); if(data.balance < 1.00) return alert("Min withdraw is $1.00"); alert("Withdraw request sent!"); }
 
-    // ===== WHEEL GAME LOGIC - FIXED ANIMATION =====
+    // ===== WHEEL GAME LOGIC - PROPORTIONAL SLICES =====
     let wheelState = JSON.parse(localStorage.getItem('wheelState')) || { players: [], timer: null, spinning: false, rotation: 0 };
     const botNames = ["Alex", "Sarah", "Mike", "Emma", "John", "Lisa", "David", "Anna"];
     const colors = ['#22c55e', '#7c3aed', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899', '#14b8a6', '#f97316'];
@@ -190,14 +190,14 @@
       if (wheelState.spinning) return tg.showAlert("Wheel is spinning");
 
       let me = wheelState.players.find(p => p.id === user.id);
-      if (me) { me.bet += betAmount; } // ADD MORE TO EXISTING BET
+      if (me) { me.bet += betAmount; }
       else { wheelState.players.push({ id: user.id, name: user.first_name, bet: betAmount }); }
 
       data.balance -= betAmount;
       saveData(); saveWheel(); updateWheelUI();
 
       if (wheelState.players.length >= 2 &&!wheelState.timer) { startTimer(); }
-      if (wheelState.players.length < 8) { addBots(); } // 8 BOTS MAX
+      if (wheelState.players.length < 8) { addBots(); }
     }
 
     function addBots() {
@@ -208,7 +208,7 @@
         wheelState.players.push({ id: 'bot'+Date.now(), name: botName, bet: botBet });
         saveWheel(); updateWheelUI();
         if (wheelState.players.length >= 2 &&!wheelState.timer) { startTimer(); }
-      }, 1000 + Math.random()*2000); // FASTER BOTS
+      }, 1000 + Math.random()*2000);
     }
 
     function startTimer() {
@@ -227,17 +227,28 @@
 
       const totalPool = wheelState.players.reduce((s, p) => s + p.bet, 0);
       let rand = Math.random() * totalPool;
-      let winnerIndex = 0;
-      for (let i=0; i<wheelState.players.length; i++) { rand -= wheelState.players[i].bet; if (rand <= 0) { winnerIndex = i; break; } }
+      let winnerIndex = 0; let cumulative = 0;
+
+      // Find winner based on bet %
+      for (let i=0; i<wheelState.players.length; i++) {
+        cumulative += wheelState.players[i].bet;
+        if (rand <= cumulative) { winnerIndex = i; break; }
+      }
       const winner = wheelState.players[winnerIndex];
 
-      const segmentAngle = 360 / wheelState.players.length;
-      const targetAngle = 270 - (winnerIndex * segmentAngle) - (segmentAngle / 2);
-      const spins = 4 * 360; // 4 FULL SPINS
+      // Calculate angle to land on winner's slice center
+      let angleBefore = 0;
+      for(let i=0; i<winnerIndex; i++) {
+        angleBefore += (wheelState.players[i].bet / totalPool) * 360;
+      }
+      const winnerSlice = (winner.bet / totalPool) * 360;
+      const targetAngle = 270 - angleBefore - (winnerSlice / 2); // Point to middle of winner slice
+
+      const spins = 4 * 360;
       const finalRotation = wheelState.rotation + spins + targetAngle;
 
       const wheelCanvas = document.getElementById('wheelCanvas');
-      wheelCanvas.style.transform = `rotate(${finalRotation}deg)`; // THIS MAKES IT SPIN
+      wheelCanvas.style.transform = `rotate(${finalRotation}deg)`;
       wheelState.rotation = finalRotation % 360;
 
       setTimeout(() => {
@@ -269,20 +280,32 @@
 
     function drawWheel(rotation) {
       const canvas = document.getElementById('wheelCanvas'); const ctx = canvas.getContext('2d');
-      canvas.style.transform = `rotate(${rotation}deg)`; // SET INITIAL ROTATION
+      canvas.style.transform = `rotate(${rotation}deg)`;
       ctx.clearRect(0, 0, 280, 280);
 
       ctx.beginPath(); ctx.arc(140, 140, 135, 0, 2 * Math.PI); ctx.fillStyle = '#1f2937'; ctx.fill();
+
+      const totalPool = wheelState.players.reduce((s, p) => s + p.bet, 0);
+      if (totalPool === 0) return;
+
+      let startAngle = 0; // START FROM TOP
       wheelState.players.forEach((p, i) => {
-        const angle = (2 * Math.PI) / wheelState.players.length;
-        ctx.beginPath(); ctx.moveTo(140, 140); ctx.arc(140, 140, 130, i * angle, (i + 1) * angle); ctx.closePath();
+        const sliceAngle = (p.bet / totalPool) * 2 * Math.PI; // PROPORTIONAL ANGLE
+
+        ctx.beginPath(); ctx.moveTo(140, 140);
+        ctx.arc(140, 140, 130, startAngle - Math.PI/2, startAngle + sliceAngle - Math.PI/2); // -90deg to start at top
+        ctx.closePath();
         ctx.fillStyle = colors[i % colors.length]; ctx.fill();
+
+        // Draw name in middle of slice
         ctx.save();
         ctx.translate(140, 140);
-        ctx.rotate(i * angle + angle/2);
+        ctx.rotate(startAngle + sliceAngle/2 - Math.PI/2);
         ctx.fillStyle = '#fff'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText(p.name.substring(0,6), 0, -90); // SHORTEN NAME
+        if (sliceAngle > 0.3) ctx.fillText(p.name.substring(0,6), 0, -90); // Only draw if slice big enough
         ctx.restore();
+
+        startAngle += sliceAngle;
       });
     }
   </script>
