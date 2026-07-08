@@ -2,28 +2,61 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>AdsPayU</title>
+  <title>AdsPayU VC</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     body { font-family: Arial; text-align: center; padding: 20px; background: #17212b; color: white; }
-    button { padding: 15px 30px; font-size: 16px; background: #0088cc; color: white; border: none; border-radius: 10px; width: 90%; }
+    h1 { color: #0088cc; }
+    button { padding: 15px 30px; font-size: 16px; background: #0088cc; color: white; border: none; border-radius: 10px; width: 90%; margin-top: 20px; }
+    button:disabled { background: #555; }
+    #debug { font-size: 11px; color: #ffcc00; margin-top: 15px; text-align: left; background: #000; padding: 10px; border-radius: 5px; }
   </style>
 </head>
 <body>
-  <h1>AdsPayU</h1>
+  <h1>AdsPayU VC 🇻🇨</h1>
   <p>Earn $0.0006 per ad</p>
   <button id="watchBtn">🎁 Watch Ad</button>
   <p id="status"></p>
+  <div id="debug">Loading...</div>
 
   <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-    const userId = tg.initDataUnsafe.user?.id || "guest";
+    const debug = document.getElementById('debug');
+    const status = document.getElementById('status');
+    const btn = document.getElementById('watchBtn');
 
-    document.getElementById('watchBtn').onclick = () => {
-      const adUrl = `https://link.gigapub.tech/7204?sub1=${userId}`;
-      tg.openTelegramLink(adUrl); // opens inside telegram
-      document.getElementById('status').innerText = "Ad opened. Stay 15s then return.";
+    function log(msg) {
+      debug.innerHTML += "<br>" + msg;
+      console.log(msg);
+    }
+
+    // 1. CHECK IF TELEGRAM LOADED
+    if (window.Telegram && Telegram.WebApp) {
+      const tg = Telegram.WebApp;
+      tg.expand();
+      tg.ready();
+      log("Telegram WebApp OK");
+
+      const userId = tg.initDataUnsafe.user?.id || "guest";
+      log("User ID: " + userId);
+
+      btn.disabled = false;
+
+      // 2. BUTTON CLICK
+      btn.onclick = () => {
+        log("Button clicked");
+        const adUrl = `https://link.gigapub.tech/7304?sub1=${userId}`;
+        log("Opening: " + adUrl);
+        
+        status.innerText = "Opening ad... Stay 15s then come back";
+        tg.HapticFeedback.impactOccurred('medium');
+        
+        // THIS IS THE KEY LINE
+        tg.openTelegramLink(adUrl); 
+      }
+    } else {
+      log("ERROR: Not opened in Telegram. Open via bot button.");
+      btn.disabled = true;
+      status.innerText = "Must open from Telegram bot";
     }
   </script>
 </body>
