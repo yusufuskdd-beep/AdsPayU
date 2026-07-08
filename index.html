@@ -5,23 +5,85 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AdsPayU VC</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <!-- GIGAPUB SCRIPT ID 7204 -->
   <script src="https://ad.gigapub.tech/script?id=7204"></script>
   <style>
-    body { font-family: Arial; text-align: center; padding: 20px; background: #17212b; color: white; }
-    h1 { color: #0088cc; }
-   .balance { font-size: 24px; margin: 20px 0; color: #4CAF50; }
-    button { padding: 15px 30px; font-size: 16px; background: #0088cc; color: white; border: none; border-radius: 10px; width: 90%; margin-top: 20px; cursor: pointer; }
-    button:disabled { background: #555; cursor: not-allowed; }
-    #status { color: #aaa; font-size: 14px; margin-top: 10px; min-height: 20px; }
+    body { font-family: Arial; background: #17212b; color: white; margin: 0; padding: 0; }
+    .container { padding: 20px; padding-bottom: 80px; }
+    h1 { color: #0088cc; text-align: center; }
+   .balance { font-size: 28px; margin: 10px 0; color: #4CAF50; text-align: center; font-weight: bold; }
+   .card { background: #242f3d; padding: 15px; border-radius: 12px; margin: 10px 0; }
+    button { padding: 15px; font-size: 16px; background: #0088cc; color: white; border: none; border-radius: 10px; width: 100%; cursor: pointer; margin-top: 10px; }
+    button:disabled { background: #555; }
+    #status { color: #aaa; font-size: 14px; margin-top: 10px; text-align: center; min-height: 20px; }
+    
+    /* TABS */
+   .tabs { position: fixed; bottom: 0; left: 0; width: 100%; display: flex; background: #242f3d; border-top: 1px solid #333; }
+   .tab-btn { flex: 1; padding: 12px; background: none; border: none; color: #aaa; font-size: 12px; cursor: pointer; }
+   .tab-btn.active { color: #0088cc; border-top: 2px solid #0088cc; }
+   .tab-content { display: none; }
+   .tab-content.active { display: block; }
+
+    /* LEADERBOARD */
+   .lb-row { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #333; }
+   .lb-rank { color: #0088cc; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>AdsPayU VC 🇻🇨</h1>
-  <p>Balance:</p>
-  <div class="balance" id="balance">$0.0000</div>
-  <button id="adBtn" onclick="showAd()">🎁 Watch Ad - $0.0006</button>
-  <p id="status"></p>
+  <div class="container">
+    
+    <!-- TAB 1: HOME -->
+    <div id="home" class="tab-content active">
+      <h1>AdsPayU VC 🇻🇨</h1>
+      <div class="card">
+        <p style="text-align:center">Your Balance</p>
+        <div class="balance" id="balance">$0.0000</div>
+        <p style="text-align:center; font-size:12px">Min Withdraw: $1.00</p>
+      </div>
+      <div class="card">
+        <h3>How it works</h3>
+        <p>1. Watch Ads<br>2. Earn $0.0006 per ad<br>3. Withdraw at $1.00</p>
+      </div>
+    </div>
+
+    <!-- TAB 2: ADS -->
+    <div id="ads" class="tab-content">
+      <h1>Earn Coins</h1>
+      <div class="card">
+        <h3>🎁 Rewarded Ad</h3>
+        <p>Earn $0.0006 per ad</p>
+        <button id="adBtn" onclick="showAd()">Watch Ad</button>
+        <p id="status"></p>
+      </div>
+    </div>
+
+    <!-- TAB 3: LEADERBOARD -->
+    <div id="leaderboard" class="tab-content">
+      <h1>Top Earners</h1>
+      <div class="card" id="lb-list">
+        Loading...
+      </div>
+    </div>
+
+    <!-- TAB 4: WITHDRAW -->
+    <div id="withdraw" class="tab-content">
+      <h1>Withdraw</h1>
+      <div class="card">
+        <p>Current Balance: <b id="w-balance">$0.0000</b></p>
+        <input type="text" id="faucetpay" placeholder="FaucetPay Email" style="width:95%; padding:10px; margin:10px 0; border-radius:5px; border:none;">
+        <button onclick="requestWithdraw()">Request Withdraw</button>
+        <p id="w-status" style="font-size:12px"></p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="openTab('home')">🏠 Home</button>
+    <button class="tab-btn" onclick="openTab('ads')">🎁 Ads</button>
+    <button class="tab-btn" onclick="openTab('leaderboard')">🏆 Top</button>
+    <button class="tab-btn" onclick="openTab('withdraw')">💰 Cashout</button>
+  </div>
 
   <script>
     const tg = window.Telegram.WebApp;
@@ -30,46 +92,81 @@
     const userId = tg.initDataUnsafe.user?.id || "guest";
     let isLoading = false;
 
-    // Load balance on start
-    fetch(`https://adspayu-backend-5y7g.onrender.com/api/balance?user_id=${userId}`)
-     .then(res => res.json())
-     .then(data => {
-        document.getElementById('balance').innerText = `$${data.balance.toFixed(4)}`;
-      })
+    // TAB SWITCHER
+    function openTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabName).classList.add('active');
+      event.target.classList.add('active');
+      if(tabName === 'leaderboard') loadLeaderboard();
+      if(tabName === 'withdraw') updateWithdrawBalance();
+    }
 
+    // LOAD BALANCE
+    function loadBalance() {
+      fetch(`https://adspayu-backend-5y7g.onrender.com/api/balance?user_id=${userId}`)
+       .then(res => res.json())
+       .then(data => {
+          document.getElementById('balance').innerText = `$${data.balance.toFixed(4)}`;
+          document.getElementById('w-balance').innerText = `$${data.balance.toFixed(4)}`;
+        })
+    }
+    loadBalance();
+
+    // SHOW AD + AUTO UPDATE BALANCE
     function showAd() {
       if(isLoading) return;
       isLoading = true;
-
       const btn = document.getElementById('adBtn');
       const status = document.getElementById('status');
       btn.disabled = true;
-      status.innerText = "Loading ad... please wait";
+      status.innerText = "Loading ad...";
 
       window.showGiga()
        .then(() => {
-          // USER WATCHED FULL AD
           status.innerText = "Ad completed! Crediting...";
-          console.log("AD WATCHED:", userId);
-
-          // Send to backend to credit
-          fetch(`https://adspayu-backend-5y7g.onrender.com/api/credit?user_id=${userId}&amount=0.0006`)
-           .then(res => res.json())
-           .then(data => {
-              status.innerText = `✅ $${data.credited} added! New balance: $${data.new_balance.toFixed(4)}`;
-              document.getElementById('balance').innerText = `$${data.new_balance.toFixed(4)}`;
-              btn.innerText = "⏰ Wait 10 min";
-            })
+          return fetch(`https://adspayu-backend-5y7g.onrender.com/api/credit?user_id=${userId}&amount=0.0006`)
+        })
+       .then(res => res.json())
+       .then(data => {
+          status.innerText = `✅ $${data.credited} added!`;
+          document.getElementById('balance').innerText = `$${data.new_balance.toFixed(4)}`; // UPDATE INSTANT
+          btn.innerText = "⏰ Wait 10s";
         })
        .catch(e => {
-          console.log("GigaPub Error:", e);
-          status.innerText = "😅 No ads available. Try again in 10-30 min";
-          btn.innerText = "🎁 Watch Ad";
+          status.innerText = "😅 No ads available. Try again later";
         })
        .finally(() => {
           isLoading = false;
-          setTimeout(() => { btn.disabled = false; }, 10000); // 10s cooldown
+          setTimeout(() => { 
+            btn.disabled = false; 
+            btn.innerText = "Watch Ad";
+          }, 10000);
         });
+    }
+
+    // LEADERBOARD
+    function loadLeaderboard() {
+      fetch(`https://adspayu-backend-5y7g.onrender.com/api/leaderboard`)
+       .then(res => res.json())
+       .then(data => {
+          let html = '';
+          data.forEach((user, i) => {
+            html += `<div class="lb-row"><span class="lb-rank">#${i+1}</span> <span>User ${user.user_id}</span> <span>$${user.balance.toFixed(4)}</span></div>`;
+          });
+          document.getElementById('lb-list').innerHTML = html || "No users yet";
+        })
+    }
+
+    // WITHDRAW
+    function updateWithdrawBalance() { loadBalance(); }
+    function requestWithdraw() {
+      const email = document.getElementById('faucetpay').value;
+      const status = document.getElementById('w-status');
+      if(!email) return status.innerText = "Enter FaucetPay email";
+      fetch(`https://adspayu-backend-5y7g.onrender.com/api/withdraw?user_id=${userId}&email=${email}`)
+       .then(res => res.json())
+       .then(data => { status.innerText = data.message; })
     }
   </script>
 </body>
