@@ -13,30 +13,20 @@
 <body>
   <h1>AdsPayU VC 🇻🇨</h1>
   <p>Earn $0.0006 per ad</p>
-  
-  <!-- CLICK DIRECTLY ON BUTTON -->
   <button onclick="watchAd()">🎁 Watch Ad</button>
-  <p id="status"></p>
+  <p id="status" style="color:#aaa; font-size:12px;"></p>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
     tg.ready();
-
     const userId = tg.initDataUnsafe.user?.id || "guest";
 
     function watchAd() {
-      const adUrl = `https://link.gigapub.tech/7304?sub1=${userId}`;
-      document.getElementById('status').innerText = "Opening ad...";
-      
-      tg.HapticFeedback.impactOccurred('light');
-      
-      // TRY BOTH METHODS. ANDROID = openTelegramLink, IPHONE = openLink
-      try {
-        tg.openTelegramLink(adUrl);
-      } catch(e) {
-        tg.openLink(adUrl);
-      }
+      // YOUR AD ID: 7204
+      const adUrl = `https://link.gigapub.tech/7204?sub1=${userId}`;
+      tg.openTelegramLink(adUrl);
+      document.getElementById('status').innerText = "Watch 15s. Reward will auto credit.";
     }
   </script>
 </body>
