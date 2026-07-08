@@ -1,185 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AdsPayU VC</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://ad.gigapub.tech/script?id=7204"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-    
-    body { 
-      font-family: 'Poppins', sans-serif; 
-      background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%); 
-      color: #222; 
-      margin: 0; 
-      padding: 0; 
-      min-height: 100vh;
-    }
-    .container { padding: 20px; padding-bottom: 90px; }
-    
-    h1 { color: white; text-align: center; font-weight: 700; text-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-    
-   .balance { font-size: 36px; margin: 10px 0; color: #00FF88; text-align: center; font-weight: 700; text-shadow: 0 2px 10px rgba(0,255,136,0.4); }
-    
-   .card { background: rgba(255,255,255,0.95); padding: 20px; border-radius: 20px; margin: 15px 0; box-shadow: 0 8px 25px rgba(0,0,0,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); }
-    
-    button { padding: 16px; font-size: 16px; background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%); color: white; border: none; border-radius: 15px; width: 100%; cursor: pointer; margin-top: 10px; font-weight: 600; box-shadow: 0 4px 15px rgba(0,114,255,0.4); transition: transform 0.1s; }
-    button:active { transform: scale(0.97); }
-    button:disabled { background: #ccc; box-shadow: none; }
-
-   .tabs { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); width: 95%; display: flex; background: rgba(255,255,255,0.95); border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.2); padding: 5px; z-index: 999; }
-   .tab-btn { flex: 1; padding: 12px; background: none; border: none; color: #666; font-size: 12px; cursor: pointer; border-radius: 15px; font-weight: 600; }
-   .tab-btn.active { color: white; background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%); box-shadow: 0 4px 12px rgba(0,114,255,0.4); }
-   .tab-content { display: none; }
-   .tab-content.active { display: block; }
-
-   .lb-row { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; border-radius: 10px; margin: 5px 0; font-size: 14px; }
-   .lb-rank { color: #0072FF; font-weight: 700; font-size: 16px; }
-    
-    input { width: 93%; padding: 14px; margin: 10px 0; border-radius: 12px; border: 2px solid #00C6FF; font-size: 14px; outline: none; }
-    input:focus { border-color: #0072FF; }
-    #status, #w-status { color: #0072FF; font-weight: 600; text-align:center; margin-top:10px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AdsPayU</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src='https://lib.gigapub.tech/gigapub.js'></script>
+<script src='//libtl.com/sdk.js' data-zone='11258922' data-sdk='show_11258922'></script>
+<style>
+  body { font-family: Arial; background: #0f172a; color: white; text-align: center; padding: 20px; }
+  .card { background: #1e293b; padding: 20px; border-radius: 15px; margin: 15px 0; }
+  .balance { font-size: 32px; color: #22c55e; font-weight: bold; }
+  .btn { width: 90%; padding: 15px; margin: 10px 0; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; }
+  .btn-giga { background: linear-gradient(90deg, #3b82f6, #06b6d4); color: white; }
+  .btn-monetag { background: linear-gradient(90deg, #f97316, #ec4899); color: white; }
+  .btn-withdraw { background: #22c55e; color: white; }
+  input { width: 80%; padding: 12px; border-radius: 8px; border: none; margin: 10px 0; }
+  #status { margin-top: 10px; font-size: 14px; color: #fbbf24; }
+</style>
 </head>
 <body>
-  <div class="container">
-    
-    <div id="home" class="tab-content active">
-      <h1>AdsPayU VC 🇻🇨</h1>
-      <div class="card">
-        <p style="text-align:center; margin:0; color:#666">Your Balance</p>
-        <div class="balance" id="balance">$0.0000</div>
-        <p style="text-align:center; font-size:12px; color:#666">Min Withdraw: $1.00 in TON</p>
-      </div>
-      <div class="card">
-        <h3 style="color:#0072FF; margin-top:0">How it works</h3>
-        <p>1. Watch Ads 🎁<br>2. Earn $0.0006 per ad<br>3. Withdraw at $1.00 to TON 💎</p>
-      </div>
-    </div>
 
-    <div id="ads" class="tab-content">
-      <h1>Earn Coins</h1>
-      <div class="card">
-        <h3 style="color:#0072FF; margin-top:0">🎁 Rewarded Ad</h3>
-        <p>Earn $0.0006 per ad. 10s cooldown.</p>
-        <button id="adBtn" onclick="showAd()">Watch Ad</button>
-        <p id="status"></p>
-      </div>
-    </div>
+<h2>🚀 AdsPayU</h2>
 
-    <div id="leaderboard" class="tab-content">
-      <h1>🏆 Top Earners</h1>
-      <div class="card" id="lb-list">Loading...</div>
-    </div>
+<div class="card">
+  <p>Your Balance</p>
+  <div class="balance">$<span id="balance">0.0000</span></div>
+</div>
 
-    <div id="withdraw" class="tab-content">
-      <h1>💎 Withdraw</h1>
-      <div class="card">
-        <p>Current Balance: <b id="w-balance" style="color:#00FF88">$0.0000</b></p>
-        <p style="font-size:12px; color:#666">Min: $1.00 | Network: TON | Paid within 24h</p>
-        <input type="text" id="tonwallet" placeholder="Your TON Wallet: UQ... or EQ...">
-        <button onclick="requestWithdraw()">Request Withdraw to TON</button>
-        <p id="w-status"></p>
-      </div>
-    </div>
+<div class="card">
+  <p><b>Watch Ads & Earn</b></p>
+  <button class="btn btn-giga" onclick="showGigaAd()">📺 Watch GigaPub +$0.0006</button>
+  <button class="btn btn-monetag" onclick="showMonetagAd()">🎁 Watch Monetag +$0.0006</button>
+  <p id="status"></p>
+</div>
 
-  </div>
+<div class="card">
+  <p><b>Withdraw to TON</b></p>
+  <input id="wallet" placeholder="UQ... EQ... kQ... TON Wallet">
+  <button class="btn btn-withdraw" onclick="withdraw()">💸 Withdraw $1.00 Min</button>
+</div>
 
-  <div class="tabs">
-    <button class="tab-btn active" onclick="openTab('home', this)">🏠 Home</button>
-    <button class="tab-btn" onclick="openTab('ads', this)">🎁 Ads</button>
-    <button class="tab-btn" onclick="openTab('leaderboard', this)">🏆 Top</button>
-    <button class="tab-btn" onclick="openTab('withdraw', this)">💰 Cash</button>
-  </div>
+<script>
+const tg = window.Telegram.WebApp;
+tg.expand();
+const user = tg.initDataUnsafe.user;
+const user_id = user?.id || 'guest';
 
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-    tg.ready();
-    const userId = tg.initDataUnsafe.user?.id || "guest";
-    let isLoading = false;
-    
-    // ✅ YOUR RENDER BACKEND URL - CHANGE THIS
-    const API = "https://adspayu-backend-5y7g.onrender.com"; 
+const API = "https://adspayu-backend-5y7g.onrender.com"; // ✅ YOUR BACKEND
+const GIGAPUB_ZONE = "1076478";
 
-    function openTab(tabName, el) {
-      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(tabName).classList.add('active');
-      el.classList.add('active');
-      if(tabName === 'leaderboard') loadLeaderboard();
-      if(tabName === 'withdraw') updateWithdrawBalance();
-    }
+let balance = 0;
 
-    function loadBalance() {
-      fetch(`${API}/api/balance?user_id=${userId}`)
-       .then(res => res.json())
-       .then(data => {
-          document.getElementById('balance').innerText = `$${data.balance.toFixed(4)}`;
-          document.getElementById('w-balance').innerText = `$${data.balance.toFixed(4)}`;
-        }).catch(e => console.log(e))
-    }
-    loadBalance();
+async function loadBalance() {
+  try {
+    const res = await fetch(`${API}/api/balance?user_id=${user_id}`);
+    const data = await res.json();
+    balance = Number(data.balance) || 0;
+    document.getElementById('balance').innerText = balance.toFixed(4);
+  } catch(e) {
+    document.getElementById('status').innerText = "❌ Can't connect to server. Wake it up at " + API;
+  }
+}
 
-    function showAd() {
-      if(isLoading) return;
-      isLoading = true;
-      const btn = document.getElementById('adBtn');
-      const status = document.getElementById('status');
-      btn.disabled = true;
-      status.innerText = "Loading ad...";
+function showGigaAd() {
+  document.getElementById('status').innerText = "Loading GigaPub ad...";
+  showGigaPub(GIGAPUB_ZONE).then(() => {
+    creditUser(0.0006, 'GigaPub');
+  }).catch(() => {
+    document.getElementById('status').innerText = "❌ GigaPub: No ads";
+  });
+}
 
-      window.showGiga()
-       .then(() => {
-          status.innerText = "Ad completed! Crediting...";
-          return fetch(`${API}/api/credit?user_id=${userId}&amount=0.0006`)
-        })
-       .then(res => res.json())
-       .then(data => {
-          status.innerText = `✅ $${data.credited} added!`;
-          document.getElementById('balance').innerText = `$${data.new_balance.toFixed(4)}`;
-          btn.innerText = "⏰ Wait 10s";
-        })
-       .catch(e => { status.innerText = "😅 No ads available. Try again later"; })
-       .finally(() => {
-          isLoading = false;
-          setTimeout(() => { 
-            btn.disabled = false; 
-            btn.innerText = "Watch Ad";
-          }, 10000);
-        });
-    }
+function showMonetagAd() {
+  document.getElementById('status').innerText = "Loading Monetag ad...";
+  show_11258922().then(() => {
+    creditUser(0.0006, 'Monetag');
+  }).catch(() => {
+    document.getElementById('status').innerText = "❌ Monetag: No ads";
+  });
+}
 
-    function loadLeaderboard() {
-      fetch(`${API}/api/leaderboard`)
-       .then(res => res.json())
-       .then(data => {
-          let html = '';
-          data.forEach((user, i) => {
-            html += `<div class="lb-row"><span class="lb-rank">#${i+1}</span> <span>User ${String(user.user_id).slice(0,6)}...</span> <span style="color:#00FF88; font-weight:700">$${user.balance.toFixed(4)}</span></div>`;
-          });
-          document.getElementById('lb-list').innerHTML = html || "No users yet";
-        })
-    }
+async function creditUser(amount, network) {
+  const res = await fetch(`${API}/api/credit?user_id=${user_id}&amount=${amount}`);
+  const data = await res.json();
+  balance = data.new_balance;
+  document.getElementById('balance').innerText = Number(balance).toFixed(4);
+  document.getElementById('status').innerText = `✅ +$${amount} from ${network}`;
+}
 
-    function updateWithdrawBalance() { loadBalance(); }
-    function requestWithdraw() {
-      const wallet = document.getElementById('tonwallet').value.trim();
-      const status = document.getElementById('w-status');
-      if(!wallet || wallet.length < 40) return status.innerText = "❌ Enter valid TON wallet address";
-      if(!wallet.startsWith('UQ') && !wallet.startsWith('EQ') && !wallet.startsWith('kQ')) return status.innerText = "❌ Wallet must start with UQ, EQ, or kQ";
-      
-      status.innerText = "Sending request...";
-      fetch(`${API}/api/withdraw?user_id=${userId}&wallet=${wallet}`)
-       .then(res => res.json())
-       .then(data => { 
-          status.innerText = data.message; 
-          if(data.message.includes('✅')) document.getElementById('tonwallet').value = '';
-          loadBalance();
-       })
-    }
-  </script>
+async function withdraw() {
+  const wallet = document.getElementById('wallet').value;
+  const res = await fetch(`${API}/api/withdraw?user_id=${user_id}&wallet=${wallet}`);
+  const data = await res.json();
+  alert(data.message);
+}
+
+loadBalance();
+</script>
+
 </body>
 </html>
