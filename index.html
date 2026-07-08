@@ -14,7 +14,7 @@
     #splash h1 { font-size: 32px; margin-bottom: 10px; }
 .loader { border: 4px solid rgba(255,255,255,0.2); border-top: 4px solid #fff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-top: 20px; }
 .powered { color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 12px; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); }
     #app { display: none; }
 .header { text-align: center; padding: 20px; background: linear-gradient(135deg, #22c55e, #16a34a); }
 .header h1 { font-size: 22px; }
@@ -139,7 +139,7 @@
       document.getElementById('refCountTop').innerText = confirmed;
       const refList = document.getElementById('refList');
       if (Object.keys(refData).length === 0) { refList.innerHTML = '<p style="color:var(--muted);">No referrals yet</p>'; }
-      else { refList.innerHTML = ''; for (let [id, r] of Object.entries(refData)) { refList.innerHTML += `<div class="ref-item"><span>${r.name}</span><span class="badge ${r.status}">${r.status}</span></div>`; } }
+      else { refList.innerHTML = ''; for (let [id, r] of Object.entries(refData)) { refList.innerHTML += `<div class="ref-item"><span>${r.name}</span><span class="badge ${r.status}">${r.status}</span></div>`; }
       const adBtn = document.getElementById('adBtn');
       if (data.adsWatched >= DAILY_LIMIT) { adBtn.disabled = true; adBtn.innerText = "Daily Limit Reached"; }
       else { adBtn.disabled = false; adBtn.innerText = "Watch AdsGram Ad +$0.0006"; }
@@ -178,8 +178,8 @@
 
     function requestWithdraw() { const wallet = document.getElementById('wallet').value; if(!wallet) return alert("Enter wallet address"); if(data.balance < 1.00) return alert("Min withdraw is $1.00"); alert("Withdraw request sent!"); }
 
-    // ===== WHEEL GAME LOGIC - PROPORTIONAL SLICES =====
-    let wheelState = JSON.parse(localStorage.getItem('wheelState')) || { players: [], timer: null, spinning: false, rotation: 0 };
+    // ===== WHEEL GAME LOGIC - ANTI GLITCH =====
+    let wheelState = JSON.parse(localStorage.getItem('wheelState')) || { players: [], timer: null, spinning: false, rotation: 0, timerRunning: false };
     const botNames = ["Alex", "Sarah", "Mike", "Emma", "John", "Lisa", "David", "Anna"];
     const colors = ['#22c55e', '#7c3aed', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899', '#14b8a6', '#f97316'];
 
@@ -196,53 +196,61 @@
       data.balance -= betAmount;
       saveData(); saveWheel(); updateWheelUI();
 
-      if (wheelState.players.length >= 2 &&!wheelState.timer) { startTimer(); }
-      if (wheelState.players.length < 8) { addBots(); }
+      if (wheelState.players.length >= 2 &&!wheelState.timerRunning) { startTimer(); }
+      if (wheelState.players.length < 8 &&!wheelState.spinning) { addBots(); }
     }
 
     function addBots() {
       setTimeout(() => {
-        if (wheelState.players.length >= 8) return;
+        if (wheelState.players.length >= 8 || wheelState.spinning) return;
         const botBet = [0.01, 0.10, 1.00][Math.floor(Math.random() * 3)];
         const botName = botNames[Math.floor(Math.random() * botNames.length)] + Math.floor(Math.random()*100);
-        wheelState.players.push({ id: 'bot'+Date.now(), name: botName, bet: botBet });
+        wheelState.players.push({ id: 'bot'+Date.now()+Math.random(), name: botName, bet: botBet }); // UNIQUE ID
         saveWheel(); updateWheelUI();
-        if (wheelState.players.length >= 2 &&!wheelState.timer) { startTimer(); }
+        if (wheelState.players.length >= 2 &&!wheelState.timerRunning) { startTimer(); }
       }, 1000 + Math.random()*2000);
     }
 
     function startTimer() {
+      if (wheelState.timerRunning) return; // LOCK: prevent 2 timers
+      wheelState.timerRunning = true;
       let time = 30;
       document.getElementById('timer').innerText = `Spinning in: ${time}s`;
       wheelState.timer = setInterval(() => {
         time--;
+        if (time < 0) time = 0; // PREVENT NEGATIVE
         document.getElementById('timer').innerText = `Spinning in: ${time}s`;
-        if (time <= 0) { clearInterval(wheelState.timer); wheelState.timer = null; spinWheel(); }
+        if (time <= 0) { 
+          clearInterval(wheelState.timer); 
+          wheelState.timer = null; 
+          wheelState.timerRunning = false;
+          spinWheel(); 
+        }
       }, 1000);
     }
 
     function spinWheel() {
+      if (wheelState.spinning) return; // LOCK: prevent double spin
       wheelState.spinning = true;
       document.querySelectorAll('.wheel-btn').forEach(b => b.disabled = true);
 
       const totalPool = wheelState.players.reduce((s, p) => s + p.bet, 0);
+      if (totalPool === 0) { wheelState.spinning = false; return; }
+
       let rand = Math.random() * totalPool;
       let winnerIndex = 0; let cumulative = 0;
-
-      // Find winner based on bet %
       for (let i=0; i<wheelState.players.length; i++) {
         cumulative += wheelState.players[i].bet;
         if (rand <= cumulative) { winnerIndex = i; break; }
       }
       const winner = wheelState.players[winnerIndex];
 
-      // Calculate angle to land on winner's slice center
       let angleBefore = 0;
       for(let i=0; i<winnerIndex; i++) {
         angleBefore += (wheelState.players[i].bet / totalPool) * 360;
       }
       const winnerSlice = (winner.bet / totalPool) * 360;
-      const targetAngle = 270 - angleBefore - (winnerSlice / 2); // Point to middle of winner slice
+      const targetAngle = 270 - angleBefore - (winnerSlice / 2);
 
       const spins = 4 * 360;
       const finalRotation = wheelState.rotation + spins + targetAngle;
@@ -257,7 +265,7 @@
         else { tg.showAlert(`${winner.name} won $${winAmount}`); }
 
         setTimeout(() => {
-          wheelState = { players: [], timer: null, spinning: false, rotation: 0 };
+          wheelState = { players: [], timer: null, spinning: false, rotation: 0, timerRunning: false }; // FULL RESET
           saveWheel(); updateWheelUI(); drawWheel(0);
           document.querySelectorAll('.wheel-btn').forEach(b => b.disabled = false);
         }, 3000);
@@ -288,23 +296,19 @@
       const totalPool = wheelState.players.reduce((s, p) => s + p.bet, 0);
       if (totalPool === 0) return;
 
-      let startAngle = 0; // START FROM TOP
+      let startAngle = 0;
       wheelState.players.forEach((p, i) => {
-        const sliceAngle = (p.bet / totalPool) * 2 * Math.PI; // PROPORTIONAL ANGLE
-
+        const sliceAngle = (p.bet / totalPool) * 2 * Math.PI;
         ctx.beginPath(); ctx.moveTo(140, 140);
-        ctx.arc(140, 140, 130, startAngle - Math.PI/2, startAngle + sliceAngle - Math.PI/2); // -90deg to start at top
+        ctx.arc(140, 140, 130, startAngle - Math.PI/2, startAngle + sliceAngle - Math.PI/2);
         ctx.closePath();
         ctx.fillStyle = colors[i % colors.length]; ctx.fill();
-
-        // Draw name in middle of slice
         ctx.save();
         ctx.translate(140, 140);
         ctx.rotate(startAngle + sliceAngle/2 - Math.PI/2);
         ctx.fillStyle = '#fff'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
-        if (sliceAngle > 0.3) ctx.fillText(p.name.substring(0,6), 0, -90); // Only draw if slice big enough
+        if (sliceAngle > 0.3) ctx.fillText(p.name.substring(0,6), 0, -90);
         ctx.restore();
-
         startAngle += sliceAngle;
       });
     }
