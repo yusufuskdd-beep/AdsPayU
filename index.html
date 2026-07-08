@@ -3,195 +3,243 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>AdsPayU v11.3</title>
+  <title>AdsPayU v11.5</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    :root { --bg: #0a0f1e; --card: #111827; --accent: #22c55e; --text: #e5e7eb; --muted: #9ca3af; --danger: #ef4444; --warning: #f59e0b; }
+    :root { --bg: #0a0f1e; --card: #111827; --accent: #22c55e; --text: #e5e7eb; --muted: #9ca3af; --danger: #ef4444; --warning: #f59e0b; --giga: #7c3aed; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 80px; }
 
-    #splashv113 { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0047ff, #0030aa); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
-    #splashv113.hide { opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
-    #splashv113 h1 { font-size: 32px; margin-bottom: 10px; color: #fff; }
-  .loader113 { border: 4px solid rgba(255,255,255,0.2); border-top: 4px solid #fff; border-radius: 50%; width: 40px; height: 40px; animation: spin113 1s linear infinite; margin-top: 20px; }
-    @keyframes spin113 { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); }
+    #splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #7c3aed, #5b21b6); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
+    #splash.hide { opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
+    #splash h1 { font-size: 32px; margin-bottom: 10px; color: #fff; }
+ .loader { border: 4px solid rgba(255,255,255,0.2); border-top: 4px solid #fff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-top: 20px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); }
 
-    #appv113 { display: none; }
-  .headerv113 { text-align: center; padding: 20px; background: linear-gradient(135deg, #22c55e, #16a34a); }
-  .headerv113 h1 { font-size: 22px; color: #fff; }
-  .balancev113 { background: var(--card); margin: -30px 16px 20px; padding: 20px; border-radius: 16px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-  .balancelabel113 { color: var(--muted); font-size: 14px; }
-  .balanceamount113 { font-size: 32px; font-weight: 700; color: var(--accent); margin: 8px 0; }
-  .statsv113 { display: flex; gap: 10px; margin-top: 12px; }
-  .statbox113 { flex: 1; background: #1f2937; padding: 10px; border-radius: 10px; }
-  .statval113 { font-size: 18px; font-weight: 700; color: var(--accent); }
-  .statlbl113 { font-size: 11px; color: var(--muted); }
+    #app { display: none; }
+ .header { text-align: center; padding: 20px; background: linear-gradient(135deg, #7c3aed, #5b21b6); }
+ .header h1 { font-size: 22px; color: #fff; }
+ .balance-card { background: var(--card); margin: -30px 16px 20px; padding: 20px; border-radius: 16px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+ .label { color: var(--muted); font-size: 14px; }
+ .amount { font-size: 32px; font-weight: 700; color: var(--giga); margin: 8px 0; }
+ .stats { display: flex; gap: 10px; margin-top: 12px; }
+ .stat-box { flex: 1; background: #1f2937; padding: 10px; border-radius: 10px; }
+ .stat-val { font-size: 18px; font-weight: 700; color: var(--giga); }
+ .stat-lbl { font-size: 11px; color: var(--muted); }
 
-  .tabs113 { display: flex; background: var(--card); margin: 0 16px; border-radius: 12px; padding: 4px; }
-  .tabbtn113 { flex: 1; padding: 10px 8px; border: none; background: transparent; color: var(--muted); border-radius: 8px; font-weight: 600; font-size: 13px; }
-  .tabbtn113.active113 { background: var(--accent); color: #000; }
-  .tabcontent113 { display: none; padding: 20px 16px; }
-  .tabcontent113.active113 { display: block; }
+ .tabs { display: flex; background: var(--card); margin: 0 16px; border-radius: 12px; padding: 4px; overflow-x: auto; }
+ .tab-btn { flex: 1; padding: 10px 8px; border: none; background: transparent; color: var(--muted); border-radius: 8px; font-weight: 600; font-size: 13px; white-space: nowrap; }
+ .tab-btn.active { background: var(--giga); color: #fff; }
+ .tab-content { display: none; padding: 20px 16px; }
+ .tab-content.active { display: block; }
 
-    button.btnprimary113 { background: var(--accent); color: #000; border: none; padding: 16px; font-size: 16px; font-weight: 700; border-radius: 12px; width: 100%; cursor: pointer; margin-bottom: 10px; }
+    button.primary { background: var(--giga); color: #fff; border: none; padding: 16px; font-size: 16px; font-weight: 700; border-radius: 12px; width: 100%; cursor: pointer; margin-bottom: 10px; }
+    button.giga { background: var(--giga); color: #fff; border: none; padding: 16px; font-size: 16px; font-weight: 700; border-radius: 12px; width: 100%; cursor: pointer; margin-bottom: 10px; }
+    button.wheel-btn { padding: 12px; font-size: 14px; margin-bottom: 0; }
     button:disabled { background: #374151; color: var(--muted); cursor: not-allowed; }
-  .card113 { background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 12px; }
+ .card { background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 12px; }
+ .ref-link { background: #1f2937; padding: 12px; border-radius: 8px; word-break: break-all; font-size: 13px; margin: 10px 0; }
 
-    #wheelbox113 { position: relative; width: 280px; height: 280px; margin: 0 auto; }
-    #wheelcanvas113 { background: #1f2937; border-radius: 50%; border: 4px solid var(--accent); display: block; transition: transform 5s cubic-bezier(0.17, 0.67, 0.12, 0.99); }
-  .pin113 { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 20px solid var(--danger); z-index: 10; }
-  .timer113 { text-align: center; font-size: 24px; font-weight: 700; color: var(--warning); margin-bottom: 12px; }
-  .player113 { display: flex; justify-content: space-between; background: #1f2937; padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; font-size: 14px; }
-  .player113.me113 { border: 2px solid var(--accent); }
+    #wheelContainer { position: relative; width: 280px; height: 280px; margin: 0 auto; }
+    #wheelCanvas { background: #1f2937; border-radius: 50%; border: 4px solid var(--giga); display: block; transition: transform 5s cubic-bezier(0.17, 0.67, 0.12, 0.99); }
+ .wheel-pin { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 20px solid var(--danger); z-index: 10; }
+ .timer { text-align: center; font-size: 24px; font-weight: 700; color: var(--warning); margin-bottom: 12px; }
+ .player-item { display: flex; justify-content: space-between; background: #1f2937; padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; font-size: 14px; }
+ .player-item.me { border: 2px solid var(--giga); }
   </style>
 </head>
 <body>
-  <div id="splashv113"><h1>💰 AdsPayU v11.3</h1><div class="loader113"></div></div>
+  <div id="splash"><h1>💰 AdsPayU</h1><div class="loader"></div><p style="color:#fff; margin-top:8px;">Powered by GigaPub</p></div>
 
-  <div id="appv113">
-    <div class="headerv113"><h1>💰 AdsPayU Rewards</h1></div>
+  <div id="app">
+    <div class="header"><h1>💰 AdsPayU Rewards</h1></div>
 
-    <div class="balancev113">
-      <div class="balancelabel113">Your Balance</div>
-      <div class="balanceamount113" id="balance">$0.0000</div>
-      <div class="balancelabel113">Min withdraw: $1.00</div>
-      <div class="statsv113">
-        <div class="statbox113"><div class="statval113" id="adsCount">0/400</div><div class="statlbl113">Today</div></div>
-        <div class="statbox113"><div class="statval113" id="refCountTop">0</div><div class="statlbl113">Confirmed</div></div>
+    <div class="balance-card">
+      <div class="label">Your Balance</div>
+      <div class="amount" id="balance">$0.0000</div>
+      <div class="label">Min withdraw: $1.00</div>
+      <div class="stats">
+        <div class="stat-box"><div class="stat-val" id="adsCount">0/400</div><div class="stat-lbl">Today</div></div>
+        <div class="stat-box"><div class="stat-val" id="refCountTop">0</div><div class="stat-lbl">Confirmed</div></div>
       </div>
     </div>
 
-    <div class="tabs113">
-      <button class="tabbtn113 active113" onclick="openTab('earn', event)">Earn</button>
-      <button class="tabbtn113" onclick="openTab('wheel', event)">🎡 Wheel</button>
-      <button class="tabbtn113" onclick="openTab('referrals', event)">Referrals</button>
-      <button class="tabbtn113" onclick="openTab('leaderboard', event)">Top 50</button>
-      <button class="tabbtn113" onclick="openTab('withdraw', event)">Withdraw</button>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="openTab('earn', event)">Earn</button>
+      <button class="tab-btn" onclick="openTab('wheel', event)">🎡 Wheel</button>
+      <button class="tab-btn" onclick="openTab('referrals', event)">Referrals</button>
+      <button class="tab-btn" onclick="openTab('leaderboard', event)">Top 50</button>
+      <button class="tab-btn" onclick="openTab('withdraw', event)">Withdraw</button>
     </div>
 
-    <div id="earn" class="tabcontent113 active113">
-      <button id="dailyBtn" class="btnprimary113" style="background:var(--warning);">🎁 Claim $0.05 TEST</button>
-      <button id="adBtn" class="btnprimary113">Watch AdsGram Ad +$0.0006</button>
-      <p style="text-align:center; color:var(--muted); margin-top:12px; font-size:13px;">TEST MODE</p>
+    <div id="earn" class="tab-content active">
+      <button id="dailyBtn" class="primary" style="background:var(--warning); color:#000;">🎁 Claim $0.05 TEST</button>
+      <button id="gigaBtn" class="giga">Watch GigaPub Ad +$0.0006</button>
+      <p style="text-align:center; color:var(--muted); margin-top:12px; font-size:13px;">400 ads per day limit</p>
     </div>
 
-    <div id="wheel" class="tabcontent113">
-      <div class="card113">
+    <div id="wheel" class="tab-content">
+      <div class="card">
         <h3>🎡 USDT Wheel</h3>
-        <p style="color:var(--muted); font-size:14px;">Bigger bet = bigger slice. 5% fee</p>
-        <div class="timer113" id="timer">Waiting for players...</div>
-        <div id="wheelbox113">
-          <div class="pin113"></div>
-          <canvas id="wheelcanvas113" width="280" height="280"></canvas>
+        <p style="color:var(--muted); font-size:14px;">Bet your ad earnings. Bigger bet = bigger slice. 5% fee</p>
+        <div class="timer" id="timer">Waiting for players...</div>
+        <div id="wheelContainer">
+          <div class="wheel-pin"></div>
+          <canvas id="wheelCanvas" width="280" height="280"></canvas>
         </div>
         <div id="playersList" style="margin: 16px 0;"></div>
         <div style="display:flex; gap:8px;">
-          <button class="btnprimary113" onclick="joinWheel(0.01)">Join $0.01</button>
-          <button class="btnprimary113" onclick="joinWheel(0.10)">Join $0.10</button>
-          <button class="btnprimary113" onclick="joinWheel(1.00)">Join $1.00</button>
+          <button class="primary wheel-btn" onclick="joinWheel(0.01)">Join $0.01</button>
+          <button class="primary wheel-btn" onclick="joinWheel(0.10)">Join $0.10</button>
+          <button class="primary wheel-btn" onclick="joinWheel(1.00)">Join $1.00</button>
         </div>
       </div>
     </div>
 
-    <div id="referrals" class="tabcontent113"><div class="card113"><h3>Referrals</h3><div class="card113" id="refLink"></div></div></div>
-    <div id="leaderboard" class="tabcontent113"><div class="card113"><h3>Top 50</h3><div id="leaderboardList"></div></div></div>
-    <div id="withdraw" class="tabcontent113"><div class="card113"><h3>Withdraw</h3><input type="text" id="wallet" placeholder="Wallet"><button class="btnprimary113" onclick="requestWithdraw()">Request</button></div></div>
+    <div id="referrals" class="tab-content">
+      <div class="card"><h3>Invite Friends 💸</h3><p style="color:var(--muted); font-size:14px;">Earn $0.0015 when your friend watches 1 ad</p><div class="ref-link" id="refLink">Loading...</div><button class="primary" onclick="copyRef()">Copy Link</button></div>
+      <div class="card"><h3>Your Referrals</h3><div id="refList"><p style="color:var(--muted);">No referrals yet</p></div></div>
+    </div>
+
+    <div id="leaderboard" class="tab-content"><div class="card"><h3>🏆 Top 50 Earners</h3><div id="leaderboardList"></div></div></div>
+    <div id="withdraw" class="tab-content"><div class="card"><h3>Withdraw Funds</h3><p style="color:var(--muted); font-size:14px;">Min $1.00 • Paid via Binance ID or USDT TRC20</p><input type="text" id="wallet" placeholder="Enter Binance ID or USDT Wallet"><button class="primary" onclick="requestWithdraw()">Request Withdraw</button></div></div>
   </div>
 
-  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+  <script src="https://cdn.gigapub.tech/sdk.js"></script>
   <script>
     const tg = window.Telegram.WebApp;
     tg.ready(); tg.expand();
     const user = tg.initDataUnsafe.user || {id: Date.now(), first_name: "Guest"};
-    let data = { date: new Date().toISOString().split('T')[0], adsWatched: 0, balance: 0 };
-    localStorage.clear(); // WIPE OLD DATA
+    
+    const DAILY_LIMIT = 400;
+    const REWARD = 0.0006; 
+    const DAILY_REWARD = 0.05;
+    const FEE = 0.05;
+
+    function getToday() { return new Date().toISOString().split('T')[0]; }
+    let data = JSON.parse(localStorage.getItem('adsPayUData')) || { date: getToday(), adsWatched: 0, balance: 0 };
+    if (data.date!== getToday()) { data = {...data, date: getToday(), adsWatched: 0 }; }
 
     function saveData() { localStorage.setItem('adsPayUData', JSON.stringify(data)); }
+
+    function creditUser() {
+      if (data.adsWatched >= DAILY_LIMIT) return false;
+      data.adsWatched += 1; 
+      data.balance += REWARD;
+      saveData(); updateUI();
+      tg.showAlert(`GigaPub Ad finished ✅ \n+$${REWARD.toFixed(4)} credited! \nToday: ${data.adsWatched}/${DAILY_LIMIT}`);
+      return true;
+    }
+
     function updateUI() {
-      document.getElementById('adsCount').innerText = `${data.adsWatched}/400`;
+      document.getElementById('adsCount').innerText = `${data.adsWatched}/${DAILY_LIMIT}`;
       document.getElementById('balance').innerText = '$' + data.balance.toFixed(4);
+      
+      const gigaBtn = document.getElementById('gigaBtn');
+      if(data.adsWatched >= DAILY_LIMIT) { gigaBtn.disabled = true; gigaBtn.innerText = "Daily Limit Reached"; }
     }
 
     window.addEventListener('load', () => { 
       setTimeout(() => { 
-        document.getElementById('splashv113').classList.add('hide'); 
-        document.getElementById('appv113').style.display = 'block'; 
+        document.getElementById('splash').classList.add('hide'); 
+        document.getElementById('app').style.display = 'block'; 
         updateUI(); 
+        drawWheel(0); 
       }, 800); 
     });
 
     function openTab(tabName, evt) { 
-      document.querySelectorAll('.tabcontent113').forEach(t => t.classList.remove('active113')); 
-      document.querySelectorAll('.tabbtn113').forEach(b => b.classList.remove('active113')); 
-      document.getElementById(tabName).classList.add('active113'); 
-      evt.target.classList.add('active113'); 
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); 
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); 
+      document.getElementById(tabName).classList.add('active'); 
+      evt.target.classList.add('active'); 
     }
 
     document.getElementById('dailyBtn').onclick = () => {
-      data.balance += 0.05; saveData(); updateUI();
-      tg.showAlert(`$0.05 Added! Total: $${data.balance.toFixed(4)}`);
+      data.balance += DAILY_REWARD;
+      saveData(); updateUI();
+      tg.showAlert(`🎁 $0.05 Added! \nTotal: $${data.balance.toFixed(4)}`);
     }
 
-    const AdController = window.Adsgram.init({ blockId: "37657" });
-    document.getElementById('adBtn').onclick = async () => {
-      try { await AdController.show(); data.adsWatched++; data.balance += 0.0006; saveData(); updateUI(); }
-      catch (e) {}
+    // GIGAPUB ONLY
+    document.getElementById('gigaBtn').onclick = async () => {
+      if(data.adsWatched >= DAILY_LIMIT) return tg.showAlert("Daily limit reached");
+      document.getElementById('gigaBtn').disabled = true;
+      try {
+        // IMPORTANT: PUT YOUR GIGAPUB APP ID HERE
+        window.GigaPubSDK.showAd({
+          appId: "YOUR_GIGAPUB_APP_ID",
+          onReward: () => { creditUser(); document.getElementById('gigaBtn').disabled = false; },
+          onClose: () => { document.getElementById('gigaBtn').disabled = false; }
+        });
+      } catch(e) {
+        tg.showAlert("GigaPub SDK error. Check App ID");
+        document.getElementById('gigaBtn').disabled = false;
+      }
     }
 
-    document.getElementById('refLink').innerText = `https://t.me/AdsPayU?start=ref${user.id}`;
+    const botUsername = "AdsPayU";
+    const refLink = `https://t.me/${botUsername}?start=ref${user.id}`;
+    document.getElementById('refLink').innerText = refLink;
+    function copyRef() { navigator.clipboard.writeText(refLink); tg.showAlert("Copied!"); }
+
     const lbList = document.getElementById('leaderboardList');
-    for(let i=1; i<=10; i++){ lbList.innerHTML += `<div style="padding:8px 0;">#${i} User${i} - $${((11-i)*0.0006).toFixed(4)}</div>`; }
-    function requestWithdraw() { alert("Request sent!"); }
+    for(let i=1; i<=50; i++){ lbList.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px 0;"><div><span style="color:var(--giga)">#${i}</span> User${i}</div><div>$${((51-i)*0.0006).toFixed(4)}</div></div>`; }
 
-    let wheelState = { players: [], spinning: false, rotation: 0 };
-    const colors = ['#22c55e', '#7c3aed', '#f59e0b', '#ef4444'];
+    function requestWithdraw() { const wallet = document.getElementById('wallet').value; if(!wallet) return alert("Enter wallet"); if(data.balance < 1.00) return alert("Min $1.00"); alert("Request sent!"); }
 
-    function joinWheel(bet) {
-      if (data.balance < bet) return tg.showAlert("No balance");
+    // WHEEL
+    let wheelState = { players: [], timer: null, spinning: false, rotation: 0, timerRunning: false };
+    const colors = ['#7c3aed', '#22c55e', '#f59e0b', '#ef4444'];
+
+    function joinWheel(betAmount) {
+      if (data.balance < betAmount) return tg.showAlert("Not enough balance");
+      if (wheelState.spinning) return tg.showAlert("Wheel is spinning");
       let me = wheelState.players.find(p => p.id === user.id);
-      if (me) { me.bet += bet; } else { wheelState.players.push({ id: user.id, name: user.first_name, bet: bet }); }
-      data.balance -= bet; saveData(); updateUI(); updateWheel();
-      if (wheelState.players.length >= 2) startTimer();
+      if (me) { me.bet += betAmount; } else { wheelState.players.push({ id: user.id, name: user.first_name, bet: betAmount }); }
+      data.balance -= betAmount; saveData(); updateUI(); updateWheelUI();
+      if (wheelState.players.length >= 2 &&!wheelState.timerRunning) { startTimer(); }
     }
 
     function startTimer() {
+      wheelState.timerRunning = true;
       let time = 30;
       document.getElementById('timer').innerText = `Spinning in: ${time}s`;
-      const t = setInterval(() => {
+      wheelState.timer = setInterval(() => {
         time--; document.getElementById('timer').innerText = `Spinning in: ${time}s`;
-        if (time <= 0) { clearInterval(t); spinWheel(); }
+        if (time <= 0) { clearInterval(wheelState.timer); wheelState.timerRunning = false; spinWheel(); }
       }, 1000);
     }
 
     function spinWheel() {
       wheelState.spinning = true;
-      const total = wheelState.players.reduce((s, p) => s + p.bet, 0);
+      const totalPool = wheelState.players.reduce((s, p) => s + p.bet, 0);
       const finalRotation = wheelState.rotation + 1440;
-      document.getElementById('wheelcanvas113').style.transform = `rotate(${finalRotation}deg)`;
+      document.getElementById('wheelCanvas').style.transform = `rotate(${finalRotation}deg)`;
       setTimeout(() => {
-        tg.showAlert(`Winner picked! Pool: $${(total*0.95).toFixed(4)}`);
-        wheelState = { players: [], spinning: false, rotation: 0 };
-        updateWheel();
+        const winAmount = (totalPool * (1 - FEE)).toFixed(4);
+        tg.showAlert(`Winner won $${winAmount}!`);
+        wheelState = { players: [], timer: null, spinning: false, rotation: 0, timerRunning: false };
+        updateWheelUI();
       }, 5200);
     }
 
-    function updateWheel() {
-      const total = wheelState.players.reduce((s, p) => s + p.bet, 0);
-      document.getElementById('playersList').innerHTML = wheelState.players.map((p,i) => 
-        `<div class="player113 ${p.id===user.id?'me113':''}"><span>${p.name}</span><span>$${p.bet.toFixed(2)}</span></div>`
-      ).join('');
-      
-      const canvas = document.getElementById('wheelcanvas113'); const ctx = canvas.getContext('2d');
+    function updateWheelUI() {
+      const list = document.getElementById('playersList');
+      const totalPool = wheelState.players.reduce((s, p) => s + p.bet, 0);
+      if (wheelState.players.length === 0) { list.innerHTML = '<p style="color:var(--muted); text-align:center;">No players yet</p>'; }
+      else {
+        list.innerHTML = wheelState.players.map((p,i) => {
+          const chance = totalPool > 0? ((p.bet / totalPool) * 100).toFixed(1) : 0;
+          return `<div class="player-item ${p.id===user.id?'me':''}" style="border-left:3px solid ${colors[i%colors.length]}"><span>${p.name}</span><span>$${p.bet.toFixed(2)} - ${chance}%</span></div>`;
+        }).join('');
+      }
+    }
+
+    function drawWheel() {
+      const canvas = document.getElementById('wheelCanvas'); const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, 280, 280);
-      if(total === 0) return;
-      let angle = 0;
-      wheelState.players.forEach((p, i) => {
-        const slice = (p.bet / total) * 2 * Math.PI;
-        ctx.beginPath(); ctx.moveTo(140, 140);
-        ctx.arc(140, 140, 130, angle - Math.PI/2, angle + slice - Math.PI/2);
-        ctx.fillStyle = colors[i % colors.length]; ctx.fill();
-        angle += slice;
-      });
+      ctx.beginPath(); ctx.arc(140, 140, 135, 0, 2 * Math.PI); ctx.fillStyle = '#1f2937'; ctx.fill();
     }
   </script>
 </body>
