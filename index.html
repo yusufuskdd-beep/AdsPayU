@@ -12,43 +12,43 @@
     #splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0047ff, #0030aa); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.5s ease; }
     #splash.hide { opacity: 0; pointer-events: none; }
     #splash h1 { font-size: 32px; margin-bottom: 10px; }
-.loader { border: 4px solid rgba(255,255,255,0.2); border-top: 4px solid #fff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-top: 20px; }
-.powered { color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 12px; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); }
+   .loader { border: 4px solid rgba(255,255,255,0.2); border-top: 4px solid #fff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-top: 20px; }
+   .powered { color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 12px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } /* FIXED } */
     #app { display: none; }
-.header { text-align: center; padding: 20px; background: linear-gradient(135deg, #22c55e, #16a34a); }
-.header h1 { font-size: 22px; }
-.balance-card { background: var(--card); margin: -30px 16px 20px; padding: 20px; border-radius: 16px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-.balance-card.label { color: var(--muted); font-size: 14px; }
-.balance-card.amount { font-size: 32px; font-weight: 700; color: var(--accent); margin: 8px 0; }
-.stats { display: flex; gap: 10px; margin-top: 12px; }
-.stat-box { flex: 1; background: #1f2937; padding: 10px; border-radius: 10px; }
-.stat-box.val { font-size: 18px; font-weight: 700; color: var(--accent); }
-.stat-box.lbl { font-size: 11px; color: var(--muted); }
-.tabs { display: flex; background: var(--card); margin: 0 16px; border-radius: 12px; padding: 4px; overflow-x: auto; }
-.tab-btn { flex: 1; padding: 10px 8px; border: none; background: transparent; color: var(--muted); border-radius: 8px; font-weight: 600; font-size: 13px; white-space: nowrap; }
-.tab-btn.active { background: var(--accent); color: #000; }
-.tab-content { display: none; padding: 20px 16px; }
-.tab-content.active { display: block; }
+   .header { text-align: center; padding: 20px; background: linear-gradient(135deg, #22c55e, #16a34a); }
+   .header h1 { font-size: 22px; }
+   .balance-card { background: var(--card); margin: -30px 16px 20px; padding: 20px; border-radius: 16px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+   .balance-card.label { color: var(--muted); font-size: 14px; }
+   .balance-card.amount { font-size: 32px; font-weight: 700; color: var(--accent); margin: 8px 0; }
+   .stats { display: flex; gap: 10px; margin-top: 12px; }
+   .stat-box { flex: 1; background: #1f2937; padding: 10px; border-radius: 10px; }
+   .stat-box.val { font-size: 18px; font-weight: 700; color: var(--accent); }
+   .stat-box.lbl { font-size: 11px; color: var(--muted); }
+   .tabs { display: flex; background: var(--card); margin: 0 16px; border-radius: 12px; padding: 4px; overflow-x: auto; }
+   .tab-btn { flex: 1; padding: 10px 8px; border: none; background: transparent; color: var(--muted); border-radius: 8px; font-weight: 600; font-size: 13px; white-space: nowrap; }
+   .tab-btn.active { background: var(--accent); color: #000; }
+   .tab-content { display: none; padding: 20px 16px; }
+   .tab-content.active { display: block; }
     button.primary { background: var(--accent); color: #000; border: none; padding: 16px; font-size: 16px; font-weight: 700; border-radius: 12px; width: 100%; cursor: pointer; margin-bottom: 10px; }
     button.giga { background: var(--giga); color: #fff; border: none; padding: 16px; font-size: 16px; font-weight: 700; border-radius: 12px; width: 100%; cursor: not-allowed; margin-bottom: 10px; opacity: 0.6; }
     button.wheel-btn { padding: 12px; font-size: 14px; margin-bottom: 0; }
     button:disabled { background: #374151; color: var(--muted); cursor: not-allowed; }
-.card { background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 12px; }
-.ref-link { background: #1f2937; padding: 12px; border-radius: 8px; word-break: break-all; font-size: 13px; margin: 10px 0; }
-.leaderboard-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #1f2937; }
-.rank { color: var(--accent); font-weight: 700; width: 30px; }
+   .card { background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 12px; }
+   .ref-link { background: #1f2937; padding: 12px; border-radius: 8px; word-break: break-all; font-size: 13px; margin: 10px 0; }
+   .leaderboard-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #1f2937; }
+   .rank { color: var(--accent); font-weight: 700; width: 30px; }
     input { width: 100%; padding: 12px; background: #1f2937; border: 1px solid #374151; border-radius: 8px; color: var(--text); margin: 8px 0; }
-.ref-item { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
-.badge { font-size: 10px; padding: 3px 6px; border-radius: 6px; }
-.badge.pending { background: var(--warning); color: #000; }
-.badge.confirmed { background: var(--accent); color: #000; }
+   .ref-item { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+   .badge { font-size: 10px; padding: 3px 6px; border-radius: 6px; }
+   .badge.pending { background: var(--warning); color: #000; }
+   .badge.confirmed { background: var(--accent); color: #000; }
     #wheelContainer { position: relative; width: 280px; height: 280px; margin: 0 auto; }
     #wheelCanvas { background: #1f2937; border-radius: 50%; border: 4px solid var(--accent); display: block; transition: transform 5s cubic-bezier(0.17, 0.67, 0.12, 0.99); }
-.wheel-pin { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 20px solid var(--danger); z-index: 10; }
-.timer { text-align: center; font-size: 24px; font-weight: 700; color: var(--warning); margin-bottom: 12px; }
-.player-item { display: flex; justify-content: space-between; background: #1f2937; padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; font-size: 14px; }
-.player-item.me { border: 2px solid var(--accent); }
+   .wheel-pin { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 20px solid var(--danger); z-index: 10; }
+   .timer { text-align: center; font-size: 24px; font-weight: 700; color: var(--warning); margin-bottom: 12px; }
+   .player-item { display: flex; justify-content: space-between; background: #1f2937; padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; font-size: 14px; }
+   .player-item.me { border: 2px solid var(--accent); }
   </style>
 </head>
 <body>
@@ -106,8 +106,12 @@
   <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
   <script>
     const tg = window.Telegram.WebApp;
+    tg.ready(); // IMPORTANT: tells Telegram app is ready
     tg.expand();
-    const user = tg.initDataUnsafe.user || {id: 123, first_name: "Guest"};
+    
+    // Safety: if tg.user is null, use guest
+    const user = tg.initDataUnsafe.user || {id: Date.now(), first_name: "Guest"}; 
+    
     const DAILY_LIMIT = 400; const REWARD = 0.0006; const REF_REWARD = 0.0015; const FEE = 0.05; const DAILY_REWARD = 0.05;
 
     function getToday() { return new Date().toISOString().split('T')[0]; }
@@ -139,7 +143,7 @@
       document.getElementById('refCountTop').innerText = confirmed;
       const refList = document.getElementById('refList');
       if (Object.keys(refData).length === 0) { refList.innerHTML = '<p style="color:var(--muted);">No referrals yet</p>'; }
-      else { refList.innerHTML = ''; for (let [id, r] of Object.entries(refData)) { refList.innerHTML += `<div class="ref-item"><span>${r.name}</span><span class="badge ${r.status}">${r.status}</span></div>`; }
+      else { refList.innerHTML = ''; for (let [id, r] of Object.entries(refData)) { refList.innerHTML += `<div class="ref-item"><span>${r.name}</span><span class="badge ${r.status}">${r.status}</span></div>`; } }
       const adBtn = document.getElementById('adBtn');
       if (data.adsWatched >= DAILY_LIMIT) { adBtn.disabled = true; adBtn.innerText = "Daily Limit Reached"; }
       else { adBtn.disabled = false; adBtn.innerText = "Watch AdsGram Ad +$0.0006"; }
@@ -147,9 +151,21 @@
       updateWheelUI();
     }
 
-    window.addEventListener('load', () => { setTimeout(() => { document.getElementById('splash').classList.add('hide'); document.getElementById('app').style.display = 'block'; updateUI(); drawWheel(0); }, 2000); });
+    window.addEventListener('load', () => { 
+      setTimeout(() => { 
+        document.getElementById('splash').classList.add('hide'); 
+        document.getElementById('app').style.display = 'block'; 
+        updateUI(); 
+        drawWheel(0); 
+      }, 1200); // FASTER LOAD
+    });
 
-    function openTab(tabName) { document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); document.getElementById(tabName).classList.add('active'); event.target.classList.add('active'); }
+    function openTab(tabName) { 
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); 
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); 
+      document.getElementById(tabName).classList.add('active'); 
+      event.target.classList.add('active'); 
+    }
 
     document.getElementById('dailyBtn').onclick = () => {
       data.balance += DAILY_REWARD;
@@ -188,14 +204,11 @@
     function joinWheel(betAmount) {
       if (data.balance < betAmount) return tg.showAlert("Not enough balance");
       if (wheelState.spinning) return tg.showAlert("Wheel is spinning");
-
       let me = wheelState.players.find(p => p.id === user.id);
       if (me) { me.bet += betAmount; }
       else { wheelState.players.push({ id: user.id, name: user.first_name, bet: betAmount }); }
-
       data.balance -= betAmount;
       saveData(); saveWheel(); updateWheelUI();
-
       if (wheelState.players.length >= 2 &&!wheelState.timerRunning) { startTimer(); }
       if (wheelState.players.length < 8 &&!wheelState.spinning) { addBots(); }
     }
@@ -205,20 +218,20 @@
         if (wheelState.players.length >= 8 || wheelState.spinning) return;
         const botBet = [0.01, 0.10, 1.00][Math.floor(Math.random() * 3)];
         const botName = botNames[Math.floor(Math.random() * botNames.length)] + Math.floor(Math.random()*100);
-        wheelState.players.push({ id: 'bot'+Date.now()+Math.random(), name: botName, bet: botBet }); // UNIQUE ID
+        wheelState.players.push({ id: 'bot'+Date.now()+Math.random(), name: botName, bet: botBet });
         saveWheel(); updateWheelUI();
         if (wheelState.players.length >= 2 &&!wheelState.timerRunning) { startTimer(); }
       }, 1000 + Math.random()*2000);
     }
 
     function startTimer() {
-      if (wheelState.timerRunning) return; // LOCK: prevent 2 timers
+      if (wheelState.timerRunning) return;
       wheelState.timerRunning = true;
       let time = 30;
       document.getElementById('timer').innerText = `Spinning in: ${time}s`;
       wheelState.timer = setInterval(() => {
         time--;
-        if (time < 0) time = 0; // PREVENT NEGATIVE
+        if (time < 0) time = 0;
         document.getElementById('timer').innerText = `Spinning in: ${time}s`;
         if (time <= 0) { 
           clearInterval(wheelState.timer); 
@@ -230,13 +243,11 @@
     }
 
     function spinWheel() {
-      if (wheelState.spinning) return; // LOCK: prevent double spin
+      if (wheelState.spinning) return;
       wheelState.spinning = true;
       document.querySelectorAll('.wheel-btn').forEach(b => b.disabled = true);
-
       const totalPool = wheelState.players.reduce((s, p) => s + p.bet, 0);
       if (totalPool === 0) { wheelState.spinning = false; return; }
-
       let rand = Math.random() * totalPool;
       let winnerIndex = 0; let cumulative = 0;
       for (let i=0; i<wheelState.players.length; i++) {
@@ -244,28 +255,23 @@
         if (rand <= cumulative) { winnerIndex = i; break; }
       }
       const winner = wheelState.players[winnerIndex];
-
       let angleBefore = 0;
       for(let i=0; i<winnerIndex; i++) {
         angleBefore += (wheelState.players[i].bet / totalPool) * 360;
       }
       const winnerSlice = (winner.bet / totalPool) * 360;
       const targetAngle = 270 - angleBefore - (winnerSlice / 2);
-
       const spins = 4 * 360;
       const finalRotation = wheelState.rotation + spins + targetAngle;
-
       const wheelCanvas = document.getElementById('wheelCanvas');
       wheelCanvas.style.transform = `rotate(${finalRotation}deg)`;
       wheelState.rotation = finalRotation % 360;
-
       setTimeout(() => {
         const winAmount = (totalPool * (1 - FEE)).toFixed(4);
         if (winner.id === user.id) { data.balance += parseFloat(winAmount); saveData(); tg.showAlert(`🎉 YOU WON $${winAmount}!`); }
         else { tg.showAlert(`${winner.name} won $${winAmount}`); }
-
         setTimeout(() => {
-          wheelState = { players: [], timer: null, spinning: false, rotation: 0, timerRunning: false }; // FULL RESET
+          wheelState = { players: [], timer: null, spinning: false, rotation: 0, timerRunning: false };
           saveWheel(); updateWheelUI(); drawWheel(0);
           document.querySelectorAll('.wheel-btn').forEach(b => b.disabled = false);
         }, 3000);
@@ -290,12 +296,9 @@
       const canvas = document.getElementById('wheelCanvas'); const ctx = canvas.getContext('2d');
       canvas.style.transform = `rotate(${rotation}deg)`;
       ctx.clearRect(0, 0, 280, 280);
-
       ctx.beginPath(); ctx.arc(140, 140, 135, 0, 2 * Math.PI); ctx.fillStyle = '#1f2937'; ctx.fill();
-
       const totalPool = wheelState.players.reduce((s, p) => s + p.bet, 0);
       if (totalPool === 0) return;
-
       let startAngle = 0;
       wheelState.players.forEach((p, i) => {
         const sliceAngle = (p.bet / totalPool) * 2 * Math.PI;
