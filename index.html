@@ -2,158 +2,62 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>AdsPayU v12.0</title>
+  <title>AdsPayU</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    :root { --bg: #0a0f1e; --card: #111827; --text: #e5e7eb; --muted: #9ca3af; --warning: #f59e0b; --giga: #7c3aed; --success: #22c55e; }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 80px; }
-
-    #splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #7c3aed, #5b21b6); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
-    #splash.hide { opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
-    #splash h1 { font-size: 32px; margin-bottom: 10px; color: #fff; }
-
-    #app { display: none; }
-.header { text-align: center; padding: 20px; background: linear-gradient(135deg, #7c3aed, #5b21b6); }
-.header h1 { font-size: 22px; color: #fff; }
-.balance-card { background: var(--card); margin: -30px 16px 20px; padding: 20px; border-radius: 16px; text-align: center; }
-.label { color: var(--muted); font-size: 14px; }
-.amount { font-size: 32px; font-weight: 700; color: var(--giga); margin: 8px 0; }
-
-    button.primary { background: var(--giga); color: #fff; border: none; padding: 16px; font-size: 16px; font-weight: 700; border-radius: 12px; width: 100%; cursor: pointer; margin-bottom: 10px; }
-    button.success { background: var(--success); color: #fff; border: none; padding: 16px; font-size: 16px; font-weight: 700; border-radius: 12px; width: 100%; cursor: pointer; margin-bottom: 10px; display: none; }
-    button:disabled { background: #374151; color: var(--muted); cursor: not-allowed; }
-.card { background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 12px; }
-.info { background: #1f2937; padding: 12px; border-radius: 8px; font-size: 13px; color: var(--muted); margin-bottom: 12px; }
-.countdown { text-align: center; color: var(--warning); font-weight: 700; margin: 10px 0; }
+    body { 
+      font-family: Arial; 
+      text-align: center; 
+      padding: 20px; 
+      background: #17212b; 
+      color: white;
+      margin: 0;
+    }
+    h1 { color: #0088cc; }
+    button { 
+      padding: 15px 30px; 
+      font-size: 16px; 
+      background: #0088cc; 
+      color: white; 
+      border: none; 
+      border-radius: 10px; 
+      margin: 10px;
+      width: 90%;
+      cursor: pointer;
+    }
+    button:active { background: #006699; }
+    #adBox { margin-top: 20px; }
+    iframe { width: 100%; height: 450px; border: none; border-radius: 10px; }
+    .note { font-size: 12px; color: #aaa; margin-top: 10px; }
   </style>
 </head>
 <body>
-  <div id="splash"><h1>💰 AdsPayU</h1><p style="color:#fff; margin-top:8px;">Powered by GigaPub</p></div>
-
-  <div id="app">
-    <div class="header"><h1>💰 AdsPayU Rewards</h1></div>
-
-    <div class="balance-card">
-      <div class="label">Your Balance</div>
-      <div class="amount" id="balance">$0.0000</div>
-      <div class="label">Ads Today: <span id="adsCount">0/400</span></div>
-    </div>
-
-    <div class="card">
-      <button id="dailyBtn" class="primary" style="background:var(--warning); color:#000;">🎁 Claim $0.05 TEST</button>
-
-      <div class="info">1. Click "Watch Ad" <br>2. Watch full ad <br>3. Come back & click "I Watched It"</div>
-
-      <button id="gigaBtn" class="primary">Watch GigaPub Ad +$0.0006</button>
-      <button id="verifyBtn" class="success">✓ I Watched The Ad - Claim Reward</button>
-      <div class="countdown" id="countdown"></div>
-
-      <p style="text-align:center; color:var(--muted); margin-top:12px; font-size:13px;">400 ads per day limit</p>
-    </div>
-  </div>
+  <h1>AdsPayU</h1>
+  <p>Earn $0.0006 per ad</p>
+  
+  <button id="watchBtn">🎁 Watch Ad</button>
+  <div id="adBox"></div>
+  
+  <p class="note">Stay on the ad for 15 seconds. GigaPub will auto-credit you.</p>
 
   <script>
     const tg = window.Telegram.WebApp;
-    tg.ready(); tg.expand();
-    const user = tg.initDataUnsafe.user || {id: Date.now(), first_name: "Guest"};
+    tg.expand();
+    tg.ready();
 
-    const DAILY_LIMIT = 400;
-    const REWARD = 0.0006;
-    const DAILY_REWARD = 0.05;
-    const GIGAPUB_ID = "7204";
-    const AD_URL = `https://gigapub.tech/show/${GIGAPUB_ID}`;
+    const user = tg.initDataUnsafe.user;
+    const userId = user ? user.id : "guest";
 
-    function getToday() { return new Date().toISOString().split('T')[0]; }
-    let data = JSON.parse(localStorage.getItem('adsPayUData')) || { date: getToday(), adsWatched: 0, balance: 0, waitingVerify: false, adStartTime: 0 };
-    if (data.date!== getToday()) { data = {...data, date: getToday(), adsWatched: 0, waitingVerify: false }; }
-
-    function saveData() { localStorage.setItem('adsPayUData', JSON.stringify(data)); }
-
-    function creditUser() {
-      if (data.adsWatched >= DAILY_LIMIT) return false;
-      if(Date.now() - data.adStartTime < 15000) return tg.showAlert("Please watch the full ad for 15s");
-
-      data.adsWatched += 1;
-      data.balance += REWARD;
-      data.waitingVerify = false;
-      saveData(); updateUI();
-      tg.showAlert(`✅ Reward Credited! \n+$${REWARD.toFixed(4)} \nToday: ${data.adsWatched}/${DAILY_LIMIT}`);
-      return true;
-    }
-
-    function updateUI() {
-      document.getElementById('adsCount').innerText = `${data.adsWatched}/${DAILY_LIMIT}`;
-      document.getElementById('balance').innerText = '$' + data.balance.toFixed(4);
-
-      const gigaBtn = document.getElementById('gigaBtn');
-      const verifyBtn = document.getElementById('verifyBtn');
-
-      if(data.adsWatched >= DAILY_LIMIT) {
-        gigaBtn.disabled = true;
-        gigaBtn.innerText = "Daily Limit Reached";
-        verifyBtn.style.display = 'none';
-      } else if(data.waitingVerify) {
-        gigaBtn.style.display = 'none';
-        verifyBtn.style.display = 'block';
-        startCountdown();
-      } else {
-        gigaBtn.style.display = 'block';
-        verifyBtn.style.display = 'none';
-        gigaBtn.disabled = false;
-        gigaBtn.innerText = "Watch GigaPub Ad +$0.0006";
-      }
-    }
-
-    function startCountdown() {
-      let time = 30;
-      const cd = document.getElementById('countdown');
-      const timer = setInterval(() => {
-        cd.innerText = `Return within ${time}s to claim`;
-        time--;
-        if(time < 0 ||!data.waitingVerify) {
-          clearInterval(timer);
-          cd.innerText = '';
-          if(data.waitingVerify) {
-            data.waitingVerify = false;
-            saveData();
-            updateUI();
-          }
-        }
-      }, 1000);
-    }
-
-    window.addEventListener('load', () => {
-      setTimeout(() => {
-        document.getElementById('splash').classList.add('hide');
-        document.getElementById('app').style.display = 'block';
-        updateUI();
-      }, 800);
-    });
-
-    document.getElementById('dailyBtn').onclick = () => {
-      data.balance += DAILY_REWARD;
-      saveData(); updateUI();
-      tg.showAlert(`🎁 $0.05 Added!`);
-    }
-
-    // OPEN AD
-    document.getElementById('gigaBtn').onclick = () => {
-      if(data.adsWatched >= DAILY_LIMIT) return tg.showAlert("Daily limit reached");
-
-      data.waitingVerify = true;
-      data.adStartTime = Date.now();
-      saveData();
-      updateUI();
-
-      // Open ad in external browser
-      tg.openLink(AD_URL);
-    }
-
-    // VERIFY AND CREDIT
-    document.getElementById('verifyBtn').onclick = () => {
-      creditUser();
+    document.getElementById('watchBtn').onclick = () => {
+      // Load GigaPub Zone 7204 with user_id
+      const adUrl = `https://link.gigapub.tech/7204?sub1=${userId}`;
+      
+      document.getElementById('adBox').innerHTML = `
+        <iframe src="${adUrl}"></iframe>
+      `;
+      
+      tg.HapticFeedback.impactOccurred('medium');
+      alert('Ad loaded. Stay for 15s then close it.');
     }
   </script>
 </body>
