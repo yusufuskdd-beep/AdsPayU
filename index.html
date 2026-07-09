@@ -20,6 +20,10 @@
             border-radius: 12px;
             cursor: pointer;
         }
+        #watchBtn:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
         #balance { font-size: 24px; margin-bottom: 20px; }
     </style>
 </head>
@@ -30,26 +34,40 @@
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand(); // Make app full screen
+        tg.ready();
         
         let userId = tg.initDataUnsafe.user?.id;
         let balance = 0;
 
         // INIT GIGAPUB
         GigaPub.init({
-            appId: 'YOUR_APP_ID_HERE', // Replace this
-            zoneId: 'YOUR_ZONE_ID_HERE' // Replace this
+            appId: '7204', 
+            zoneId: 'main'
         });
 
         document.getElementById('watchBtn').onclick = () => {
+            document.getElementById('watchBtn').disabled = true;
+            document.getElementById('watchBtn').innerText = "Loading Ad...";
+
             GigaPub.showRewardedAd({
                 onReward: () => {
                     balance += 10;
                     document.getElementById('balance').innerText = `Balance: ${balance} Coins`;
-                    // TODO: Send this to your backend
-                    alert('You earned 10 coins!');
+                    alert('✅ You earned 10 coins!');
+                    document.getElementById('watchBtn').disabled = false;
+                    document.getElementById('watchBtn').innerText = "Watch Ad +10 Coins";
+                    
+                    // NEXT STEP: Send to backend
+                    // fetch(`/api/credit?user_id=${userId}&amount=10`)
                 },
                 onError: (err) => {
-                    alert('Ad failed to load. Try again.');
+                    alert('❌ Ad failed to load. Try again in 30s.');
+                    document.getElementById('watchBtn').disabled = false;
+                    document.getElementById('watchBtn').innerText = "Watch Ad +10 Coins";
+                },
+                onClose: () => {
+                    document.getElementById('watchBtn').disabled = false;
+                    document.getElementById('watchBtn').innerText = "Watch Ad +10 Coins";
                 }
             });
         };
