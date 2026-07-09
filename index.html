@@ -37,17 +37,16 @@ const API = "https://adspayu-backend-5y7g.onrender.com";
 let canWatch = true;
 let cooldown = 5; 
 
-// LOAD GIGAPUB DYNAMICALLY AFTER TG READY
+// LOAD GIGAPUB
 function loadGiga() {
     const script = document.createElement('script');
     script.src = 'https://ad.gigapub.tech/script?id=7204';
     script.async = true;
     script.onload = () => {
         document.getElementById('status').innerText = "Ready to earn";
-        console.log("GigaPub Loaded");
     };
     script.onerror = () => {
-        document.getElementById('status').innerText = "❌ GigaPub Blocked by Telegram";
+        document.getElementById('status').innerText = "❌ GigaPub Blocked";
     };
     document.head.appendChild(script);
 }
@@ -59,14 +58,21 @@ async function loadBalance() {
         document.getElementById('balance').innerText = `$${data.balance.toFixed(4)}`;
     } catch(e) {
         document.getElementById('status').innerText = "Backend offline.";
+        console.error("Balance fetch error:", e);
     }
 }
 
 async function creditUser() {
-    const res = await fetch(`${API}/api/credit?user_id=${user_id}&amount=0.0006`);
-    const data = await res.json();
-    document.getElementById('balance').innerText = `$${data.new_balance.toFixed(4)}`;
-    document.getElementById('status').innerText = "Credited +$0.0006 ✅";
+    try {
+        document.getElementById('status').innerText = "Crediting...";
+        const res = await fetch(`${API}/api/credit?user_id=${user_id}&amount=0.0006`);
+        const data = await res.json();
+        document.getElementById('balance').innerText = `$${data.new_balance.toFixed(4)}`;
+        document.getElementById('status').innerText = "Credited +$0.0006 ✅";
+    } catch(e) {
+        document.getElementById('status').innerText = "❌ Credit failed. Check logs";
+        console.error("Credit fetch error:", e);
+    }
 }
 
 function startCooldown() {
@@ -83,6 +89,7 @@ function startCooldown() {
             btn.disabled = false;
             btn.innerText = "Watch Ad +$0.0006";
             status.innerText = "Ready for next ad";
+            loadGiga(); // RELOAD SDK SO NEXT AD WORKS
         }
     }, 1000);
 }
@@ -90,7 +97,7 @@ function startCooldown() {
 function watchAd() {
     if (!canWatch) return;
     if (typeof window.showGiga !== 'function') {
-        alert("Ad SDK not loaded. Try reopening the app.");
+        alert("Ad SDK not loaded. Reopen app.");
         return;
     }
     
@@ -100,14 +107,27 @@ function watchAd() {
     btn.innerText = "Watching...";
     document.getElementById('status').innerText = "Loading ad...";
 
+    // ADD TIMEOUT IN CASE GIGAPUB NEVER CALLS BACK
+    let adTimeout = setTimeout(() => {
+        document.getElementById('status').innerText = "Ad timeout. Try again.";
+        startCooldown();
+    }, 30000); // 30s timeout
+
     window.showGiga({
         onReward: async () => {
+            clearTimeout(adTimeout);
             await creditUser();
             startCooldown();
         },
+        onClose: () => {
+            clearTimeout(adTimeout);
+            document.getElementById('status').innerText = "Ad closed early";
+            startCooldown();
+        },
         onError: (err) => {
+            clearTimeout(adTimeout);
             console.log("GigaPub Error:", err);
-            document.getElementById('status').innerText = "No ad available. Try again.";
+            document.getElementById('status').innerText = "No ad. Try again.";
             startCooldown();
         }
     });
@@ -115,7 +135,7 @@ function watchAd() {
 
 document.getElementById('watchAdBtn').onclick = watchAd;
 loadBalance();
-loadGiga(); // Load SDK after page loads
+loadGiga();
 </script>
 </body>
 </html>
