@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AdsPayU</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-<!-- YOUR GIGAPUB APP ID -->
 <script src='https://lib.gigapub.tech/gigapub.js?appId=7204'></script>
 
 <style>
@@ -26,8 +24,8 @@
   <div id="balance">$0.0000</div>
 </div>
 
-<button id="watchAdBtn">Watch Ad +$0.0006</button>
-<div id="status">Loading...</div>
+<button id="watchAdBtn" disabled>Loading SDK...</button>
+<div id="status">Initializing...</div>
 
 <script>
 const tg = window.Telegram.WebApp;
@@ -35,30 +33,52 @@ tg.ready();
 tg.expand();
 const user_id = tg.initDataUnsafe?.user?.id || "guest123";
 const API = "https://adspayu-backend-5y7g.onrender.com";
+let sdkReady = false;
+
+// 1. WAIT FOR GIGAPUB SDK TO BE READY
+function checkSDK() {
+    if (window.GigaPub) {
+        // INIT SDK WITH USER ID
+        window.GigaPub.init({ userId: user_id });
+        sdkReady = true;
+        document.getElementById('watchAdBtn').disabled = false;
+        document.getElementById('watchAdBtn').innerText = "Watch Ad +$0.0006";
+        document.getElementById('status').innerText = "Ready to earn";
+        loadBalance();
+    } else {
+        setTimeout(checkSDK, 200); // Check again in 200ms
+    }
+}
 
 async function loadBalance() {
     try {
         const res = await fetch(`${API}/api/balance?user_id=${user_id}`);
         const data = await res.json();
         document.getElementById('balance').innerText = `$${data.balance.toFixed(4)}`;
-        document.getElementById('status').innerText = "Ready to earn";
     } catch(e) {
         document.getElementById('status').innerText = "Backend offline.";
-        console.error(e);
     }
 }
 
-// GIGAPUB WITH APP ID 7204 + PLACEMENT "main"
+// 2. WATCH AD WITH TIMEOUT
 document.getElementById('watchAdBtn').onclick = () => {
+    if(!sdkReady) return;
+    
     const btn = document.getElementById('watchAdBtn');
     btn.disabled = true;
     document.getElementById('status').innerText = "Loading ad...";
 
+    let adTimeout = setTimeout(() => {
+        document.getElementById('status').innerText = "Ad took too long. No fill.";
+        btn.disabled = false;
+    }, 8000); // 8 second timeout
+
     window.GigaPub.showAd({
         userId: user_id,
         placementId: "main", 
-        // test: true, // UNCOMMENT THIS LINE TO FORCE TEST AD
+        // test: true, // UNCOMMENT TO TEST
         onReward: async () => {
+            clearTimeout(adTimeout);
             document.getElementById('status').innerText = "Crediting...";
             const res = await fetch(`${API}/api/credit?user_id=${user_id}&amount=0.0006`);
             const data = await res.json();
@@ -67,6 +87,7 @@ document.getElementById('watchAdBtn').onclick = () => {
             btn.disabled = false;
         },
         onError: (err) => {
+            clearTimeout(adTimeout);
             console.log("GigaPub Error:", err);
             document.getElementById('status').innerText = err.message || "No ads available";
             btn.disabled = false;
@@ -74,7 +95,7 @@ document.getElementById('watchAdBtn').onclick = () => {
     });
 };
 
-loadBalance();
+checkSDK(); // START CHECKING FOR SDK
 </script>
 </body>
 </html>
