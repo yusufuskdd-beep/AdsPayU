@@ -1,92 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AdsPayU VC</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <!-- ✅ NEW GIGAPUB SCRIPT -->
-  <script src="https://lib.gigapub.tech/gigapub.js"></script>
-  <style>
-    body { font-family: Arial; text-align: center; padding: 20px; background: #17212b; color: white; }
-    h1 { color: #0088cc; }
-    .balance { font-size: 24px; margin: 20px 0; color: #4CAF50; font-weight: bold; }
-    button { padding: 15px 30px; font-size: 16px; background: #0088cc; color: white; border: none; border-radius: 10px; width: 90%; margin-top: 20px; cursor: pointer; transition: 0.2s; }
-    button:active { transform: scale(0.97); }
-    button:disabled { background: #555; cursor: not-allowed; }
-    #status { color: #aaa; font-size: 14px; margin-top: 10px; min-height: 20px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AdsPayU</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src='//lib.gigapub.tech/gigapub.js'></script>
+<style>
+  body { font-family: Arial; background: #0e0e0e; color: white; text-align: center; padding: 20px; }
+  #balance { font-size: 32px; color: #00ff88; margin: 20px 0; }
+  button { padding: 15px 30px; font-size: 18px; background: #00ff88; color: black; border: none; border-radius: 10px; cursor: pointer; margin: 10px; }
+  button:disabled { background: #555; cursor: not-allowed; }
+</style>
 </head>
 <body>
-  <h1>AdsPayU VC 🇻🇨</h1>
-  <p>Balance:</p>
-  <div class="balance" id="balance">$0.0000</div>
-  <button id="adBtn" onclick="showAd()">🎁 Watch Ad - $0.0006</button>
-  <p id="status"></p>
 
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-    tg.ready();
-    const userId = tg.initDataUnsafe.user?.id || "guest";
-    let isLoading = false;
-    const API = "https://adspayu-backend-5y7g.onrender.com";
+<h1>AdsPayU 💰</h1>
+<div>Your Balance</div>
+<div id="balance">$0.0000</div>
 
-    // Load balance on start
-    fetch(`${API}/api/balance?user_id=${userId}`)
-     .then(res => res.json())
-     .then(data => {
+<button id="watchAdBtn">Watch Ad +$0.0006</button>
+<div id="status"></div>
+
+<script>
+const tg = window.Telegram.WebApp;
+tg.expand();
+const user_id = tg.initDataUnsafe?.user?.id || "guest123";
+
+// 1. YOUR BACKEND URL
+const API = "https://adspayu-backend-5y7g.onrender.com";
+
+// 2. LOAD BALANCE ON START
+async function loadBalance() {
+    try {
+        const res = await fetch(`${API}/api/balance?user_id=${user_id}`);
+        const data = await res.json();
         document.getElementById('balance').innerText = `$${data.balance.toFixed(4)}`;
-      })
-     .catch(e => console.log("Balance Load Error:", e))
-
-    function showAd() {
-      if(isLoading) return;
-      isLoading = true;
-
-      const btn = document.getElementById('adBtn');
-      const status = document.getElementById('status');
-      btn.disabled = true;
-      status.innerText = "Loading ad... please wait";
-
-      // ✅ 4 SECOND TIMEOUT SO IT DOESN'T HANG FOREVER
-      let adTimeout = setTimeout(() => {
-        status.innerText = "😅 GigaPub timeout. No ads right now. Try again in 30s";
-        btn.disabled = false;
-        isLoading = false;
-      }, 4000);
-
-      // ✅ USE ZONE NAME "main"
-      window.showGiga("main")
-       .then(() => {
-          clearTimeout(adTimeout);
-          // USER WATCHED FULL AD
-          status.innerText = "Ad completed! Crediting...";
-          console.log("AD WATCHED:", userId);
-
-          // Send to backend to credit
-          return fetch(`${API}/api/credit?user_id=${userId}&amount=0.0006`)
-        })
-       .then(res => res.json())
-       .then(data => {
-          status.innerText = `✅ $${data.credited} added! New balance: $${data.new_balance.toFixed(4)}`;
-          document.getElementById('balance').innerText = `$${data.new_balance.toFixed(4)}`;
-          btn.innerText = "⏰ Wait 10s";
-        })
-       .catch(e => {
-          clearTimeout(adTimeout);
-          console.log("GigaPub Error:", e);
-          status.innerText = "😅 No ads available. Try again in 10-30 min";
-          btn.innerText = "🎁 Watch Ad";
-        })
-       .finally(() => {
-          isLoading = false;
-          setTimeout(() => { 
-            btn.disabled = false; 
-            btn.innerText = "🎁 Watch Ad - $0.0006";
-          }, 10000); // 10s cooldown
-        });
+    } catch(e) {
+        document.getElementById('status').innerText = "Backend offline. Check Render.";
     }
-  </script>
+}
+
+// 3. SHOW AD AND CREDIT
+document.getElementById('watchAdBtn').onclick = () => {
+    const btn = document.getElementById('watchAdBtn');
+    btn.disabled = true;
+    document.getElementById('status').innerText = "Loading ad...";
+    
+    showGigaAd(); // This calls GigaPub
+};
+
+// 4. GIGAPUB CALLBACK - FIRES WHEN AD IS WATCHED
+window.showGigaAd = () => {
+    window.GigaPub.showAd({
+        userId: user_id,
+        onReward: async () => {
+            document.getElementById('status').innerText = "Crediting...";
+            // Call backend to add money
+            const res = await fetch(`${API}/api/credit?user_id=${user_id}&amount=0.0006`);
+            const data = await res.json();
+            document.getElementById('balance').innerText = `$${data.new_balance.toFixed(4)}`;
+            document.getElementById('status').innerText = "Credited +$0.0006 ✅";
+            document.getElementById('watchAdBtn').disabled = false;
+        },
+        onError: () => {
+            document.getElementById('status').innerText = "Ad failed. Try again.";
+            document.getElementById('watchAdBtn').disabled = false;
+        }
+    });
+};
+
+loadBalance();
+</script>
+
 </body>
 </html>
