@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AdsPayU VC</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <!-- GIGAPUB SCRIPT ID 7204 -->
-  <script src="https://ad.gigapub.tech/script?id=7204"></script>
+  <!-- ✅ NEW GIGAPUB SCRIPT -->
+  <script src="https://lib.gigapub.tech/gigapub.js"></script>
   <style>
     body { font-family: Arial; text-align: center; padding: 20px; background: #17212b; color: white; }
     h1 { color: #0088cc; }
@@ -46,7 +46,8 @@
       btn.disabled = true;
       status.innerText = "Loading ad... please wait";
 
-      window.showGiga()
+      // ✅ USE ZONE NAME "main" NOT 7204
+      window.showGiga("main")
        .then(() => {
           // USER WATCHED FULL AD
           status.innerText = "Ad completed! Crediting...";
@@ -58,7 +59,7 @@
            .then(data => {
               status.innerText = `✅ $${data.credited} added! New balance: $${data.new_balance.toFixed(4)}`;
               document.getElementById('balance').innerText = `$${data.new_balance.toFixed(4)}`;
-              btn.innerText = "⏰ Wait 10 min";
+              btn.innerText = "⏰ Wait 10s";
             })
         })
        .catch(e => {
@@ -68,7 +69,10 @@
         })
        .finally(() => {
           isLoading = false;
-          setTimeout(() => { btn.disabled = false; }, 10000); // 10s cooldown
+          setTimeout(() => { 
+            btn.disabled = false; 
+            btn.innerText = "🎁 Watch Ad - $0.0006";
+          }, 10000); // 10s cooldown
         });
     }
   </script>
