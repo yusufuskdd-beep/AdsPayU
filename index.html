@@ -1,144 +1,58 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AdsPayU</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>
-  body { font-family: Arial; background: #0e0e0e; color: white; text-align: center; padding: 20px; margin: 0; }
-  #balance { font-size: 36px; color: #00ff88; margin: 20px 0; font-weight: bold; }
-  button { padding: 18px 40px; font-size: 18px; background: #00ff88; color: black; border: none; border-radius: 12px; cursor: pointer; margin: 10px; font-weight: bold; }
-  button:disabled { background: #555; cursor: not-allowed; color: #aaa; }
-  #status { margin-top: 15px; font-size: 14px; color: #aaa; min-height: 20px; }
-  .card { background: #1a1a1a; padding: 20px; border-radius: 15px; margin: 20px auto; max-width: 400px; }
-  #timer { color: #00ff88; font-weight: bold; }
-</style>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src='//lib.gigapub.tech/tag.min.js'></script>
+    <style>
+        body { 
+            font-family: sans-serif; 
+            text-align: center; 
+            padding: 50px;
+            background: #1a1a1a;
+            color: white;
+        }
+        #watchBtn {
+            background: #2AABEE;
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 18px;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+        #balance { font-size: 24px; margin-bottom: 20px; }
+    </style>
 </head>
 <body>
+    <div id="balance">Balance: 0 Coins</div>
+    <button id="watchBtn">Watch Ad +10 Coins</button>
 
-<h1>AdsPayU 💰</h1>
-<div class="card">
-  <div>Your Balance</div>
-  <div id="balance">$0.0000</div>
-</div>
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand(); // Make app full screen
+        
+        let userId = tg.initDataUnsafe.user?.id;
+        let balance = 0;
 
-<button id="watchAdBtn">Watch Ad +$0.0006</button>
-<div id="status">Loading SDK...</div>
+        // INIT GIGAPUB
+        GigaPub.init({
+            appId: 'YOUR_APP_ID_HERE', // Replace this
+            zoneId: 'YOUR_ZONE_ID_HERE' // Replace this
+        });
 
-<script>
-const tg = window.Telegram.WebApp;
-tg.ready(); 
-tg.expand();
-
-const user_id = tg.initDataUnsafe?.user?.id || "guest123";
-const API = "https://railway-production-1f39.up.railway.app"; // RAILWAY URL
-
-let canWatch = true;
-let cooldown = 5; 
-
-// LOAD GIGAPUB
-function loadGiga() {
-    const script = document.createElement('script');
-    script.src = 'https://ad.gigapub.tech/script?id=7204';
-    script.async = true;
-    script.onload = () => {
-        document.getElementById('status').innerText = "Ready to earn";
-    };
-    script.onerror = () => {
-        document.getElementById('status').innerText = "❌ GigaPub Blocked";
-    };
-    document.head.appendChild(script);
-}
-
-async function loadBalance() {
-    try {
-        const res = await fetch(`${API}/api/balance?user_id=${user_id}`);
-        const data = await res.json();
-        document.getElementById('balance').innerText = `$${data.balance.toFixed(4)}`;
-    } catch(e) {
-        document.getElementById('status').innerText = "Backend offline.";
-        console.error("Balance fetch error:", e);
-    }
-}
-
-async function creditUser() {
-    alert("DEBUG: creditUser() was called!"); // DEBUG 2
-    try {
-        document.getElementById('status').innerText = "Crediting...";
-        const res = await fetch(`${API}/api/credit?user_id=${user_id}&amount=0.0006`);
-        const data = await res.json();
-        document.getElementById('balance').innerText = `$${data.new_balance.toFixed(4)}`;
-        document.getElementById('status').innerText = "Credited +$0.0006 ✅";
-    } catch(e) {
-        document.getElementById('status').innerText = "❌ Credit failed. Check logs";
-        console.error("Credit fetch error:", e);
-        alert("DEBUG: Fetch error - " + e.message); // DEBUG 3
-    }
-}
-
-function startCooldown() {
-    let timeLeft = cooldown;
-    const btn = document.getElementById('watchAdBtn');
-    const status = document.getElementById('status');
-    
-    const timer = setInterval(() => {
-        status.innerHTML = `Wait <span id="timer">${timeLeft}s</span> for next ad`;
-        timeLeft--;
-        if (timeLeft < 0) {
-            clearInterval(timer);
-            canWatch = true;
-            btn.disabled = false;
-            btn.innerText = "Watch Ad +$0.0006";
-            status.innerText = "Ready for next ad";
-            loadGiga();
-        }
-    }, 1000);
-}
-
-function watchAd() {
-    alert("DEBUG: Button clicked!"); // DEBUG 1
-    if (!canWatch) return;
-    if (typeof window.showGiga !== 'function') {
-        alert("Ad SDK not loaded. Reopen app.");
-        return;
-    }
-    
-    const btn = document.getElementById('watchAdBtn');
-    canWatch = false;
-    btn.disabled = true;
-    btn.innerText = "Watching...";
-    document.getElementById('status').innerText = "Loading ad...";
-
-    let adTimeout = setTimeout(() => {
-        document.getElementById('status').innerText = "Ad timeout. Try again.";
-        startCooldown();
-    }, 30000);
-
-    window.showGiga({
-        onReward: async () => {
-            alert("DEBUG: onReward fired!"); // DEBUG 4
-            clearTimeout(adTimeout);
-            await creditUser();
-            startCooldown();
-        },
-        onClose: () => {
-            clearTimeout(adTimeout);
-            document.getElementById('status').innerText = "Ad closed early";
-            startCooldown();
-        },
-        onError: (err) => {
-            clearTimeout(adTimeout);
-            console.log("GigaPub Error:", err);
-            document.getElementById('status').innerText = "No ad. Try again.";
-            startCooldown();
-        }
-    });
-}
-
-document.getElementById('watchAdBtn').onclick = watchAd;
-loadBalance();
-loadGiga();
-</script>
+        document.getElementById('watchBtn').onclick = () => {
+            GigaPub.showRewardedAd({
+                onReward: () => {
+                    balance += 10;
+                    document.getElementById('balance').innerText = `Balance: ${balance} Coins`;
+                    // TODO: Send this to your backend
+                    alert('You earned 10 coins!');
+                },
+                onError: (err) => {
+                    alert('Ad failed to load. Try again.');
+                }
+            });
+        };
+    </script>
 </body>
 </html>
