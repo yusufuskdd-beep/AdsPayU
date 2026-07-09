@@ -5,14 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AdsPayU</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-<!-- YOUR WORKING GIGAPUB SCRIPT -->
-<script src="https://ad.gigapub.tech/script?id=7204"></script>
-
 <style>
   body { font-family: Arial; background: #0e0e0e; color: white; text-align: center; padding: 20px; margin: 0; }
   #balance { font-size: 36px; color: #00ff88; margin: 20px 0; font-weight: bold; }
-  button { padding: 18px 40px; font-size: 18px; background: #00ff88; color: black; border: none; border-radius: 12px; cursor: pointer; margin: 10px; font-weight: bold; transition: 0.3s; }
+  button { padding: 18px 40px; font-size: 18px; background: #00ff88; color: black; border: none; border-radius: 12px; cursor: pointer; margin: 10px; font-weight: bold; }
   button:disabled { background: #555; cursor: not-allowed; color: #aaa; }
   #status { margin-top: 15px; font-size: 14px; color: #aaa; min-height: 20px; }
   .card { background: #1a1a1a; padding: 20px; border-radius: 15px; margin: 20px auto; max-width: 400px; }
@@ -28,42 +24,51 @@
 </div>
 
 <button id="watchAdBtn">Watch Ad +$0.0006</button>
-<div id="status">Loading...</div>
+<div id="status">Loading SDK...</div>
 
 <script>
 const tg = window.Telegram.WebApp;
 tg.ready(); 
 tg.expand();
+
 const user_id = tg.initDataUnsafe?.user?.id || "guest123";
 const API = "https://adspayu-backend-5y7g.onrender.com";
 
 let canWatch = true;
-let cooldown = 5; // 5 SECOND COOLDOWN
+let cooldown = 5; 
+
+// LOAD GIGAPUB DYNAMICALLY AFTER TG READY
+function loadGiga() {
+    const script = document.createElement('script');
+    script.src = 'https://ad.gigapub.tech/script?id=7204';
+    script.async = true;
+    script.onload = () => {
+        document.getElementById('status').innerText = "Ready to earn";
+        console.log("GigaPub Loaded");
+    };
+    script.onerror = () => {
+        document.getElementById('status').innerText = "❌ GigaPub Blocked by Telegram";
+    };
+    document.head.appendChild(script);
+}
 
 async function loadBalance() {
     try {
         const res = await fetch(`${API}/api/balance?user_id=${user_id}`);
         const data = await res.json();
         document.getElementById('balance').innerText = `$${data.balance.toFixed(4)}`;
-        document.getElementById('status').innerText = "Ready to earn";
     } catch(e) {
         document.getElementById('status').innerText = "Backend offline.";
-        console.error(e);
     }
 }
 
 async function creditUser() {
-    try {
-        const res = await fetch(`${API}/api/credit?user_id=${user_id}&amount=0.0006`);
-        const data = await res.json();
-        document.getElementById('balance').innerText = `$${data.new_balance.toFixed(4)}`;
-        document.getElementById('status').innerText = "Credited +$0.0006 ✅";
-    } catch(e) {
-        document.getElementById('status').innerText = "Credit failed. Check backend.";
-    }
+    const res = await fetch(`${API}/api/credit?user_id=${user_id}&amount=0.0006`);
+    const data = await res.json();
+    document.getElementById('balance').innerText = `$${data.new_balance.toFixed(4)}`;
+    document.getElementById('status').innerText = "Credited +$0.0006 ✅";
 }
 
-// COOLDOWN TIMER
 function startCooldown() {
     let timeLeft = cooldown;
     const btn = document.getElementById('watchAdBtn');
@@ -82,9 +87,12 @@ function startCooldown() {
     }, 1000);
 }
 
-// MAIN AD FUNCTION
 function watchAd() {
     if (!canWatch) return;
+    if (typeof window.showGiga !== 'function') {
+        alert("Ad SDK not loaded. Try reopening the app.");
+        return;
+    }
     
     const btn = document.getElementById('watchAdBtn');
     canWatch = false;
@@ -95,14 +103,19 @@ function watchAd() {
     window.showGiga({
         onReward: async () => {
             await creditUser();
-            startCooldown(); // START 5s COOLDOWN
+            startCooldown();
         },
         onError: (err) => {
             console.log("GigaPub Error:", err);
-            document.getElementById('status').innerText = "No ad. Try again.";
-            startCooldown(); // STILL START COOLDOWN ON ERROR
+            document.getElementById('status').innerText = "No ad available. Try again.";
+            startCooldown();
         }
     });
 }
 
-document
+document.getElementById('watchAdBtn').onclick = watchAd;
+loadBalance();
+loadGiga(); // Load SDK after page loads
+</script>
+</body>
+</html>
