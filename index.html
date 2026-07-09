@@ -32,7 +32,7 @@ tg.ready();
 tg.expand();
 
 const user_id = tg.initDataUnsafe?.user?.id || "guest123";
-const API = "https://railway-production-1f39.up.railway.app"; // <-- CHANGED TO RAILWAY
+const API = "https://railway-production-1f39.up.railway.app"; // RAILWAY URL
 
 let canWatch = true;
 let cooldown = 5; 
@@ -63,6 +63,7 @@ async function loadBalance() {
 }
 
 async function creditUser() {
+    alert("DEBUG: creditUser() was called!"); // DEBUG 2
     try {
         document.getElementById('status').innerText = "Crediting...";
         const res = await fetch(`${API}/api/credit?user_id=${user_id}&amount=0.0006`);
@@ -72,6 +73,7 @@ async function creditUser() {
     } catch(e) {
         document.getElementById('status').innerText = "❌ Credit failed. Check logs";
         console.error("Credit fetch error:", e);
+        alert("DEBUG: Fetch error - " + e.message); // DEBUG 3
     }
 }
 
@@ -89,12 +91,13 @@ function startCooldown() {
             btn.disabled = false;
             btn.innerText = "Watch Ad +$0.0006";
             status.innerText = "Ready for next ad";
-            loadGiga(); // RELOAD SDK SO NEXT AD WORKS
+            loadGiga();
         }
     }, 1000);
 }
 
 function watchAd() {
+    alert("DEBUG: Button clicked!"); // DEBUG 1
     if (!canWatch) return;
     if (typeof window.showGiga !== 'function') {
         alert("Ad SDK not loaded. Reopen app.");
@@ -114,6 +117,7 @@ function watchAd() {
 
     window.showGiga({
         onReward: async () => {
+            alert("DEBUG: onReward fired!"); // DEBUG 4
             clearTimeout(adTimeout);
             await creditUser();
             startCooldown();
