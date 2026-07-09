@@ -8,19 +8,19 @@
   <script src='//lib.gigapub.tech/gigapub.js'></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-    body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%); color: #222; margin: 0; padding: 0; min-height: 100vh; }
+    body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%); margin: 0; padding: 0; min-height: 100vh; }
     .container { padding: 20px; padding-bottom: 90px; }
     h1 { color: white; text-align: center; font-weight: 700; font-size: 24px; text-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-    .balance { font-size: 36px; margin: 10px 0; color: #00FF88; text-align: center; font-weight: 700; text-shadow: 0 2px 10px rgba(0,255,136,0.4); }
-    .card { background: rgba(255,255,255,0.95); padding: 20px; border-radius: 20px; margin: 15px 0; box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+    .balance { font-size: 36px; margin: 10px 0; color: #00FF88; text-align: center; font-weight: 700; }
+    .card { background: rgba(255,255,255,0.95); padding: 20px; border-radius: 20px; margin: 15px 0; }
     button { padding: 16px; font-size: 16px; background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%); color: white; border: none; border-radius: 15px; width: 100%; cursor: pointer; margin-top: 10px; font-weight: 600; }
     button:active { transform: scale(0.97); }
     button:disabled { background: #ccc; }
-    .tabs { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); width: 95%; display: flex; background: rgba(255,255,255,0.95); border-radius: 20px; padding: 5px; z-index: 999; }
+    .tabs { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); width: 95%; display: flex; background: rgba(255,255,255,0.95); border-radius: 20px; padding: 5px; }
     .tab-btn { flex: 1; padding: 12px; background: none; border: none; color: #666; font-size: 12px; cursor: pointer; border-radius: 15px; font-weight: 600; }
     .tab-btn.active { color: white; background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%); }
     .tab-content { display: none; } .tab-content.active { display: block; }
-    .lb-row { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+    .lb-row { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; }
     input { width: 93%; padding: 14px; margin: 10px 0; border-radius: 12px; border: 2px solid #00C6FF; }
     #status, #w-status { color: #0072FF; font-weight: 600; text-align:center; margin-top:10px; }
   </style>
@@ -28,9 +28,9 @@
 <body>
   <div class="container">
     <div id="home" class="tab-content active"><h1>AdsPayU VC 🇻🇨</h1><div class="card"><p style="text-align:center">Your Balance</p><div class="balance" id="balance">$0.0000</div></div></div>
-    <div id="ads" class="tab-content"><h1>Earn Coins</h1><div class="card"><h3>🎁 Rewarded Ad</h3><p>Earn $0.0006 per ad. 10s cooldown.</p><button id="adBtn" onclick="showAd()">Watch Ad</button><p id="status"></p></div></div>
+    <div id="ads" class="tab-content"><h1>Earn Coins</h1><div class="card"><h3>🎁 Rewarded Ad</h3><p>Earn $0.0006 per ad</p><button id="adBtn" onclick="showAd()">Watch Ad</button><p id="status"></p></div></div>
     <div id="leaderboard" class="tab-content"><h1>🏆 Top Earners</h1><div class="card" id="lb-list">Loading...</div></div>
-    <div id="withdraw" class="tab-content"><h1>💎 Withdraw</h1><div class="card"><p>Balance: <b id="w-balance">$0.0000</b></p><input type="text" id="tonwallet" placeholder="TON Wallet: UQ..."><button onclick="requestWithdraw()">Request Withdraw</button><p id="w-status"></p></div></div>
+    <div id="withdraw" class="tab-content"><h1>💎 Withdraw</h1><div class="card"><p>Balance: <b id="w-balance">$0.0000</b></p><input id="tonwallet" placeholder="TON Wallet: UQ..."><button onclick="requestWithdraw()">Request Withdraw</button><p id="w-status"></p></div></div>
   </div>
   <div class="tabs">
     <button class="tab-btn active" onclick="openTab('home', this)">🏠 Home</button>
@@ -44,7 +44,6 @@
     const userId = tg.initDataUnsafe.user?.id || "guest";
     let isLoading = false;
     const API = "https://adspayu-backend-5y7g.onrender.com"; 
-    const GIGAPUB_ZONE = "7204"; // ✅ YOUR ZONE
 
     function openTab(tabName, el) {
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -58,7 +57,7 @@
       fetch(`${API}/api/balance?user_id=${userId}`).then(res => res.json()).then(data => {
           document.getElementById('balance').innerText = `$${data.balance.toFixed(4)}`;
           document.getElementById('w-balance').innerText = `$${data.balance.toFixed(4)}`;
-      }).catch(e => console.log(e))
+      })
     }
     loadBalance();
 
@@ -67,8 +66,8 @@
       const btn = document.getElementById('adBtn'); const status = document.getElementById('status');
       btn.disabled = true; status.innerText = "Loading ad...";
 
-      // ✅ CHANGED TO ZONE 7204
-      window.showGiga(GIGAPUB_ZONE)
+      // ✅ ZONE NAME = "main"
+      window.showGiga("main")
        .then(() => { 
           status.innerText = "Ad completed! Crediting...";
           return fetch(`${API}/api/credit?user_id=${userId}&amount=0.0006`)
@@ -80,8 +79,8 @@
           btn.innerText = "⏰ Wait 10s";
         })
        .catch(e => { 
-          console.error("GIGAPUB ERROR:", e);
-          status.innerText = "😅 No ads available. Try again in 1 min"; 
+          console.error("Giga Error:", e);
+          status.innerText = "😅 No ads right now. Try again in 30s"; 
         })
        .finally(() => {
           isLoading = false;
@@ -91,7 +90,7 @@
 
     function loadLeaderboard() {
       fetch(`${API}/api/leaderboard`).then(res => res.json()).then(data => {
-          if(data.length === 0) return document.getElementById('lb-list').innerText = "No users yet";
+          if(data.length === 0) return document.getElementById('lb-list').innerText = "No users yet. Watch an ad!";
           let html = ''; data.forEach((user, i) => {
             html += `<div class="lb-row"><span>#${i+1}</span> <span>User ${String(user.user_id).slice(0,6)}</span> <span style="color:#00FF88">$${user.balance.toFixed(4)}</span></div>`;
           }); document.getElementById('lb-list').innerHTML = html;
@@ -100,7 +99,9 @@
     function requestWithdraw() {
       const wallet = document.getElementById('tonwallet').value.trim(); const status = document.getElementById('w-status');
       if(!wallet || wallet.length < 40) return status.innerText = "❌ Enter valid TON wallet";
-      fetch(`${API}/api/withdraw?user_id=${userId}&wallet=${wallet}`).then(res => res.json()).then(data => { status.innerText = data.message; loadBalance(); })
+      fetch(`${API}/api/withdraw?user_id=${userId}&wallet=${wallet}`).then(res => res.json()).then(data => { 
+        status.innerText = data.message; loadBalance(); 
+      })
     }
   </script>
 </body>
