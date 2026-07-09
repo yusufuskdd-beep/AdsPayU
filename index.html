@@ -1,100 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AdsPayU</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-<!-- LOAD GIGAPUB WITH FALLBACK -->
-<script>
-  var gigaScript = document.createElement('script');
-  gigaScript.src = 'https://lib.gigapub.tech/gigapub.js?appId=7204';
-  gigaScript.onload = function() { console.log("GigaPub SDK Loaded"); };
-  gigaScript.onerror = function() { console.log("GigaPub SDK FAILED TO LOAD"); document.getElementById('status').innerText = "SDK Blocked by Telegram"; };
-  document.head.appendChild(gigaScript);
-</script>
-
-<style>
-  body { font-family: Arial; background: #0e0e0e; color: white; text-align: center; padding: 20px; margin: 0; }
-  #balance { font-size: 36px; color: #00ff88; margin: 20px 0; font-weight: bold; }
-  button { padding: 18px 40px; font-size: 18px; background: #00ff88; color: black; border: none; border-radius: 12px; cursor: pointer; margin: 10px; font-weight: bold; }
-  button:disabled { background: #555; cursor: not-allowed; color: #aaa; }
-  #status { margin-top: 15px; font-size: 14px; color: #ffaa00; }
-  .card { background: #1a1a1a; padding: 20px; border-radius: 15px; margin: 20px auto; max-width: 400px; }
-</style>
+<script src='https://cdn.gigapub.tech/sdk.js?appId=7204'></script>
 </head>
 <body>
-
-<h1>AdsPayU 💰</h1>
-<div class="card">
-  <div>Your Balance</div>
-  <div id="balance">$0.0000</div>
-</div>
-
-<button id="watchAdBtn" disabled>Loading SDK...</button>
-<div id="status">Checking SDK...</div>
-<div id="debug" style="font-size:12px; color:#666; margin-top:10px;"></div>
-
-<script>
-const tg = window.Telegram.WebApp;
-tg.ready(); 
-tg.expand();
-const user_id = tg.initDataUnsafe?.user?.id || "guest123";
-const API = "https://adspayu-backend-5y7g.onrender.com";
-
-let checkCount = 0;
-function checkSDK() {
-    checkCount++;
-    document.getElementById('debug').innerText = `Checking... attempt ${checkCount}`;
-    
-    if (window.GigaPub) {
-        window.GigaPub.init({ userId: user_id });
-        document.getElementById('watchAdBtn').disabled = false;
-        document.getElementById('watchAdBtn').innerText = "Watch Ad +$0.0006";
-        document.getElementById('status').innerText = "SDK Ready ✅";
-        loadBalance();
-    } else if (checkCount < 25) { // Check for 5 seconds
-        setTimeout(checkSDK, 200);
-    } else {
-        document.getElementById('status').innerText = "SDK Failed to Load. Telegram is blocking it.";
-        document.getElementById('watchAdBtn').innerText = "SDK Error";
-    }
-}
-
-async function loadBalance() {
-    try {
-        const res = await fetch(`${API}/api/balance?user_id=${user_id}`);
-        const data = await res.json();
-        document.getElementById('balance').innerText = `$${data.balance.toFixed(4)}`;
-    } catch(e) {}
-}
-
-document.getElementById('watchAdBtn').onclick = () => {
-    const btn = document.getElementById('watchAdBtn');
-    btn.disabled = true;
-    document.getElementById('status').innerText = "Loading ad...";
-
-    window.GigaPub.showAd({
-        userId: user_id,
-        placementId: "main", 
-        test: true, // FORCED TEST MODE SO WE KNOW IT WORKS
-        onReward: async () => {
-            const res = await fetch(`${API}/api/credit?user_id=${user_id}&amount=0.0006`);
-            const data = await res.json();
-            document.getElementById('balance').innerText = `$${data.new_balance.toFixed(4)}`;
-            document.getElementById('status').innerText = "Credited +$0.0006 ✅";
-            btn.disabled = false;
-        },
-        onError: (err) => {
-            console.log("GigaPub Error:", err);
-            document.getElementById('status').innerText = "Error: " + JSON.stringify(err);
-            btn.disabled = false;
-        }
-    });
-};
-
-checkSDK();
-</script>
+<button onclick="window.GigaPub.showAd({userId:'test', placementId:'main', test:true})">Test Ad</button>
 </body>
 </html>
