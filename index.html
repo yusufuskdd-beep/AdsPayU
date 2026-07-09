@@ -10,8 +10,9 @@
   <style>
     body { font-family: Arial; text-align: center; padding: 20px; background: #17212b; color: white; }
     h1 { color: #0088cc; }
-   .balance { font-size: 24px; margin: 20px 0; color: #4CAF50; }
-    button { padding: 15px 30px; font-size: 16px; background: #0088cc; color: white; border: none; border-radius: 10px; width: 90%; margin-top: 20px; cursor: pointer; }
+    .balance { font-size: 24px; margin: 20px 0; color: #4CAF50; font-weight: bold; }
+    button { padding: 15px 30px; font-size: 16px; background: #0088cc; color: white; border: none; border-radius: 10px; width: 90%; margin-top: 20px; cursor: pointer; transition: 0.2s; }
+    button:active { transform: scale(0.97); }
     button:disabled { background: #555; cursor: not-allowed; }
     #status { color: #aaa; font-size: 14px; margin-top: 10px; min-height: 20px; }
   </style>
@@ -29,13 +30,15 @@
     tg.ready();
     const userId = tg.initDataUnsafe.user?.id || "guest";
     let isLoading = false;
+    const API = "https://adspayu-backend-5y7g.onrender.com";
 
     // Load balance on start
-    fetch(`https://adspayu-backend-5y7g.onrender.com/api/balance?user_id=${userId}`)
+    fetch(`${API}/api/balance?user_id=${userId}`)
      .then(res => res.json())
      .then(data => {
         document.getElementById('balance').innerText = `$${data.balance.toFixed(4)}`;
       })
+     .catch(e => console.log("Balance Load Error:", e))
 
     function showAd() {
       if(isLoading) return;
@@ -46,23 +49,32 @@
       btn.disabled = true;
       status.innerText = "Loading ad... please wait";
 
-      // ✅ USE ZONE NAME "main" NOT 7204
+      // ✅ 4 SECOND TIMEOUT SO IT DOESN'T HANG FOREVER
+      let adTimeout = setTimeout(() => {
+        status.innerText = "😅 GigaPub timeout. No ads right now. Try again in 30s";
+        btn.disabled = false;
+        isLoading = false;
+      }, 4000);
+
+      // ✅ USE ZONE NAME "main"
       window.showGiga("main")
        .then(() => {
+          clearTimeout(adTimeout);
           // USER WATCHED FULL AD
           status.innerText = "Ad completed! Crediting...";
           console.log("AD WATCHED:", userId);
 
           // Send to backend to credit
-          fetch(`https://adspayu-backend-5y7g.onrender.com/api/credit?user_id=${userId}&amount=0.0006`)
-           .then(res => res.json())
-           .then(data => {
-              status.innerText = `✅ $${data.credited} added! New balance: $${data.new_balance.toFixed(4)}`;
-              document.getElementById('balance').innerText = `$${data.new_balance.toFixed(4)}`;
-              btn.innerText = "⏰ Wait 10s";
-            })
+          return fetch(`${API}/api/credit?user_id=${userId}&amount=0.0006`)
+        })
+       .then(res => res.json())
+       .then(data => {
+          status.innerText = `✅ $${data.credited} added! New balance: $${data.new_balance.toFixed(4)}`;
+          document.getElementById('balance').innerText = `$${data.new_balance.toFixed(4)}`;
+          btn.innerText = "⏰ Wait 10s";
         })
        .catch(e => {
+          clearTimeout(adTimeout);
           console.log("GigaPub Error:", e);
           status.innerText = "😅 No ads available. Try again in 10-30 min";
           btn.innerText = "🎁 Watch Ad";
