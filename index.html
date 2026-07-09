@@ -5,56 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AdsPayU</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src='https://lib.gigapub.tech/gigapub.js'></script>
+
+<!-- YOUR GIGAPUB APP ID -->
+<script src='https://lib.gigapub.tech/gigapub.js?appId=7204'></script>
+
 <style>
-  body { 
-    font-family: Arial; 
-    background: #0e0e0e; 
-    color: white; 
-    text-align: center; 
-    padding: 20px;
-    margin: 0;
-  }
-  #balance { 
-    font-size: 36px; 
-    color: #00ff88; 
-    margin: 20px 0; 
-    font-weight: bold;
-  }
-  button { 
-    padding: 18px 40px; 
-    font-size: 18px; 
-    background: #00ff88; 
-    color: black; 
-    border: none; 
-    border-radius: 12px; 
-    cursor: pointer; 
-    margin: 10px;
-    font-weight: bold;
-  }
-  button:disabled { 
-    background: #555; 
-    cursor: not-allowed; 
-    color: #aaa;
-  }
-  #status {
-    margin-top: 15px;
-    font-size: 14px;
-    color: #aaa;
-  }
-  .card {
-    background: #1a1a1a;
-    padding: 20px;
-    border-radius: 15px;
-    margin: 20px auto;
-    max-width: 400px;
-  }
+  body { font-family: Arial; background: #0e0e0e; color: white; text-align: center; padding: 20px; margin: 0; }
+  #balance { font-size: 36px; color: #00ff88; margin: 20px 0; font-weight: bold; }
+  button { padding: 18px 40px; font-size: 18px; background: #00ff88; color: black; border: none; border-radius: 12px; cursor: pointer; margin: 10px; font-weight: bold; }
+  button:disabled { background: #555; cursor: not-allowed; color: #aaa; }
+  #status { margin-top: 15px; font-size: 14px; color: #aaa; }
+  .card { background: #1a1a1a; padding: 20px; border-radius: 15px; margin: 20px auto; max-width: 400px; }
 </style>
 </head>
 <body>
 
 <h1>AdsPayU 💰</h1>
-
 <div class="card">
   <div>Your Balance</div>
   <div id="balance">$0.0000</div>
@@ -68,11 +34,8 @@ const tg = window.Telegram.WebApp;
 tg.ready(); 
 tg.expand();
 const user_id = tg.initDataUnsafe?.user?.id || "guest123";
-
-// 1. YOUR BACKEND URL
 const API = "https://adspayu-backend-5y7g.onrender.com";
 
-// 2. LOAD BALANCE ON START
 async function loadBalance() {
     try {
         const res = await fetch(`${API}/api/balance?user_id=${user_id}`);
@@ -80,38 +43,38 @@ async function loadBalance() {
         document.getElementById('balance').innerText = `$${data.balance.toFixed(4)}`;
         document.getElementById('status').innerText = "Ready to earn";
     } catch(e) {
-        document.getElementById('status').innerText = "Backend offline. Check Render.";
+        document.getElementById('status').innerText = "Backend offline.";
         console.error(e);
     }
 }
 
-// 3. WATCH AD AND CREDIT
-document.getElementById('watchAdBtn').onclick = async () => {
+// GIGAPUB WITH APP ID 7204 + PLACEMENT "main"
+document.getElementById('watchAdBtn').onclick = () => {
     const btn = document.getElementById('watchAdBtn');
     btn.disabled = true;
     document.getElementById('status').innerText = "Loading ad...";
 
-    try {
-        // NEW GIGAPUB CODE
-        await window.showGiga("main");
-        
-        // AD COMPLETED - CREDIT USER
-        document.getElementById('status').innerText = "Crediting...";
-        const res = await fetch(`${API}/api/credit?user_id=${user_id}&amount=0.0006`);
-        const data = await res.json();
-        document.getElementById('balance').innerText = `$${data.new_balance.toFixed(4)}`;
-        document.getElementById('status').innerText = "Credited +$0.0006 ✅";
-
-    } catch (e) {
-        console.log("GigaPub Error:", e);
-        document.getElementById('status').innerText = "No ads available. Try again in 30s";
-    }
-    
-    btn.disabled = false;
+    window.GigaPub.showAd({
+        userId: user_id,
+        placementId: "main", 
+        // test: true, // UNCOMMENT THIS LINE TO FORCE TEST AD
+        onReward: async () => {
+            document.getElementById('status').innerText = "Crediting...";
+            const res = await fetch(`${API}/api/credit?user_id=${user_id}&amount=0.0006`);
+            const data = await res.json();
+            document.getElementById('balance').innerText = `$${data.new_balance.toFixed(4)}`;
+            document.getElementById('status').innerText = "Credited +$0.0006 ✅";
+            btn.disabled = false;
+        },
+        onError: (err) => {
+            console.log("GigaPub Error:", err);
+            document.getElementById('status').innerText = err.message || "No ads available";
+            btn.disabled = false;
+        }
+    });
 };
 
 loadBalance();
 </script>
-
 </body>
 </html>
