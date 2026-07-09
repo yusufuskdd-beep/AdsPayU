@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AdsPayU VC</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://ad.gigapub.tech/script?id=7204"></script>
+  <script src='//lib.gigapub.tech/gigapub.js'></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
     
@@ -122,7 +122,6 @@
 <body>
   <div class="container">
     
-    <!-- TAB 1: HOME -->
     <div id="home" class="tab-content active">
       <h1>AdsPayU VC 🇻🇨</h1>
       <div class="card">
@@ -130,13 +129,8 @@
         <div class="balance" id="balance">$0.0000</div>
         <p style="text-align:center; font-size:12px; color:#666">Min Withdraw: $1.00 in TON</p>
       </div>
-      <div class="card">
-        <h3 style="color:#0072FF; margin-top:0">How it works</h3>
-        <p>1. Watch Ads 🎁<br>2. Earn $0.0006 per ad<br>3. Withdraw at $1.00 to TON 💎</p>
-      </div>
     </div>
 
-    <!-- TAB 2: ADS -->
     <div id="ads" class="tab-content">
       <h1>Earn Coins</h1>
       <div class="card">
@@ -147,18 +141,15 @@
       </div>
     </div>
 
-    <!-- TAB 3: LEADERBOARD -->
     <div id="leaderboard" class="tab-content">
       <h1>🏆 Top Earners</h1>
       <div class="card" id="lb-list">Loading...</div>
     </div>
 
-    <!-- TAB 4: WITHDRAW -->
     <div id="withdraw" class="tab-content">
       <h1>💎 Withdraw</h1>
       <div class="card">
         <p>Current Balance: <b id="w-balance" style="color:#00FF88">$0.0000</b></p>
-        <p style="font-size:12px; color:#666">Min: $1.00 | Network: TON | Paid within 24h</p>
         <input type="text" id="tonwallet" placeholder="Your TON Wallet: UQ... or EQ...">
         <button onclick="requestWithdraw()">Request Withdraw to TON</button>
         <p id="w-status"></p>
@@ -167,7 +158,6 @@
 
   </div>
 
-  <!-- BOTTOM TABS -->
   <div class="tabs">
     <button class="tab-btn active" onclick="openTab('home', this)">🏠 Home</button>
     <button class="tab-btn" onclick="openTab('ads', this)">🎁 Ads</button>
@@ -183,7 +173,6 @@
     let isLoading = false;
     
     const API = "https://adspayu-backend-5y7g.onrender.com"; 
-    const GIGAPUB_ZONE = "7204";
 
     function openTab(tabName, el) {
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -200,7 +189,7 @@
        .then(data => {
           document.getElementById('balance').innerText = `$${data.balance.toFixed(4)}`;
           document.getElementById('w-balance').innerText = `$${data.balance.toFixed(4)}`;
-        }).catch(e => console.log("Balance Error:", e))
+        })
     }
     loadBalance();
 
@@ -212,19 +201,21 @@
       btn.disabled = true;
       status.innerText = "Loading ad...";
 
-      showGigaPub(GIGAPUB_ZONE)
-       .then(() => {
+      // ✅ NEW GIGAPUB V3 CODE
+      window.showGiga("main")
+       .then(() => { 
           status.innerText = "Ad completed! Crediting...";
           return fetch(`${API}/api/credit?user_id=${userId}&amount=0.0006`)
         })
        .then(res => res.json())
        .then(data => {
           status.innerText = `✅ $${data.credited} added!`;
-          document.getElementById('balance').innerText = `$${data.new_balance.toFixed(4)}`;
+          loadBalance();
           btn.innerText = "⏰ Wait 10s";
         })
        .catch(e => { 
-          status.innerText = "😅 No ads right now. Try again"; 
+          console.error(e);
+          status.innerText = "😅 No ads available. Try again"; 
         })
        .finally(() => {
           isLoading = false;
@@ -240,31 +231,28 @@
       fetch(`${API}/api/leaderboard`)
        .then(res => res.json())
        .then(data => {
-          if(data.length === 0) return document.getElementById('lb-list').innerText = "No users yet. Watch an ad!";
+          if(data.length === 0) return document.getElementById('lb-list').innerText = "No users yet";
           let html = '';
           data.forEach((user, i) => {
             html += `<div class="lb-row"><span class="lb-rank">#${i+1}</span> <span>User ${String(user.user_id).slice(0,6)}...</span> <span style="color:#00FF88; font-weight:700">$${user.balance.toFixed(4)}</span></div>`;
           });
           document.getElementById('lb-list').innerHTML = html;
         })
-       .catch(e => document.getElementById('lb-list').innerText = "❌ Failed to load")
     }
 
     function updateWithdrawBalance() { loadBalance(); }
     function requestWithdraw() {
       const wallet = document.getElementById('tonwallet').value.trim();
       const status = document.getElementById('w-status');
-      if(!wallet || wallet.length < 40) return status.innerText = "❌ Enter valid TON wallet address";
-      if(!wallet.startsWith('UQ') && !wallet.startsWith('EQ') && !wallet.startsWith('kQ')) return status.innerText = "❌ Wallet must start with UQ, EQ, or KQ";
+      if(!wallet || wallet.length < 40) return status.innerText = "❌ Enter valid TON wallet";
       
       status.innerText = "Sending request...";
       fetch(`${API}/api/withdraw?user_id=${userId}&wallet=${wallet}`)
        .then(res => res.json())
        .then(data => { 
           status.innerText = data.message; 
-          if(data.message.includes('✅')) document.getElementById('tonwallet').value = '';
           loadBalance();
-       }).catch(e => status.innerText = "❌ Server error")
+       })
     }
   </script>
 </body>
