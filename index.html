@@ -6,16 +6,17 @@
 <title>AdsPayU</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-<!-- YOUR OLD WORKING GIGAPUB SCRIPT -->
+<!-- YOUR WORKING GIGAPUB SCRIPT -->
 <script src="https://ad.gigapub.tech/script?id=7204"></script>
 
 <style>
   body { font-family: Arial; background: #0e0e0e; color: white; text-align: center; padding: 20px; margin: 0; }
   #balance { font-size: 36px; color: #00ff88; margin: 20px 0; font-weight: bold; }
-  button { padding: 18px 40px; font-size: 18px; background: #00ff88; color: black; border: none; border-radius: 12px; cursor: pointer; margin: 10px; font-weight: bold; }
+  button { padding: 18px 40px; font-size: 18px; background: #00ff88; color: black; border: none; border-radius: 12px; cursor: pointer; margin: 10px; font-weight: bold; transition: 0.3s; }
   button:disabled { background: #555; cursor: not-allowed; color: #aaa; }
-  #status { margin-top: 15px; font-size: 14px; color: #aaa; }
+  #status { margin-top: 15px; font-size: 14px; color: #aaa; min-height: 20px; }
   .card { background: #1a1a1a; padding: 20px; border-radius: 15px; margin: 20px auto; max-width: 400px; }
+  #timer { color: #00ff88; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -36,6 +37,9 @@ tg.expand();
 const user_id = tg.initDataUnsafe?.user?.id || "guest123";
 const API = "https://adspayu-backend-5y7g.onrender.com";
 
+let canWatch = true;
+let cooldown = 5; // 5 SECOND COOLDOWN
+
 async function loadBalance() {
     try {
         const res = await fetch(`${API}/api/balance?user_id=${user_id}`);
@@ -48,34 +52,57 @@ async function loadBalance() {
     }
 }
 
-// OLD GIGAPUB FUNCTION: window.showGiga()
-document.getElementById('watchAdBtn').onclick = () => {
+async function creditUser() {
+    try {
+        const res = await fetch(`${API}/api/credit?user_id=${user_id}&amount=0.0006`);
+        const data = await res.json();
+        document.getElementById('balance').innerText = `$${data.new_balance.toFixed(4)}`;
+        document.getElementById('status').innerText = "Credited +$0.0006 ✅";
+    } catch(e) {
+        document.getElementById('status').innerText = "Credit failed. Check backend.";
+    }
+}
+
+// COOLDOWN TIMER
+function startCooldown() {
+    let timeLeft = cooldown;
     const btn = document.getElementById('watchAdBtn');
+    const status = document.getElementById('status');
+    
+    const timer = setInterval(() => {
+        status.innerHTML = `Wait <span id="timer">${timeLeft}s</span> for next ad`;
+        timeLeft--;
+        if (timeLeft < 0) {
+            clearInterval(timer);
+            canWatch = true;
+            btn.disabled = false;
+            btn.innerText = "Watch Ad +$0.0006";
+            status.innerText = "Ready for next ad";
+        }
+    }, 1000);
+}
+
+// MAIN AD FUNCTION
+function watchAd() {
+    if (!canWatch) return;
+    
+    const btn = document.getElementById('watchAdBtn');
+    canWatch = false;
     btn.disabled = true;
+    btn.innerText = "Watching...";
     document.getElementById('status').innerText = "Loading ad...";
 
     window.showGiga({
         onReward: async () => {
-            document.getElementById('status').innerText = "Crediting...";
-            try {
-                const res = await fetch(`${API}/api/credit?user_id=${user_id}&amount=0.0006`);
-                const data = await res.json();
-                document.getElementById('balance').innerText = `$${data.new_balance.toFixed(4)}`;
-                document.getElementById('status').innerText = "Credited +$0.0006 ✅";
-            } catch(e) {
-                document.getElementById('status').innerText = "Credit failed. Check backend.";
-            }
-            btn.disabled = false;
+            await creditUser();
+            startCooldown(); // START 5s COOLDOWN
         },
         onError: (err) => {
             console.log("GigaPub Error:", err);
-            document.getElementById('status').innerText = "No ad available";
-            btn.disabled = false;
+            document.getElementById('status').innerText = "No ad. Try again.";
+            startCooldown(); // STILL START COOLDOWN ON ERROR
         }
     });
-};
+}
 
-loadBalance();
-</script>
-</body>
-</html>
+document
