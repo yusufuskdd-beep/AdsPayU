@@ -32,7 +32,7 @@ tg.ready();
 tg.expand();
 
 const user_id = tg.initDataUnsafe?.user?.id || "guest123";
-const API = "https://adspayu-backend-5y7g.onrender.com";
+const API = "https://railway-production-1f39.up.railway.app"; // <-- CHANGED TO RAILWAY
 
 let canWatch = true;
 let cooldown = 5; 
@@ -107,11 +107,10 @@ function watchAd() {
     btn.innerText = "Watching...";
     document.getElementById('status').innerText = "Loading ad...";
 
-    // ADD TIMEOUT IN CASE GIGAPUB NEVER CALLS BACK
     let adTimeout = setTimeout(() => {
         document.getElementById('status').innerText = "Ad timeout. Try again.";
         startCooldown();
-    }, 30000); // 30s timeout
+    }, 30000);
 
     window.showGiga({
         onReward: async () => {
