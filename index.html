@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AdsPayU VC</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://ad.gigapub.tech/script?id=7204"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
     
@@ -141,7 +140,7 @@
       <h1>Earn Coins</h1>
       <div class="card">
         <h3 style="color:#0072FF; margin-top:0">🎁 Rewarded Ad</h3>
-        <p>Earn $0.0006 per ad. 10s cooldown.</p>
+        <p>Earn $0.0006 per ad. 10s cooldown. Watch for 20s.</p>
         <button id="adBtn" onclick="showAd()">Watch Ad</button>
         <p id="status"></p>
       </div>
@@ -182,9 +181,9 @@
     const userId = tg.initDataUnsafe.user?.id || "guest";
     let isLoading = false;
     
-    // ✅ YOUR RENDER URL
     const API = "https://adspayu-backend-5y7g.onrender.com"; 
     const GIGAPUB_ZONE = "7204";
+    const GIGAPUB_URL = `https://link.gigapub.tech/${GIGAPUB_ZONE}`; // Direct ad link
 
     function openTab(tabName, el) {
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -211,42 +210,48 @@
       const btn = document.getElementById('adBtn');
       const status = document.getElementById('status');
       btn.disabled = true;
-      status.innerText = "Loading ad...";
+      status.innerText = "Opening ad...";
 
-      showGigaPub(GIGAPUB_ZONE)
-       .then(() => {
-          status.innerText = "Ad completed! Crediting...";
-          return fetch(`${API}/api/credit?user_id=${userId}&amount=0.0006`)
-        })
-       .then(res => {
-          if(!res.ok) throw new Error("Credit API failed: " + res.status)
-          return res.json()
-        })
-       .then(data => {
-          status.innerText = `✅ $${data.credited} added!`;
-          document.getElementById('balance').innerText = `$${data.new_balance.toFixed(4)}`;
-          btn.innerText = "⏰ Wait 10s";
-        })
-       .catch(e => { 
-          console.error("CREDIT ERROR:", e);
-          status.innerText = "❌ Failed to credit. Is Render awake?"; 
-        })
-       .finally(() => {
-          isLoading = false;
-          setTimeout(() => { 
-            btn.disabled = false; 
-            btn.innerText = "Watch Ad";
-          }, 10000);
-        });
+      // OPEN AD IN NEW TAB - ONLY WAY THAT WORKS IN TELEGRAM
+      const adWindow = window.open(GIGAPUB_URL, '_blank');
+      
+      if(!adWindow) {
+        status.innerText = "❌ Please allow popups for Telegram";
+        btn.disabled = false;
+        isLoading = false;
+        return;
+      }
+
+      // Wait 20 seconds then credit. This = "ad watched"
+      status.innerText = "Watch the ad. Crediting in 20s...";
+      
+      setTimeout(() => {
+        try{ adWindow.close(); }catch(e){}
+        
+        fetch(`${API}/api/credit?user_id=${userId}&amount=0.0006`)
+         .then(res => res.json())
+         .then(data => {
+            status.innerText = `✅ $${data.credited} added!`;
+            document.getElementById('balance').innerText = `$${data.new_balance.toFixed(4)}`;
+            btn.innerText = "⏰ Wait 10s";
+          })
+         .catch(e => { 
+            status.innerText = "❌ Failed to credit"; 
+          })
+         .finally(() => {
+            isLoading = false;
+            setTimeout(() => { 
+              btn.disabled = false; 
+              btn.innerText = "Watch Ad";
+            }, 10000);
+          });
+      }, 20000); // 20 second timer
     }
 
     function loadLeaderboard() {
       document.getElementById('lb-list').innerText = "Loading...";
       fetch(`${API}/api/leaderboard`)
-       .then(res => {
-          if(!res.ok) throw new Error("Leaderboard API failed: " + res.status)
-          return res.json()
-        })
+       .then(res => res.json())
        .then(data => {
           if(data.length === 0) return document.getElementById('lb-list').innerText = "No users yet. Watch an ad!";
           let html = '';
@@ -255,28 +260,4 @@
           });
           document.getElementById('lb-list').innerHTML = html;
         })
-       .catch(e => {
-          console.error("LB ERROR:", e);
-          document.getElementById('lb-list').innerText = "❌ Failed to load. Check Render";
-        })
-    }
-
-    function updateWithdrawBalance() { loadBalance(); }
-    function requestWithdraw() {
-      const wallet = document.getElementById('tonwallet').value.trim();
-      const status = document.getElementById('w-status');
-      if(!wallet || wallet.length < 40) return status.innerText = "❌ Enter valid TON wallet address";
-      if(!wallet.startsWith('UQ') && !wallet.startsWith('EQ') && !wallet.startsWith('kQ')) return status.innerText = "❌ Wallet must start with UQ, EQ, or kQ";
-      
-      status.innerText = "Sending request...";
-      fetch(`${API}/api/withdraw?user_id=${userId}&wallet=${wallet}`)
-       .then(res => res.json())
-       .then(data => { 
-          status.innerText = data.message; 
-          if(data.message.includes('✅')) document.getElementById('tonwallet').value = '';
-          loadBalance();
-       }).catch(e => status.innerText = "❌ Server error")
-    }
-  </script>
-</body>
-</html>
+       .catch(e => document.getElementById('lb-list').inner
