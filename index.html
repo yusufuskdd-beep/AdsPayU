@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://ad.gigapub.tech/script?id=7204"></script>
-<!-- MONETAG SDK -->
 <script src='//libtl.com/sdk.js' data-zone='11258922' data-sdk='show_11258922'></script>
 <title>AdsPayU</title>
 <style>
@@ -77,9 +76,7 @@
       <button class="btn btn-secondary" onclick="swap()">SWAP</button>
     </div>
 
-    <!-- HOME -->
     <div id="home" class="page active">
-      <!-- GIGAPUB CARD - CHANGED TO 1 AD -->
       <div class="card">
         <div class="card-header">
           <div class="card-icon">🎯</div>
@@ -91,7 +88,6 @@
         </div>
       </div>
 
-      <!-- MONETAG CARD -->
       <div class="card">
         <div class="card-header">
           <div class="card-icon">💰</div>
@@ -104,7 +100,6 @@
       </div>
     </div>
 
-    <!-- RANK -->
     <div id="rank" class="page">
       <div class="card">
         <h3>🏆 Top Earners</h3>
@@ -131,37 +126,54 @@ const DAILY_LIMIT = 100;
 let coins = parseInt(localStorage.getItem('coins') || 0);
 let adWatched = parseInt(localStorage.getItem('adWatched') || 0);
 
-// GET REAL TELEGRAM USER
 const user = tg.initDataUnsafe?.user;
 const userId = user?.id || "guest";
-const userName = user?.first_name + (user?.last_name? " + user.last_name : "") || "Guest";
+const userName = user?.first_name + (user?.last_name? " " + user.last_name : "") || "Guest";
 
-// WAIT FOR ADS
+// FIX: OPEN AFTER 2S EVEN IF ADS FAIL
+let appOpened = false;
+function openApp() {
+  if(appOpened) return;
+  appOpened = true;
+  clearInterval(check);
+  document.getElementById('loader').classList.add('hide');
+  document.getElementById('app').style.display = 'block';
+  enableAds();
+  updateUI();
+  savePlayer();
+  loadLeaderboard();
+}
+
+setTimeout(openApp, 2000); // Force open after 2 seconds
+
+// CHECK ADS IN BACKGROUND
 let tries = 0;
 const check = setInterval(() => {
   tries++;
   if(typeof window.showGiga === 'function' && typeof window.show_11258922 === 'function') {
-    clearInterval(check);
-    document.getElementById('loader').classList.add('hide');
-    document.getElementById('app').style.display = 'block';
-    enableAds();
-    updateUI();
-    savePlayer();
-    loadLeaderboard();
-  }
-  if(tries > 50) {
-    clearInterval(check);
-    document.getElementById('loader').innerHTML = 'Failed to load. <button onclick="location.reload()" style="margin-top:10px; padding:8px 16px; background:#FF8A00; border:none; border-radius:8px; color:#fff;">Tap to Retry</button>';
+    openApp(); // Open immediately if both loaded
   }
 }, 200);
 
 function enableAds() {
-  document.getElementById('gigaBtn').disabled = false;
-  document.getElementById('monetagBtn').disabled = false;
-  document.getElementById('gigaBtn').innerText = "Watch";
-  document.getElementById('monetagBtn').innerText = "Watch";
-  document.getElementById('gigaBtn').onclick = startGigaQueue;
-  document.getElementById('monetagBtn').onclick = showMonetagAd;
+  const gigaBtn = document.getElementById('gigaBtn');
+  const monetagBtn = document.getElementById('monetagBtn');
+  
+  if(typeof window.showGiga === 'function') {
+    gigaBtn.disabled = false;
+    gigaBtn.innerText = "Watch";
+    gigaBtn.onclick = startGigaQueue;
+  } else {
+    gigaBtn.innerText = "Unavailable";
+  }
+
+  if(typeof window.show_11258922 === 'function') {
+    monetagBtn.disabled = false;
+    monetagBtn.innerText = "Watch";
+    monetagBtn.onclick = showMonetagAd;
+  } else {
+    monetagBtn.innerText = "Unavailable";
+  }
 }
 
 function updateUI() {
@@ -175,13 +187,13 @@ function updateUI() {
   }
 }
 
-// 1. GIGAPUB: 1 AD = 50 APU - CHANGED
+// 1. GIGAPUB: 1 AD = 50 APU
 let gigaQueue = 0;
 let gigaCompleted = false;
 
 function startGigaQueue() {
-  if(adWatched >= DAILY_LIMIT) return tg.showAlert("Daily limit reached"); // was DAILY_LIMIT - 1
-  gigaQueue = 1; // was 2
+  if(adWatched >= DAILY_LIMIT) return tg.showAlert("Daily limit reached");
+  gigaQueue = 1;
   gigaCompleted = false;
   playGigaAd();
 }
@@ -214,7 +226,7 @@ function playGigaAd() {
 function finishGigaAd() {
   if(gigaCompleted) {
     coins += 50;
-    adWatched += 1; // was 2
+    adWatched += 1;
     localStorage.setItem('coins', coins);
     localStorage.setItem('adWatched', adWatched);
     updateUI();
