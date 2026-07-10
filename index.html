@@ -11,10 +11,10 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
   body { 
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: linear-gradient(180deg, #0A2AFF 0%, #0018B3 50%, #000A4D 100%);
-    color: #fff; padding-bottom: 90px; min-height: 100vh; background-attachment: fixed;
+    background: #0A2AFF;
+    color: #fff; padding-bottom: 90px; min-height: 100vh;
   }
-  #loader { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0A2AFF; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.6s ease; }
+  #loader { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0A2AFF; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.6s ease; }
   #loader.hide { opacity: 0; pointer-events: none; }
   #splashImg { width: 100%; height: 100%; object-fit: cover; }
   .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; position: sticky; top: 0; background: rgba(0,10,77,0.8); backdrop-filter: blur(20px); z-index: 10; }
@@ -55,14 +55,12 @@
 <body>
 
   <div id="loader">
-    <!-- PUT YOUR IMAGE URL HERE -->
-    <img id="splashImg" src="YOUR_IMAGE_URL_HERE" alt="AdsPayU">
+    <!-- YOUR LOGO -->
+    <img id="splashImg" src="attachment://0" alt="AdsPayU">
   </div>
 
   <div id="app" style="display:none">
-    <div class="topbar">
-      <h1>AdsPayU</h1>
-    </div>
+    <div class="topbar"><h1>AdsPayU</h1></div>
 
     <div class="balance-section">
       <div class="balance-label">BALANCE</div>
@@ -75,7 +73,6 @@
       <button class="btn btn-secondary" onclick="swap()">SWAP</button>
     </div>
 
-    <!-- HOME -->
     <div id="home" class="page active">
       <div class="card">
         <div class="card-header">
@@ -87,7 +84,6 @@
           <button class="btn-get" id="gigaBtn" disabled>Loading...</button>
         </div>
       </div>
-
       <div class="card">
         <div class="card-header">
           <div class="card-icon">💰</div>
@@ -100,12 +96,8 @@
       </div>
     </div>
 
-    <!-- RANK -->
     <div id="rank" class="page">
-      <div class="card">
-        <h3>🏆 Top Earners</h3>
-        <div id="board"></div>
-      </div>
+      <div class="card"><h3>🏆 Top Earners</h3><div id="board"></div></div>
     </div>
 
     <div class="bottom-nav">
@@ -120,13 +112,12 @@
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
-tg.setBackgroundColor('#000A4D');
+tg.setBackgroundColor('#0A2AFF');
 
 const COIN_VALUE = 0.000028;
 const DAILY_LIMIT = 100;
 let coins = parseInt(localStorage.getItem('coins') || 0);
 let adWatched = parseInt(localStorage.getItem('adWatched') || 0);
-
 const user = tg.initDataUnsafe?.user;
 const userId = user?.id || "guest";
 const userName = user?.first_name + (user?.last_name? " + user.last_name : "") || "Guest";
@@ -139,7 +130,7 @@ setTimeout(() => {
   updateUI();
   savePlayer();
   loadLeaderboard();
-}, 1500); // 1500ms = 1.5 seconds
+}, 1500);
 
 function enableAds() {
   document.getElementById('gigaBtn').disabled = false;
@@ -154,7 +145,6 @@ function updateUI() {
   document.getElementById('coins').innerText = coins;
   document.getElementById('usd').innerText = (coins * COIN_VALUE).toFixed(2);
   document.getElementById('adLimit').innerText = adWatched;
-  
   if(adWatched >= DAILY_LIMIT) {
     document.getElementById('gigaBtn').disabled = true;
     document.getElementById('gigaBtn').innerText = "Daily Limit";
@@ -162,50 +152,33 @@ function updateUI() {
 }
 
 // GIGAPUB
-let gigaQueue = 0;
-let gigaCompleted = false;
-
+let gigaQueue = 0; let gigaCompleted = false;
 function startGigaQueue() {
   if(adWatched >= DAILY_LIMIT - 1) return tg.showAlert("Not enough ads left today");
-  gigaQueue = 2;
-  gigaCompleted = false;
-  playGigaAd();
+  gigaQueue = 2; gigaCompleted = false; playGigaAd();
 }
-
 function playGigaAd() {
   if(gigaQueue <= 0) return finishGigaAd();
   document.getElementById('gigaBtn').classList.add('loading');
   document.getElementById('gigaBtn').innerText = "Loading...";
-
-  window.showGiga()
- .then(() => {
+  window.showGiga().then(() => {
     gigaQueue -= 1;
-    if(gigaQueue > 0) {
-      setTimeout(playGigaAd, 3000);
-    } else {
-      gigaCompleted = true;
-      finishGigaAd();
-    }
-  })
- .catch(e => {
-    gigaQueue = 0;
-    gigaCompleted = false;
+    if(gigaQueue > 0) setTimeout(playGigaAd, 3000);
+    else { gigaCompleted = true; finishGigaAd(); }
+  }).catch(e => {
+    gigaQueue = 0; gigaCompleted = false;
     document.getElementById('gigaBtn').innerText = "Watch";
     if(e === 'No ads') tg.showAlert("GigaPub: No ads available.");
     else if(e === 'Skipped') tg.showAlert("Ad skipped. No reward.");
     document.getElementById('gigaBtn').classList.remove('loading');
   });
 }
-
 function finishGigaAd() {
   if(gigaCompleted) {
-    coins += 50;
-    adWatched += 2;
+    coins += 50; adWatched += 2;
     localStorage.setItem('coins', coins);
     localStorage.setItem('adWatched', adWatched);
-    updateUI();
-    savePlayer();
-    loadLeaderboard();
+    updateUI(); savePlayer(); loadLeaderboard();
     tg.HapticFeedback.notificationOccurred('success');
     tg.showPopup({title: "GigaPub Complete!", message: "+50 APU"});
   }
@@ -217,13 +190,9 @@ function finishGigaAd() {
 function showMonetagAd() {
   document.getElementById('monetagBtn').classList.add('loading');
   document.getElementById('monetagBtn').innerText = "Loading...";
-
   window.show_11258922().then(() => {
-    coins += 50;
-    localStorage.setItem('coins', coins);
-    updateUI();
-    savePlayer();
-    loadLeaderboard();
+    coins += 50; localStorage.setItem('coins', coins);
+    updateUI(); savePlayer(); loadLeaderboard();
     tg.HapticFeedback.notificationOccurred('success');
     tg.showPopup({title: "Monetag Complete!", message: "+50 APU"});
   }).catch(e => {
@@ -243,7 +212,6 @@ function savePlayer() {
   leaderboard = leaderboard.slice(0, 20);
   localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
 }
-
 function loadLeaderboard() {
   let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
   if(leaderboard.length === 0) {
@@ -253,18 +221,16 @@ function loadLeaderboard() {
   let html = '';
   leaderboard.forEach((player, index) => {
     const isMe = player.id === userId;
-    html += `
-      <div class="list-item" style="${isMe? 'background: rgba(255,138,0,0.1); border-radius:8px; padding: 12px;' : ''}">
+    html += `<div class="list-item" style="${isMe? 'background: rgba(255,138,0,0.1); border-radius:8px; padding: 12px;' : ''}">
         <span class="rank-num">#${index + 1}</span>
         <span class="player-name">${player.name} ${isMe? '(You)' : ''}</span>
         <span>${player.coins} APU</span>
-      </div>
-    `;
+      </div>`;
   });
   document.getElementById('board').innerHTML = html;
 }
 
-// NAVIGATION
+// NAV
 function showTab(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
@@ -272,11 +238,9 @@ function showTab(id) {
   event.currentTarget.classList.add('active');
   if(id === 'rank') loadLeaderboard();
 }
-
 function withdraw() {
   tg.showPopup({title: "Withdraw", message: `You have ${coins} APU\nMin withdraw: 10000 APU`, buttons: [{type: "close"}]});
 }
-
 function swap() { tg.showAlert("Swap feature coming soon"); }
 
 // Reset daily
