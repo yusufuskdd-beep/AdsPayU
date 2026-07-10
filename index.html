@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://ad.gigapub.tech/script?id=7204"></script>
+<!-- MONETAG SDK -->
+<script src='//libtl.com/sdk.js' data-zone='11258922' data-sdk='show_11258922'></script>
 <title>AdsPayU</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -39,8 +41,11 @@
   .card-title { font-size: 15px; font-weight: 700; }
   .card-sub { font-size: 12px; opacity: 0.7; margin-top: 2px; }
   .btn-get { padding: 10px 18px; background: linear-gradient(90deg, #1877FF 0%, #0A5FFF 100%); border: none; border-radius: 10px; color: #fff; font-weight: 700; cursor: pointer; min-width: 100px; }
+  .btn-get.orange { background: linear-gradient(90deg, #FF8A00 0%, #FF6A00 100%); }
   .btn-get:disabled { background: #333; opacity: 0.5; }
-  .list-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 14px; }
+  .list-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 14px; align-items: center; }
+  .rank-num { font-weight: 800; color: #FF8A00; margin-right: 8px; }
+  .player-name { flex: 1; font-weight: 600; }
   .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,10,20,0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; padding: 8px; display: flex; gap: 16px; }
   .nav-item { text-align: center; font-size: 10px; opacity: 0.6; background: none; border: none; color: #fff; cursor: pointer; padding: 4px 8px; }
   .nav-item.active { opacity: 1; color: #FF8A00; }
@@ -53,7 +58,7 @@
 
   <div id="loader">
     <div class="spinner"></div>
-    Loading GigaPub...
+    Loading Ads...
   </div>
 
   <div id="app" style="display:none">
@@ -74,35 +79,28 @@
 
     <!-- HOME -->
     <div id="home" class="page active">
+      <!-- GIGAPUB CARD -->
       <div class="card">
         <div class="card-header">
-          <div class="card-icon">📺</div>
+          <div class="card-icon">🎯</div>
           <div class="card-info">
-            <div class="card-title">Watch Rewarded Ad</div>
-            <div class="card-sub">Earn 50 APU | <span id="adLimit">0</span>/100 today</div>
+            <div class="card-title">GigaPub Ads</div>
+            <div class="card-sub">Watch 2 Ads | Earn 50 APU | <span id="adLimit">0</span>/100 today</div>
           </div>
-          <button class="btn-get" id="watchBtn" disabled>Loading...</button>
+          <button class="btn-get" id="gigaBtn" disabled>Loading...</button>
         </div>
       </div>
-    </div>
 
-    <!-- FRIENDS -->
-    <div id="friends" class="page">
+      <!-- MONETAG CARD -->
       <div class="card">
-        <h3>Invite Friends</h3>
-        <p style="opacity:0.7; font-size:13px; margin:8px 0;">Get 100 APU for each friend</p>
-        <button class="btn btn-primary" onclick="copyLink()">Copy Invite Link</button>
-        <div style="margin-top:12px;">
-          <div class="list-item"><span>Total Invites</span><span id="refCount">0</span></div>
+        <div class="card-header">
+          <div class="card-icon">💰</div>
+          <div class="card-info">
+            <div class="card-title">Monetag Ads</div>
+            <div class="card-sub">Watch 1 Ad | Earn 50 APU</div>
+          </div>
+          <button class="btn-get orange" id="monetagBtn" disabled>Loading...</button>
         </div>
-      </div>
-    </div>
-
-    <!-- MISSION -->
-    <div id="mission" class="page">
-      <div class="card">
-        <h3>Daily Tasks</h3>
-        <button class="btn btn-primary" id="dailyBtn" onclick="claimDaily()">Claim Daily Bonus +25</button>
       </div>
     </div>
 
@@ -111,14 +109,6 @@
       <div class="card">
         <h3>🏆 Top Earners</h3>
         <div id="board"></div>
-      </div>
-    </div>
-
-    <!-- ADD -->
-    <div id="add" class="page">
-      <div class="card">
-        <h3>Quick Earn</h3>
-        <button class="btn btn-primary" id="quickAdBtn" disabled style="margin-top:10px;">Loading...</button>
       </div>
     </div>
 
@@ -140,20 +130,23 @@ const COIN_VALUE = 0.000028;
 const DAILY_LIMIT = 100;
 let coins = parseInt(localStorage.getItem('coins') || 0);
 let adWatched = parseInt(localStorage.getItem('adWatched') || 0);
-let referrals = parseInt(localStorage.getItem('referrals') || 0);
-let adsInQueue = 0;
-let bothAdsCompleted = false;
 
-// WAIT FOR GIGAPUB
+// GET REAL TELEGRAM USER
+const user = tg.initDataUnsafe?.user;
+const userId = user?.id || "guest";
+const userName = user?.first_name + (user?.last_name? " " + user.last_name : "") || "Guest";
+
+// WAIT FOR ADS
 let tries = 0;
 const check = setInterval(() => {
   tries++;
-  if(typeof window.showGiga === 'function') {
+  if(typeof window.showGiga === 'function' && typeof window.show_11258922 === 'function') {
     clearInterval(check);
     document.getElementById('loader').classList.add('hide');
     document.getElementById('app').style.display = 'block';
     enableAds();
     updateUI();
+    savePlayer();
     loadLeaderboard();
   }
   if(tries > 50) {
@@ -163,82 +156,127 @@ const check = setInterval(() => {
 }, 200);
 
 function enableAds() {
-  document.getElementById('watchBtn').disabled = false;
-  document.getElementById('quickAdBtn').disabled = false;
-  document.getElementById('watchBtn').innerText = "Watch Ad";
-  document.getElementById('quickAdBtn').innerText = "Watch Ad";
-  document.getElementById('watchBtn').onclick = startAdQueue;
-  document.getElementById('quickAdBtn').onclick = startAdQueue;
+  document.getElementById('gigaBtn').disabled = false;
+  document.getElementById('monetagBtn').disabled = false;
+  document.getElementById('gigaBtn').innerText = "Watch";
+  document.getElementById('monetagBtn').innerText = "Watch";
+  document.getElementById('gigaBtn').onclick = startGigaQueue;
+  document.getElementById('monetagBtn').onclick = showMonetagAd;
 }
 
 function updateUI() {
   document.getElementById('coins').innerText = coins;
   document.getElementById('usd').innerText = (coins * COIN_VALUE).toFixed(2);
   document.getElementById('adLimit').innerText = adWatched;
-  document.getElementById('refCount').innerText = referrals;
   
   if(adWatched >= DAILY_LIMIT) {
-    document.getElementById('watchBtn').disabled = true;
-    document.getElementById('quickAdBtn').disabled = true;
-    document.getElementById('watchBtn').innerText = "Daily Limit";
-    document.getElementById('quickAdBtn').innerText = "Daily Limit";
+    document.getElementById('gigaBtn').disabled = true;
+    document.getElementById('gigaBtn').innerText = "Daily Limit";
   }
 }
 
-// 2 ADS WITH 3S DELAY, NO POPUP IN MIDDLE
-function startAdQueue() {
+// 1. GIGAPUB: 2 ADS = 50 APU
+let gigaQueue = 0;
+let gigaCompleted = false;
+
+function startGigaQueue() {
   if(adWatched >= DAILY_LIMIT - 1) return tg.showAlert("Not enough ads left today");
-  
-  adsInQueue = 2;
-  bothAdsCompleted = false;
-  playNextAd();
+  gigaQueue = 2;
+  gigaCompleted = false;
+  playGigaAd();
 }
 
-function playNextAd() {
-  if(adsInQueue <= 0) return finishAdQueue();
-  
-  document.getElementById('watchBtn').classList.add('loading');
-  document.getElementById('quickAdBtn').classList.add('loading');
-  document.getElementById('watchBtn').innerText = "Loading Ad...";
-  
+function playGigaAd() {
+  if(gigaQueue <= 0) return finishGigaAd();
+  document.getElementById('gigaBtn').classList.add('loading');
+  document.getElementById('gigaBtn').innerText = "Loading...";
+
   window.showGiga()
-  .then(() => {
-    adsInQueue -= 1;
-    
-    if(adsInQueue > 0) {
-      // REMOVED POPUP HERE - just wait 3s silently
-      setTimeout(playNextAd, 3000); // 3 SECOND DELAY
+ .then(() => {
+    gigaQueue -= 1;
+    if(gigaQueue > 0) {
+      setTimeout(playGigaAd, 3000);
     } else {
-      bothAdsCompleted = true;
-      finishAdQueue();
+      gigaCompleted = true;
+      finishGigaAd();
     }
   })
-  .catch(e => {
-    adsInQueue = 0;
-    bothAdsCompleted = false;
-    document.getElementById('watchBtn').innerText = "Watch Ad";
-    if(e === 'No ads') tg.showAlert("No ads available.");
+ .catch(e => {
+    gigaQueue = 0;
+    gigaCompleted = false;
+    document.getElementById('gigaBtn').innerText = "Watch";
+    if(e === 'No ads') tg.showAlert("GigaPub: No ads available.");
     else if(e === 'Skipped') tg.showAlert("Ad skipped. No reward.");
-    else tg.showAlert("Ad error: " + e);
-    document.getElementById('watchBtn').classList.remove('loading');
-    document.getElementById('quickAdBtn').classList.remove('loading');
+    document.getElementById('gigaBtn').classList.remove('loading');
   });
 }
 
-function finishAdQueue() {
-  if(bothAdsCompleted) {
+function finishGigaAd() {
+  if(gigaCompleted) {
     coins += 50;
     adWatched += 2;
     localStorage.setItem('coins', coins);
     localStorage.setItem('adWatched', adWatched);
     updateUI();
+    savePlayer();
+    loadLeaderboard();
     tg.HapticFeedback.notificationOccurred('success');
-    tg.showPopup({title: "Completed!", message: "+50 APU"}); // ONLY POPUP AT END
+    tg.showPopup({title: "GigaPub Complete!", message: "+50 APU"});
   }
-  
-  document.getElementById('watchBtn').innerText = "Watch Ad";
-  document.getElementById('watchBtn').classList.remove('loading');
-  document.getElementById('quickAdBtn').classList.remove('loading');
+  document.getElementById('gigaBtn').innerText = "Watch";
+  document.getElementById('gigaBtn').classList.remove('loading');
+}
+
+// 2. MONETAG: 1 AD = 50 APU
+function showMonetagAd() {
+  document.getElementById('monetagBtn').classList.add('loading');
+  document.getElementById('monetagBtn').innerText = "Loading...";
+
+  window.show_11258922().then(() => {
+    // Monetag reward
+    coins += 50;
+    localStorage.setItem('coins', coins);
+    updateUI();
+    savePlayer();
+    loadLeaderboard();
+    tg.HapticFeedback.notificationOccurred('success');
+    tg.showPopup({title: "Monetag Complete!", message: "+50 APU"});
+  }).catch(e => {
+    tg.showAlert("Monetag: " + e);
+  }).finally(() => {
+    document.getElementById('monetagBtn').innerText = "Watch";
+    document.getElementById('monetagBtn').classList.remove('loading');
+  });
+}
+
+// LEADERBOARD
+function savePlayer() {
+  let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+  leaderboard = leaderboard.filter(p => p.id !== userId);
+  leaderboard.push({ id: userId, name: userName, coins: coins });
+  leaderboard.sort((a,b) => b.coins - a.coins);
+  leaderboard = leaderboard.slice(0, 20);
+  localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+}
+
+function loadLeaderboard() {
+  let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+  if(leaderboard.length === 0) {
+    document.getElementById('board').innerHTML = '<p style="opacity:0.6">No players yet</p>';
+    return;
+  }
+  let html = '';
+  leaderboard.forEach((player, index) => {
+    const isMe = player.id === userId;
+    html += `
+      <div class="list-item" style="${isMe? 'background: rgba(255,138,0,0.1); border-radius:8px; padding: 12px;' : ''}">
+        <span class="rank-num">#${index + 1}</span>
+        <span class="player-name">${player.name} ${isMe? '(You)' : ''}</span>
+        <span>${player.coins} APU</span>
+      </div>
+    `;
+  });
+  document.getElementById('board').innerHTML = html;
 }
 
 // NAVIGATION
@@ -247,24 +285,7 @@ function showTab(id) {
   document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   event.currentTarget.classList.add('active');
-}
-
-// OTHER FEATURES
-function claimDaily() {
-  const today = new Date().toDateString();
-  if(localStorage.getItem('lastDaily') === today) return tg.showAlert("Already claimed today");
-  coins += 25;
-  localStorage.setItem('coins', coins);
-  localStorage.setItem('lastDaily', today);
-  updateUI();
-  tg.showAlert("Daily bonus claimed! +25 APU");
-}
-
-function copyLink() {
-  const userId = tg.initDataUnsafe?.user?.id || "demo123";
-  const link = `https://t.me/AdsPayUBot?startapp=ref_${userId}`;
-  navigator.clipboard.writeText(link);
-  tg.showAlert("Invite link copied!");
+  if(id === 'rank') loadLeaderboard();
 }
 
 function withdraw() {
@@ -272,14 +293,6 @@ function withdraw() {
 }
 
 function swap() { tg.showAlert("Swap feature coming soon"); }
-
-function loadLeaderboard() {
-  document.getElementById('board').innerHTML = `
-    <div class="list-item"><span>1. You</span><span>${coins} APU</span></div>
-    <div class="list-item"><span>2. Player2</span><span>12500 APU</span></div>
-    <div class="list-item"><span>3. Player3</span><span>9800 APU</span></div>
-  `;
-}
 
 // Reset daily
 if(!localStorage.getItem('lastReset') || new Date().toDateString() !== localStorage.getItem('lastReset')) {
