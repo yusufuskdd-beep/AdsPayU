@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.gigapub.tech/sdk.js"></script>
 <title>AdsPayU</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -12,7 +13,7 @@
     background: linear-gradient(180deg, #0A2AFF 0%, #0018B3 50%, #000A4D 100%);
     color: #fff; padding-bottom: 90px; min-height: 100vh; background-attachment: fixed;
   }
-  #loader { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0A2AFF url('./splash.jpg') no-repeat center; background-size: cover; z-index: 9999; transition: opacity 0.6s ease; }
+  #loader { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0A2AFF url('./splash.jpg') no-repeat center; background-size: cover; z-index: 9999; transition: opacity 0.6s ease; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; }
   #loader.hide { opacity: 0; pointer-events: none; }
   .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
   .topbar h1 { font-size: 18px; font-weight: 700; }
@@ -29,26 +30,26 @@
   .page { display: none; padding: 0 16px; }
   .page.active { display: block; animation: fade .25s ease; }
   @keyframes fade { from {opacity:0; transform: translateY(4px)} to {opacity:1; transform: translateY(0)} }
-  .card { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 14px; margin-bottom: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+  .card { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 14px; margin-bottom: 12px; }
   .card-header { display: flex; align-items: center; gap: 12px; }
   .card-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 22px; }
   .card-info { flex: 1; }
   .card-title { font-size: 15px; font-weight: 700; }
   .card-sub { font-size: 12px; opacity: 0.7; }
   .btn-get { padding: 10px 18px; background: linear-gradient(90deg, #1877FF 0%, #0A5FFF 100%); border: none; border-radius: 10px; color: #fff; font-weight: 700; }
-  .btn-get:disabled { background: #444; opacity: 0.5; }
+  .btn-get:disabled { background: #333; opacity: 0.5; }
   .list-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
   .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,10,20,0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; padding: 8px; display: flex; gap: 20px; }
   .nav-item { text-align: center; font-size: 10px; opacity: 0.6; background: none; border: none; color: #fff; cursor: pointer; }
   .nav-item.active { opacity: 1; color: #FF8A00; }
   .nav-icon { font-size: 22px; display: block; }
-  .nav-center { background: linear-gradient(135deg, #FF3B30 0%, #FF6A00 100%); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; box-shadow: 0 4px 20px rgba(255,59,48,0.4); }
+  .nav-center { background: linear-gradient(135deg, #FF3B30 0%, #FF6A00 100%); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; }
   .loading { opacity: 0.6; pointer-events: none; }
 </style>
 </head>
 <body>
 
-  <div id="loader"></div>
+  <div id="loader">Loading Ads...</div>
 
   <div id="app" style="display:none">
     <div class="topbar">
@@ -75,18 +76,18 @@
             <div class="card-title">Watch Ad</div>
             <div class="card-sub">Reward: 50 APU | <span id="adLimit">0</span>/50 today</div>
           </div>
-          <button class="btn-get" id="watchBtn" onclick="showAd()">Loading Ads...</button>
+          <button class="btn-get" id="watchBtn" disabled>Loading...</button>
         </div>
       </div>
     </div>
 
-    <div id="friends" class="page">...</div>
-    <div id="mission" class="page">...</div>
-    <div id="rank" class="page">...</div>
+    <div id="friends" class="page"><div class="card"><h3>Invite Friends</h3><button class="btn btn-primary" onclick="copyLink()">Copy Link</button></div></div>
+    <div id="mission" class="page"><div class="card"><h3>Daily Bonus</h3><button class="btn btn-primary" onclick="claimDaily()">Claim +25</button></div></div>
+    <div id="rank" class="page"><div class="card"><h3>🏆 Leaderboard</h3><div id="board"></div></div></div>
     <div id="add" class="page">
       <div class="card">
         <h3>Quick Earn</h3>
-        <button class="btn btn-primary" id="quickAdBtn" style="margin-top:10px;" onclick="showAd()">Loading...</button>
+        <button class="btn btn-primary" id="quickAdBtn" disabled style="margin-top:10px;">Loading...</button>
         <button class="btn btn-secondary" style="margin-top:10px;" onclick="claimDaily()">Daily Bonus +25</button>
       </div>
     </div>
@@ -105,60 +106,44 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 tg.setBackgroundColor('#000A4D');
 
-let adsReady = false;
 const GIGA_TOKEN = "main";
-
-// 1. LOAD GIGAPUB SDK DYNAMICALLY
-function loadGigaSDK() {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.gigapub.tech/sdk.js';
-    script.onload = () => resolve();
-    script.onerror = () => reject();
-    document.head.appendChild(script);
-  });
-}
-
-// 2. FORCE START APP AFTER 4S
-setTimeout(() => {
-  document.getElementById('loader').classList.add('hide');
-  document.getElementById('app').style.display = 'block';
-  initAds();
-}, 4000);
-
-async function initAds() {
-  try {
-    await loadGigaSDK();
-    // Wait 500ms for SDK to attach to window
-    setTimeout(() => {
-      if(typeof window.showGiga === 'function') {
-        adsReady = true;
-        enableButtons();
-        console.log("GigaPub Loaded");
-      } else {
-        throw new Error("SDK not attached");
-      }
-    }, 500);
-  } catch(e) {
-    console.log("GigaPub failed, enabling test mode");
-    enableButtons();
-    tg.showAlert("Ads server slow. You can still test, but no real ads will show.");
-  }
-}
-
-function enableButtons() {
-  document.getElementById('watchBtn').innerText = "Get APU";
-  document.getElementById('quickAdBtn').innerText = "Watch Ad +50";
-  document.getElementById('watchBtn').disabled = false;
-  document.getElementById('quickAdBtn').disabled = false;
-}
-
-// DATA
 let coins = parseInt(localStorage.getItem('coins') || 0);
 let adWatched = parseInt(localStorage.getItem('adWatched') || 0);
-let referrals = parseInt(localStorage.getItem('referrals') || 0);
-let lastDaily = localStorage.getItem('lastDaily') || 0;
 const COIN_VALUE = 0.000028;
+
+// WAIT FOR GIGAPUB TO BE READY
+function waitForGiga() {
+  const check = setInterval(() => {
+    if(typeof window.showGiga === 'function') {
+      clearInterval(check);
+      enableAds();
+      hideLoader();
+    }
+  }, 200);
+  
+  // Force timeout after 8s
+  setTimeout(() => {
+    clearInterval(check);
+    hideLoader();
+    if(typeof window.showGiga !== 'function') {
+      tg.showAlert("GigaPub failed to load. Check internet and restart.");
+    }
+  }, 8000);
+}
+
+function hideLoader() {
+  document.getElementById('loader').classList.add('hide');
+  document.getElementById('app').style.display = 'block';
+}
+
+function enableAds() {
+  document.getElementById('watchBtn').disabled = false;
+  document.getElementById('quickAdBtn').disabled = false;
+  document.getElementById('watchBtn').innerText = "Get APU";
+  document.getElementById('quickAdBtn').innerText = "Watch Ad +50";
+  document.getElementById('watchBtn').onclick = showGigaAd;
+  document.getElementById('quickAdBtn').onclick = showGigaAd;
+}
 
 function updateUI() {
   document.getElementById('coins').innerText = coins;
@@ -167,25 +152,15 @@ function updateUI() {
   if(adWatched >= 50) {
     document.getElementById('watchBtn').disabled = true;
     document.getElementById('quickAdBtn').disabled = true;
-    document.getElementById('watchBtn').innerText = "Limit";
-    document.getElementById('quickAdBtn').innerText = "Limit";
+    document.getElementById('watchBtn').innerText = "Daily Limit";
+    document.getElementById('quickAdBtn').innerText = "Daily Limit";
   }
 }
 updateUI();
 
-// 3. SHOW AD FUNCTION WITH CHECK
-function showAd() {
-  if(adWatched >= 50) return tg.showAlert("Daily ad limit reached");
-  
-  if(!adsReady || typeof window.showGiga !== 'function') {
-    // TEST MODE: Give coins anyway so you can test UI
-    coins += 50;
-    adWatched += 1;
-    localStorage.setItem('coins', coins);
-    localStorage.setItem('adWatched', adWatched);
-    updateUI();
-    return tg.showAlert("TEST MODE: +50 APU. Real ads not loaded yet.");
-  }
+// THE CORRECT GIGAPUB CALL
+function showGigaAd() {
+  if(adWatched >= 50) return tg.showAlert("Daily limit reached");
   
   document.getElementById('watchBtn').classList.add('loading');
   document.getElementById('quickAdBtn').classList.add('loading');
@@ -198,12 +173,12 @@ function showAd() {
     localStorage.setItem('adWatched', adWatched);
     updateUI();
     tg.HapticFeedback.notificationOccurred('success');
-    tg.showPopup({title: "Earned!", message: "+50 APU"});
+    tg.showPopup({title: "Success!", message: "+50 APU"});
   })
   .catch(e => { 
-    if(e === 'No ads') tg.showAlert("No ads available. Try again in 1 hour.");
+    if(e === 'No ads') tg.showAlert("No ads right now. Try again later.");
     else if(e === 'Skipped') tg.showAlert("Ad skipped. No reward.");
-    else tg.showAlert("Ad error: " + e);
+    else tg.showAlert("Error: " + e);
   })
   .finally(() => {
     document.getElementById('watchBtn').classList.remove('loading');
@@ -221,17 +196,25 @@ function showTab(id) {
 
 function claimDaily() {
   const today = new Date().toDateString();
-  if(lastDaily === today) return tg.showAlert("Already claimed today");
+  if(localStorage.getItem('lastDaily') === today) return tg.showAlert("Already claimed");
   coins += 25;
-  lastDaily = today;
   localStorage.setItem('coins', coins);
   localStorage.setItem('lastDaily', today);
   updateUI();
   tg.showAlert("Daily bonus claimed! +25 APU");
 }
 
-function withdraw() { tg.showAlert("Withdraw page coming soon"); }
-function swap() { tg.showAlert("Swap page coming soon"); }
+function copyLink() {
+  const userId = tg.initDataUnsafe?.user?.id || "demo";
+  navigator.clipboard.writeText(`https://t.me/YourBot?startapp=ref_${userId}`);
+  tg.showAlert("Link copied");
+}
+
+function withdraw() { tg.showAlert("Withdraw soon"); }
+function swap() { tg.showAlert("Swap soon"); }
+
+// START
+waitForGiga();
 
 // Reset daily
 if(!localStorage.getItem('lastReset') || new Date().toDateString() !== localStorage.getItem('lastReset')) {
