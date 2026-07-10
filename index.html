@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://ad.gigapub.tech/script?id=7204"></script>
+<!-- MONETAG SDK -->
 <script src='//libtl.com/sdk.js' data-zone='11258922' data-sdk='show_11258922'></script>
 <title>AdsPayU</title>
 <style>
@@ -78,7 +79,7 @@
 
     <!-- HOME -->
     <div id="home" class="page active">
-      <!-- GIGAPUB CARD - CHANGED TEXT -->
+      <!-- GIGAPUB CARD -->
       <div class="card">
         <div class="card-header">
           <div class="card-icon">🎯</div>
@@ -174,13 +175,13 @@ function updateUI() {
   }
 }
 
-// 1. GIGAPUB: 1 AD = 50 APU - CHANGED
+// 1. GIGAPUB: 1 AD = 50 APU
 let gigaQueue = 0;
 let gigaCompleted = false;
 
 function startGigaQueue() {
   if(adWatched >= DAILY_LIMIT) return tg.showAlert("Daily limit reached");
-  gigaQueue = 1; // CHANGED FROM 2 TO 1
+  gigaQueue = 1;
   gigaCompleted = false;
   playGigaAd();
 }
@@ -213,7 +214,7 @@ function playGigaAd() {
 function finishGigaAd() {
   if(gigaCompleted) {
     coins += 50;
-    adWatched += 1; // CHANGED FROM 2 TO 1
+    adWatched += 1;
     localStorage.setItem('coins', coins);
     localStorage.setItem('adWatched', adWatched);
     updateUI();
