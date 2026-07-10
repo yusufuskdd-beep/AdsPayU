@@ -16,78 +16,69 @@
   }
   #loader { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0A2AFF; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; font-size: 16px; font-weight: 600; transition: opacity 0.6s ease; }
   #loader.hide { opacity: 0; pointer-events: none; }
-  .spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.2); border-top: 3px solid #FF8A00; border-radius: 50%; animation: spin 1s linear infinite; }
+ .spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.2); border-top: 3px solid #FF8A00; border-radius: 50%; animation: spin 1s linear infinite; }
   @keyframes spin { to {transform: rotate(360deg)} }
-  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; position: sticky; top: 0; background: rgba(0,10,77,0.8); backdrop-filter: blur(20px); z-index: 10; }
-  .topbar h1 { font-size: 18px; font-weight: 700; }
-  .balance-section { padding: 16px; text-align: center; }
-  .balance-label { font-size: 12px; opacity: 0.7; letter-spacing: 1px; }
-  .balance { font-size: 48px; font-weight: 800; margin: 8px 0; }
-  .balance span { font-size: 20px; opacity: 0.8; }
-  .usd { font-size: 14px; opacity: 0.7; }
-  .btn-row { display: flex; gap: 10px; padding: 0 16px 20px; }
-  .btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: transform 0.1s; }
-  .btn:active { transform: scale(0.97); }
-  .btn-primary { background: linear-gradient(90deg, #FF8A00 0%, #FF6A00 100%); color: #fff; box-shadow: 0 4px 20px rgba(255,138,0,0.4); }
-  .btn-secondary { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); color: #fff; border: 1px solid rgba(255,255,255,0.15); }
-  .page { display: none; padding: 0 16px; animation: fade .25s ease; }
-  .page.active { display: block; }
+ .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; position: sticky; top: 0; background: rgba(0,10,77,0.8); backdrop-filter: blur(20px); z-index: 10; }
+ .topbar h1 { font-size: 18px; font-weight: 700; }
+ .balance-section { padding: 16px; text-align: center; }
+ .balance-label { font-size: 12px; opacity: 0.7; letter-spacing: 1px; }
+ .balance { font-size: 48px; font-weight: 800; margin: 8px 0; }
+ .balance span { font-size: 20px; opacity: 0.8; }
+ .usd { font-size: 14px; opacity: 0.7; }
+ .btn-row { display: flex; gap: 10px; padding: 0 16px 20px; }
+ .btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: transform 0.1s; }
+ .btn:active { transform: scale(0.97); }
+ .btn-primary { background: linear-gradient(90deg, #FF8A00 0%, #FF6A00 100%); color: #fff; box-shadow: 0 4px 20px rgba(255,138,0,0.4); }
+ .btn-secondary { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); color: #fff; border: 1px solid rgba(255,255,255,0.15); }
+ .page { display: none; padding: 0 16px; animation: fade.25s ease; }
+ .page.active { display: block; }
   @keyframes fade { from {opacity:0; transform: translateY(4px)} to {opacity:1; transform: translateY(0)} }
-  .card { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
-  .card-header { display: flex; align-items: center; gap: 12px; }
-  .card-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 22px; }
-  .card-info { flex: 1; }
-  .card-title { font-size: 15px; font-weight: 700; }
-  .card-sub { font-size: 12px; opacity: 0.7; margin-top: 2px; }
-  .btn-get { padding: 10px 18px; background: linear-gradient(90deg, #1877FF 0%, #0A5FFF 100%); border: none; border-radius: 10px; color: #fff; font-weight: 700; cursor: pointer; min-width: 100px; }
-  .btn-get.orange { background: linear-gradient(90deg, #FF8A00 0%, #FF6A00 100%); }
-  .btn-get:disabled { background: #333; opacity: 0.5; }
-  .list-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 14px; align-items: center; }
-  .rank-num { font-weight: 800; color: #FF8A00; margin-right: 8px; }
-  .player-name { flex: 1; font-weight: 600; }
-  .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,10,20,0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; padding: 8px; display: flex; gap: 12px; }
-  .nav-item { text-align: center; font-size: 10px; opacity: 0.6; background: none; border: none; color: #fff; cursor: pointer; padding: 4px 6px; }
-  .nav-item.active { opacity: 1; color: #FF8A00; }
-  .nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
-  .nav-center { background: linear-gradient(135deg, #FF3B30 0%, #FF6A00 100%); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; }
-  .loading { opacity: 0.6; pointer-events: none; }
+ .card { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+ .card-header { display: flex; align-items: center; gap: 12px; }
+ .card-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 22px; }
+ .card-info { flex: 1; }
+ .card-title { font-size: 15px; font-weight: 700; }
+ .card-sub { font-size: 12px; opacity: 0.7; margin-top: 2px; }
+ .btn-get { padding: 10px 18px; background: linear-gradient(90deg, #1877FF 0%, #0A5FFF 100%); border: none; border-radius: 10px; color: #fff; font-weight: 700; cursor: pointer; min-width: 100px; }
+ .btn-get.orange { background: linear-gradient(90deg, #FF8A00 0%, #FF6A00 100%); }
+ .btn-get:disabled { background: #333; opacity: 0.5; }
+ .list-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 14px; align-items: center; }
+ .rank-num { font-weight: 800; color: #FF8A00; margin-right: 8px; }
+ .player-name { flex: 1; font-weight: 600; }
+ .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,10,20,0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; padding: 8px; display: flex; gap: 12px; }
+ .nav-item { text-align: center; font-size: 10px; opacity: 0.6; background: none; border: none; color: #fff; cursor: pointer; padding: 4px 6px; }
+ .nav-item.active { opacity: 1; color: #FF8A00; }
+ .nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
+ .nav-center { background: linear-gradient(135deg, #FF3B30 0%, #FF6A00 100%); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; }
+ .loading { opacity: 0.6; pointer-events: none; }
 
-  /* WHEEL STYLES - UPDATED */
-  .wheel-container { text-align: center; padding: 20px 0; }
-  .wheel-wrapper { position: relative; width: 280px; height: 280px; margin: 0 auto 20px; }
-  .wheel { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #FF8A00; position: relative; overflow: hidden; transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99); box-shadow: 0 0 30px rgba(255,138,0,0.5); }
-  .wheel-pointer { width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #fff; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); z-index: 10; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
-  .bet-input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: #fff; font-size: 16px; text-align: center; margin-bottom: 12px; }
-  .pot { font-size: 24px; font-weight: 800; color: #FF8A00; margin: 10px 0; }
-  .players-list { font-size: 12px; opacity: 0.8; max-height: 80px; overflow-y: auto; }
-  .player-legend { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
-  .color-dot { width: 12px; height: 12px; border-radius: 50%; }
+  /* WHEEL STYLES */
+ .wheel-wrapper { position: relative; width: 280px; height: 280px; margin: 0 auto 20px; }
+ .wheel { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #FF8A00; position: relative; overflow: hidden; transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99); box-shadow: 0 0 30px rgba(255,138,0,0.5); }
+ .wheel-pointer { width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #fff; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); z-index: 10; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+ .bet-input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: #fff; font-size: 16px; text-align: center; margin-bottom: 12px; }
+ .pot { font-size: 24px; font-weight: 800; color: #FF8A00; margin: 10px 0; }
+ .players-list { font-size: 12px; opacity: 0.8; max-height: 80px; overflow-y: auto; }
+ .player-legend { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+ .color-dot { width: 12px; height: 12px; border-radius: 50%; }
+ .bot-tag { font-size: 9px; background: #555; padding: 2px 5px; border-radius: 4px; margin-left: 4px; }
 </style>
 </head>
 <body>
 
-  <div id="loader">
-    <div class="spinner"></div>
-    Loading Ads...
-  </div>
-
+  <div id="loader"><div class="spinner"></div>Loading Ads...</div>
   <div id="app" style="display:none">
-    <div class="topbar">
-      <h1>AdsPayU</h1>
-    </div>
-
+    <div class="topbar"><h1>AdsPayU</h1></div>
     <div class="balance-section">
       <div class="balance-label">BALANCE</div>
       <div class="balance"><span id="coins">0</span> <span>APU</span></div>
       <div class="usd">🪙 ~$<span id="usd">0.00</span></div>
     </div>
-
     <div class="btn-row">
       <button class="btn btn-primary" onclick="withdraw()">WITHDRAW</button>
       <button class="btn btn-secondary" onclick="swap()">SWAP</button>
     </div>
 
-    <!-- HOME -->
     <div id="home" class="page active">
       <div class="card">
         <div class="card-header">
@@ -99,7 +90,6 @@
           <button class="btn-get" id="gigaBtn" disabled>Loading...</button>
         </div>
       </div>
-
       <div class="card">
         <div class="card-header">
           <div class="card-icon">💰</div>
@@ -125,12 +115,10 @@
           <div class="pot"><span id="pot">0</span> APU</div>
         </div>
       </div>
-
       <div class="card">
         <div class="card-sub" style="margin-bottom:8px">Players in round: <span id="playerCount">0</span></div>
         <div class="players-list" id="wheelPlayers"></div>
       </div>
-
       <div class="card">
         <input type="number" id="betAmount" class="bet-input" placeholder="Enter bet amount" min="10" value="100">
         <button class="btn btn-primary" id="betBtn" onclick="placeBet()">PLACE BET & JOIN</button>
@@ -138,13 +126,7 @@
       </div>
     </div>
 
-    <!-- RANK -->
-    <div id="rank" class="page">
-      <div class="card">
-        <h3>🏆 Top Earners</h3>
-        <div id="board"></div>
-      </div>
-    </div>
+    <div id="rank" class="page"><div class="card"><h3>🏆 Top Earners</h3><div id="board"></div></div></div>
 
     <div class="bottom-nav">
       <button class="nav-item active" onclick="showTab('home')"><span class="nav-icon">🏠</span>Home</button>
@@ -157,80 +139,61 @@
 
 <script>
 const tg = window.Telegram.WebApp;
-tg.expand();
-tg.setBackgroundColor('#000A4D');
+tg.expand(); tg.setBackgroundColor('#000A4D');
 
 const COIN_VALUE = 0.000028;
 const DAILY_LIMIT = 100;
-const COLORS = ['#1877FF','#FF8A00','#00C853','#D50000','#AA00FF','#FFD600','#FF4081','#29B6F6']; // 8 colors
+const COLORS = ['#1877FF','#FF8A00','#00C853','#D50000','#AA00FF','#FFD600','#FF4081','#29B6F6'];
+const BOT_NAMES = ['Bot_Alex', 'Bot_Sara', 'Bot_Max']; // 3 bots
 
 let coins = parseInt(localStorage.getItem('coins') || 0);
 let adWatched = parseInt(localStorage.getItem('adWatched') || 0);
-
 const user = tg.initDataUnsafe?.user;
 const userId = user?.id || "guest";
 const userName = user?.first_name + (user?.last_name? " " + user.last_name : "") || "Guest";
 
-// WHEEL GAME DATA
 let wheelPlayers = JSON.parse(localStorage.getItem('wheelPlayers') || '[]');
 let wheelPot = parseInt(localStorage.getItem('wheelPot') || 0);
 let spinning = false;
 
+// OPEN APP
 let appOpened = false;
 function openApp() {
-  if(appOpened) return;
-  appOpened = true;
-  clearInterval(check);
+  if(appOpened) return; appOpened = true; clearInterval(check);
   document.getElementById('loader').classList.add('hide');
   document.getElementById('app').style.display = 'block';
-  enableAds();
-  updateUI();
-  updateWheelUI();
-  savePlayer();
-  loadLeaderboard();
+  enableAds(); updateUI(); updateWheelUI(); savePlayer(); loadLeaderboard();
 }
 setTimeout(openApp, 2000);
-
-let tries = 0;
-const check = setInterval(() => {
-  tries++;
-  if(typeof window.showGiga === 'function' && typeof window.show_11258922 === 'function') {
-    openApp();
-  }
-}, 200);
+let tries = 0; const check = setInterval(() => { if(typeof window.showGiga === 'function') openApp(); }, 200);
 
 function enableAds() {
   const gigaBtn = document.getElementById('gigaBtn');
   const monetagBtn = document.getElementById('monetagBtn');
-  if(typeof window.showGiga === 'function') {
-    gigaBtn.disabled = false; gigaBtn.innerText = "Watch"; gigaBtn.onclick = startGigaQueue;
-  } else { gigaBtn.innerText = "Unavailable"; }
-  if(typeof window.show_11258922 === 'function') {
-    monetagBtn.disabled = false; monetagBtn.innerText = "Watch"; monetagBtn.onclick = showMonetagAd;
-  } else { monetagBtn.innerText = "Unavailable"; }
+  if(typeof window.showGiga === 'function') { gigaBtn.disabled = false; gigaBtn.innerText = "Watch"; gigaBtn.onclick = startGigaQueue; }
+  if(typeof window.show_11258922 === 'function') { monetagBtn.disabled = false; monetagBtn.innerText = "Watch"; monetagBtn.onclick = showMonetagAd; }
 }
-
 function updateUI() {
   document.getElementById('coins').innerText = coins;
   document.getElementById('usd').innerText = (coins * COIN_VALUE).toFixed(2);
   document.getElementById('adLimit').innerText = adWatched;
-  if(adWatched >= DAILY_LIMIT) {
-    document.getElementById('gigaBtn').disabled = true;
-    document.getElementById('gigaBtn').innerText = "Daily Limit";
+}
+
+// WHEEL FUNCTIONS WITH BOTS
+function addBots(bet) {
+  // Add 2 random bots when user joins
+  for(let i = 0; i < 2; i++) {
+    const botBet = Math.floor(Math.random() * 3 + 1) * bet; // bot bets 1x to 3x your bet
+    const botId = 'bot_' + i + Date.now();
+    wheelPlayers.push({id: botId, name: BOT_NAMES[i], bet: botBet, isBot: true});
+    wheelPot += botBet;
   }
 }
 
-// WHEEL FUNCTIONS - UPDATED FOR PIE CHART
 function drawWheel() {
   const wheel = document.getElementById('wheelSpin');
-  if(wheelPlayers.length === 0) {
-    wheel.style.background = '#333';
-    return;
-  }
-  
-  let gradient = 'conic-gradient(';
-  let currentAngle = 0;
-  
+  if(wheelPlayers.length === 0) { wheel.style.background = '#333'; return; }
+  let gradient = 'conic-gradient('; let currentAngle = 0;
   wheelPlayers.forEach((player, index) => {
     const percentage = player.bet / wheelPot;
     const angle = percentage * 360;
@@ -238,26 +201,22 @@ function drawWheel() {
     gradient += `${color} ${currentAngle}deg ${currentAngle + angle}deg,`;
     currentAngle += angle;
   });
-  
-  gradient = gradient.slice(0, -1) + ')';
-  wheel.style.background = gradient;
+  wheel.style.background = gradient.slice(0, -1) + ')';
 }
 
 function updateWheelUI() {
   document.getElementById('pot').innerText = wheelPot;
   document.getElementById('playerCount').innerText = wheelPlayers.length;
-  
   let html = '';
   wheelPlayers.forEach((p, i) => {
     const color = COLORS[i % COLORS.length];
-    html += `<div class="player-legend"><div class="color-dot" style="background:${color}"></div>${p.name}: ${p.bet} APU</div>`;
+    const botLabel = p.isBot? '<span class="bot-tag">BOT</span>' : '';
+    html += `<div class="player-legend"><div class="color-dot" style="background:${color}"></div>${p.name}${botLabel}: ${p.bet} APU</div>`;
   });
   document.getElementById('wheelPlayers').innerHTML = html || 'No players yet';
-  
   const hasBet = wheelPlayers.some(p => p.id === userId);
-  document.getElementById('betBtn').style.display = hasBet ? 'none' : 'block';
-  document.getElementById('spinBtn').style.display = wheelPlayers.length >= 2 && !spinning ? 'block' : 'none';
-  
+  document.getElementById('betBtn').style.display = hasBet? 'none' : 'block';
+  document.getElementById('spinBtn').style.display = wheelPlayers.length >= 2 &&!spinning? 'block' : 'none';
   drawWheel();
 }
 
@@ -271,155 +230,69 @@ function placeBet() {
   wheelPot += bet;
   wheelPlayers.push({id: userId, name: userName, bet: bet});
   
+  addBots(bet); // ADD BOTS HERE
+
   localStorage.setItem('coins', coins);
   localStorage.setItem('wheelPlayers', JSON.stringify(wheelPlayers));
   localStorage.setItem('wheelPot', wheelPot);
-  
-  updateUI();
-  updateWheelUI();
-  tg.showPopup({title: "Bet Placed!", message: `You bet ${bet} APU`});
+  updateUI(); updateWheelUI();
+  tg.showPopup({title: "Round Started!", message: `You + 2 Bots joined. Pot: ${wheelPot} APU`});
 }
 
 function spinWheel() {
   if(wheelPlayers.length < 2) return tg.showAlert("Need at least 2 players");
-  spinning = true;
-  document.getElementById('spinBtn').disabled = true;
-  
+  spinning = true; document.getElementById('spinBtn').disabled = true;
   const degrees = 360 * 5 + Math.floor(Math.random() * 360);
   document.getElementById('wheelSpin').style.transform = `rotate(${degrees}deg)`;
-  
   setTimeout(() => {
-    // Determine winner based on where pointer lands
     const finalAngle = degrees % 360;
-    const stopAngle = (360 - finalAngle + 90) % 360; // +90 because pointer is at top
-    
-    let currentAngle = 0;
-    let winner = wheelPlayers[0];
+    const stopAngle = (360 - finalAngle + 90) % 360;
+    let currentAngle = 0; let winner = wheelPlayers[0];
     for(let i = 0; i < wheelPlayers.length; i++) {
       const percentage = wheelPlayers[i].bet / wheelPot;
       const angle = percentage * 360;
-      if(stopAngle >= currentAngle && stopAngle < currentAngle + angle) {
-        winner = wheelPlayers[i];
-        break;
-      }
+      if(stopAngle >= currentAngle && stopAngle < currentAngle + angle) { winner = wheelPlayers[i]; break; }
       currentAngle += angle;
     }
-    
     if(winner.id === userId) {
-      coins += wheelPot;
-      localStorage.setItem('coins', coins);
-      tg.showPopup({title: "YOU WON! 🎉", message: `You won ${wheelPot} APU!`});
+      coins += wheelPot; localStorage.setItem('coins', coins);
+      tg.showPopup({title: "YOU WON! 🎉", message: `You won ${wheelPot} APU from the bots!`});
     } else {
       tg.showPopup({title: "Round Over", message: `${winner.name} won ${wheelPot} APU!`});
     }
-    
-    // Reset round
-    wheelPlayers = [];
-    wheelPot = 0;
+    // Reset
+    wheelPlayers = []; wheelPot = 0;
     localStorage.setItem('wheelPlayers', JSON.stringify(wheelPlayers));
     localStorage.setItem('wheelPot', wheelPot);
-    spinning = false;
-    
-    updateUI();
-    updateWheelUI();
-    savePlayer();
-    loadLeaderboard();
+    spinning = false; updateUI(); updateWheelUI(); savePlayer(); loadLeaderboard();
   }, 4000);
 }
 
-// ADS FUNCTIONS
+// ADS + OTHER FUNCTIONS
 let gigaQueue = 0; let gigaCompleted = false;
-function startGigaQueue() {
-  if(adWatched >= DAILY_LIMIT) return tg.showAlert("Daily limit reached");
-  gigaQueue = 1; gigaCompleted = false; playGigaAd();
-}
+function startGigaQueue() { if(adWatched >= DAILY_LIMIT) return tg.showAlert("Daily limit reached"); gigaQueue = 1; gigaCompleted = false; playGigaAd(); }
 function playGigaAd() {
   if(gigaQueue <= 0) return finishGigaAd();
-  document.getElementById('gigaBtn').classList.add('loading');
-  document.getElementById('gigaBtn').innerText = "Loading...";
-  window.showGiga().then(() => {
-    gigaQueue -= 1;
-    if(gigaQueue > 0) { setTimeout(playGigaAd, 3000); } 
-    else { gigaCompleted = true; finishGigaAd(); }
-  }).catch(e => {
-    gigaQueue = 0; gigaCompleted = false;
-    document.getElementById('gigaBtn').innerText = "Watch";
-    if(e === 'No ads') tg.showAlert("GigaPub: No ads available.");
-    else if(e === 'Skipped') tg.showAlert("Ad skipped. No reward.");
-    document.getElementById('gigaBtn').classList.remove('loading');
-  });
+  document.getElementById('gigaBtn').classList.add('loading'); document.getElementById('gigaBtn').innerText = "Loading...";
+  window.showGiga().then(() => { gigaQueue -= 1; if(gigaQueue > 0) setTimeout(playGigaAd, 3000); else { gigaCompleted = true; finishGigaAd(); } })
+ .catch(e => { gigaQueue = 0; gigaCompleted = false; document.getElementById('gigaBtn').innerText = "Watch"; tg.showAlert("GigaPub: " + e); document.getElementById('gigaBtn').classList.remove('loading'); });
 }
 function finishGigaAd() {
-  if(gigaCompleted) {
-    coins += 50; adWatched += 1;
-    localStorage.setItem('coins', coins);
-    localStorage.setItem('adWatched', adWatched);
-    updateUI(); savePlayer(); loadLeaderboard();
-    tg.HapticFeedback.notificationOccurred('success');
-    tg.showPopup({title: "GigaPub Complete!", message: "+50 APU"});
-  }
-  document.getElementById('gigaBtn').innerText = "Watch";
-  document.getElementById('gigaBtn').classList.remove('loading');
+  if(gigaCompleted) { coins += 50; adWatched += 1; localStorage.setItem('coins', coins); localStorage.setItem('adWatched', adWatched); updateUI(); savePlayer(); loadLeaderboard(); tg.showPopup({title: "GigaPub Complete!", message: "+50 APU"}); }
+  document.getElementById('gigaBtn').innerText = "Watch"; document.getElementById('gigaBtn').classList.remove('loading');
 }
 function showMonetagAd() {
-  document.getElementById('monetagBtn').classList.add('loading');
-  document.getElementById('monetagBtn').innerText = "Loading...";
-  window.show_11258922().then(() => {
-    coins += 50; localStorage.setItem('coins', coins);
-    updateUI(); savePlayer(); loadLeaderboard();
-    tg.HapticFeedback.notificationOccurred('success');
-    tg.showPopup({title: "Monetag Complete!", message: "+50 APU"});
-  }).catch(e => { tg.showAlert("Monetag: " + e);
-  }).finally(() => {
-    document.getElementById('monetagBtn').innerText = "Watch";
-    document.getElementById('monetagBtn').classList.remove('loading');
-  });
+  document.getElementById('monetagBtn').classList.add('loading'); document.getElementById('monetagBtn').innerText = "Loading...";
+  window.show_11258922().then(() => { coins += 50; localStorage.setItem('coins', coins); updateUI(); savePlayer(); loadLeaderboard(); tg.showPopup({title: "Monetag Complete!", message: "+50 APU"}); })
+ .catch(e => tg.showAlert("Monetag: " + e))
+ .finally(() => { document.getElementById('monetagBtn').innerText = "Watch"; document.getElementById('monetagBtn').classList.remove('loading'); });
 }
-
-// LEADERBOARD + NAV
-function savePlayer() {
-  let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
-  leaderboard = leaderboard.filter(p => p.id !== userId);
-  leaderboard.push({ id: userId, name: userName, coins: coins });
-  leaderboard.sort((a,b) => b.coins - a.coins);
-  leaderboard = leaderboard.slice(0, 20);
-  localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
-}
-function loadLeaderboard() {
-  let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
-  if(leaderboard.length === 0) {
-    document.getElementById('board').innerHTML = '<p style="opacity:0.6">No players yet</p>';
-    return;
-  }
-  let html = '';
-  leaderboard.forEach((player, index) => {
-    const isMe = player.id === userId;
-    html += `<div class="list-item" style="${isMe? 'background: rgba(255,138,0,0.1); border-radius:8px; padding: 12px;' : ''}">
-        <span class="rank-num">#${index + 1}</span>
-        <span class="player-name">${player.name} ${isMe? '(You)' : ''}</span>
-        <span>${player.coins} APU</span>
-      </div>`;
-  });
-  document.getElementById('board').innerHTML = html;
-}
-function showTab(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  event.currentTarget.classList.add('active');
-  if(id === 'rank') loadLeaderboard();
-  if(id === 'wheel') updateWheelUI();
-}
-function withdraw() {
-  tg.showPopup({title: "Withdraw", message: `You have ${coins} APU\nMin withdraw: 10000 APU`, buttons: [{type: "close"}]});
-}
+function savePlayer() { let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]'); leaderboard = leaderboard.filter(p => p.id!== userId); leaderboard.push({ id: userId, name: userName, coins: coins }); leaderboard.sort((a,b) => b.coins - a.coins); leaderboard = leaderboard.slice(0, 20); localStorage.setItem('leaderboard', JSON.stringify(leaderboard)); }
+function loadLeaderboard() { let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]'); let html = ''; leaderboard.forEach((player, index) => { const isMe = player.id === userId; html += `<div class="list-item" style="${isMe? 'background: rgba(255,138,0,0.1); border-radius:8px; padding: 12px;' : ''}"><span class="rank-num">#${index + 1}</span><span class="player-name">${player.name} ${isMe? '(You)' : ''}</span><span>${player.coins} APU</span></div>`; }); document.getElementById('board').innerHTML = html || '<p style="opacity:0.6">No players yet</p>'; }
+function showTab(id) { document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active')); document.getElementById(id).classList.add('active'); event.currentTarget.classList.add('active'); if(id === 'rank') loadLeaderboard(); if(id === 'wheel') updateWheelUI(); }
+function withdraw() { tg.showPopup({title: "Withdraw", message: `You have ${coins} APU\nMin withdraw: 10000 APU`, buttons: [{type: "close"}]}); }
 function swap() { tg.showAlert("Swap feature coming soon"); }
-
-// Reset daily
-if(!localStorage.getItem('lastReset') || new Date().toDateString() !== localStorage.getItem('lastReset')) {
-  localStorage.setItem('adWatched', 0);
-  localStorage.setItem('lastReset', new Date().toDateString());
-}
+if(!localStorage.getItem('lastReset') || new Date().toDateString()!== localStorage.getItem('lastReset')) { localStorage.setItem('adWatched', 0); localStorage.setItem('lastReset', new Date().toDateString()); }
 </script>
 </body>
 </html>
