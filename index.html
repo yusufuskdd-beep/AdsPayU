@@ -4,60 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.gigapub.tech/sdk.js"></script>
 <title>AdsPayU</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
   body { 
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background: linear-gradient(180deg, #0A2AFF 0%, #0018B3 50%, #000A4D 100%);
-    color: #fff; 
-    padding-bottom: 90px; 
-    min-height: 100vh;
-    background-attachment: fixed;
+    color: #fff; padding-bottom: 90px; min-height: 100vh; background-attachment: fixed;
   }
-
-  /* LOADER */
-  #loader { 
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-    background: #0A2AFF url('./splash.jpg') no-repeat center; 
-    background-size: cover; 
-    z-index: 9999; 
-    transition: opacity 0.6s ease; 
-  }
+  #loader { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0A2AFF url('./splash.jpg') no-repeat center; background-size: cover; z-index: 9999; transition: opacity 0.6s ease; }
   #loader.hide { opacity: 0; pointer-events: none; }
-
-  /* HEADER + BALANCE */
   .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
   .topbar h1 { font-size: 18px; font-weight: 700; }
   .lang { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 6px 10px; border-radius: 20px; font-size: 13px; font-weight: 600; }
-  
   .balance-section { padding: 0 16px 16px; }
   .balance-label { font-size: 12px; opacity: 0.7; }
   .balance { font-size: 42px; font-weight: 800; }
   .balance span { font-size: 18px; opacity: 0.8; }
   .usd { font-size: 13px; opacity: 0.7; margin-top: 4px; }
-
-  /* BUTTONS */
   .btn-row { display: flex; gap: 10px; padding: 0 16px 20px; }
   .btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; }
   .btn-primary { background: linear-gradient(90deg, #FF8A00 0%, #FF6A00 100%); color: #fff; box-shadow: 0 4px 20px rgba(255,138,0,0.4); }
   .btn-secondary { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); color: #fff; border: 1px solid rgba(255,255,255,0.15); }
-
-  /* PAGES */
   .page { display: none; padding: 0 16px; }
   .page.active { display: block; animation: fade .25s ease; }
   @keyframes fade { from {opacity:0; transform: translateY(4px)} to {opacity:1; transform: translateY(0)} }
-
-  /* CARDS - GLASS STYLE */
-  .card { 
-    background: rgba(255,255,255,0.08); 
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 16px; 
-    padding: 14px; 
-    margin-bottom: 12px; 
-    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-  }
+  .card { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 14px; margin-bottom: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
   .card-header { display: flex; align-items: center; gap: 12px; }
   .card-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 22px; }
   .card-info { flex: 1; }
@@ -65,23 +38,13 @@
   .card-sub { font-size: 12px; opacity: 0.7; }
   .btn-get { padding: 10px 18px; background: linear-gradient(90deg, #1877FF 0%, #0A5FFF 100%); border: none; border-radius: 10px; color: #fff; font-weight: 700; }
   .btn-get:disabled { background: rgba(255,255,255,0.1); opacity: 0.5; }
-
-  /* LIST */
   .list-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
-  .list-item:last-child { border-bottom: none; }
-
-  /* BOTTOM NAV - GLASS */
-  .bottom-nav { 
-    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
-    background: rgba(10,10,20,0.8); 
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 30px; padding: 8px; display: flex; gap: 20px; 
-  }
+  .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,10,20,0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; padding: 8px; display: flex; gap: 20px; }
   .nav-item { text-align: center; font-size: 10px; opacity: 0.6; background: none; border: none; color: #fff; cursor: pointer; }
   .nav-item.active { opacity: 1; color: #FF8A00; }
   .nav-icon { font-size: 22px; display: block; }
   .nav-center { background: linear-gradient(135deg, #FF3B30 0%, #FF6A00 100%); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; box-shadow: 0 4px 20px rgba(255,59,48,0.4); }
+  .loading { opacity: 0.6; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -94,14 +57,12 @@
       <div class="lang">🇬🇧 EN</div>
     </div>
 
-    <!-- BALANCE ALWAYS VISIBLE -->
     <div class="balance-section">
       <div class="balance-label">BALANCE</div>
       <div class="balance"><span id="coins">0</span> <span>APU</span></div>
       <div class="usd">🪙 ~$<span id="usd">0.00</span></div>
     </div>
 
-    <!-- PAGES -->
     <div id="home" class="page active">
       <div class="btn-row">
         <button class="btn btn-primary" onclick="withdraw()">WITHDRAW</button>
@@ -115,7 +76,7 @@
             <div class="card-title">Watch Ad</div>
             <div class="card-sub">Reward: 50 APU | <span id="adLimit">0</span>/50 today</div>
           </div>
-          <button class="btn-get" id="watchBtn" onclick="watchAd()">Get APU</button>
+          <button class="btn-get" id="watchBtn" onclick="showGigaAd()">Get APU</button>
         </div>
       </div>
     </div>
@@ -144,16 +105,6 @@
           <button class="btn-get" id="dailyBtn" onclick="claimDaily()">Claim</button>
         </div>
       </div>
-      <div class="card">
-        <div class="card-header">
-          <div class="card-icon">👥</div>
-          <div class="card-info">
-            <div class="card-title">Invite 1 Friend</div>
-            <div class="card-sub">Reward: 100 APU</div>
-          </div>
-          <button class="btn-get" disabled>Progress</button>
-        </div>
-      </div>
     </div>
 
     <div id="rank" class="page">
@@ -166,12 +117,11 @@
     <div id="add" class="page">
       <div class="card">
         <h3>Quick Earn</h3>
-        <button class="btn btn-primary" style="margin-top:10px;" onclick="watchAd()">Watch Ad +50</button>
+        <button class="btn btn-primary" id="quickAdBtn" style="margin-top:10px;" onclick="showGigaAd()">Watch Ad +50</button>
         <button class="btn btn-secondary" style="margin-top:10px;" onclick="claimDaily()">Daily Bonus +25</button>
       </div>
     </div>
 
-    <!-- BOTTOM NAV -->
     <div class="bottom-nav">
       <button class="nav-item active" onclick="showTab('home')"><span class="nav-icon">🏠</span>Home</button>
       <button class="nav-item" onclick="showTab('friends')"><span class="nav-icon">👥</span>Friends</button>
@@ -185,6 +135,12 @@
 const tg = window.Telegram.WebApp;
 tg.expand();
 tg.setBackgroundColor('#000A4D');
+
+// INIT GIGAPUB WITH YOUR CREDENTIALS
+GigaPub.init({
+  appId: "7204",
+  token: "main"
+});
 
 // SPLASH
 setTimeout(() => {
@@ -205,32 +161,54 @@ function updateUI() {
   document.getElementById('adLimit').innerText = adWatched;
   document.getElementById('refCount').innerText = referrals;
   document.getElementById('refBonus').innerText = referrals * 100;
-  if(adWatched >= 50) document.getElementById('watchBtn').disabled = true;
+  if(adWatched >= 50) {
+    document.getElementById('watchBtn').disabled = true;
+    document.getElementById('quickAdBtn').disabled = true;
+  }
   
   const today = new Date().toDateString();
   if(lastDaily === today) document.getElementById('dailyBtn').disabled = true;
 }
 updateUI();
 
-// TAB SWITCH
+// SHOW GIGAPUB AD - BOTH BUTTONS USE THIS
+async function showGigaAd() {
+  if(adWatched >= 50) return tg.showAlert("Daily ad limit reached");
+  
+  document.getElementById('watchBtn').classList.add('loading');
+  document.getElementById('quickAdBtn').classList.add('loading');
+  
+  try {
+    const result = await GigaPub.showRewarded();
+    
+    if(result.success) {
+      coins += 50;
+      adWatched += 1;
+      localStorage.setItem('coins', coins);
+      localStorage.setItem('adWatched', adWatched);
+      updateUI();
+      tg.HapticFeedback.notificationOccurred('success');
+      tg.showPopup({title: "Earned!", message: "+50 APU"});
+    } else {
+      tg.showAlert("Ad was skipped. No reward.");
+    }
+    
+  } catch (error) {
+    tg.showAlert("Ad failed to load. Try again later.");
+    console.log(error)
+  }
+  
+  document.getElementById('watchBtn').classList.remove('loading');
+  document.getElementById('quickAdBtn').classList.remove('loading');
+}
+
+// OTHER FUNCTIONS
 function showTab(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   event.currentTarget.classList.add('active');
   if(id === 'rank') loadLeaderboard();
-}
-
-// FEATURES
-function watchAd() {
-  if(adWatched >= 50) return tg.showAlert("Daily ad limit reached");
-  tg.HapticFeedback.impactOccurred('light');
-  coins += 50;
-  adWatched += 1;
-  localStorage.setItem('coins', coins);
-  localStorage.setItem('adWatched', adWatched);
-  updateUI();
-  tg.showPopup({title: "Earned!", message: "+50 APU"});
 }
 
 function claimDaily() {
@@ -258,8 +236,7 @@ function loadLeaderboard() {
   const demo = [
     {name: "Alex", coins: 1240},
     {name: tg.initDataUnsafe?.user?.first_name || "You", coins: coins},
-    {name: "Sam", coins: 800},
-    {name: "Maya", coins: 650}
+    {name: "Sam", coins: 800}
   ].sort((a,b) => b.coins - a.coins);
   
   document.getElementById('board').innerHTML = demo.map((u,i) => 
