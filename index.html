@@ -99,7 +99,6 @@
       <h1>AdsPayU</h1>
     </div>
 
-    <!-- BALANCE CARD WITH APU VISIBLE -->
     <div class="balance-card">
       <div class="balance-label">YOUR BALANCE</div>
       <div class="balance-apu"><span id="coins">0</span> <span>APU</span></div>
@@ -163,13 +162,13 @@ tg.setBackgroundColor('#000A4D');
 const COIN_VALUE = 0.000028;
 const DAILY_LIMIT = 100;
 let coins = parseInt(localStorage.getItem('coins') || 0);
-let gigaWatched = parseInt(localStorage.getItem('gigaWatched') || 0); // SEPARATE COUNT
-let monetagWatched = parseInt(localStorage.getItem('monetagWatched') || 0); // SEPARATE COUNT
+let gigaWatched = parseInt(localStorage.getItem('gigaWatched') || 0);
+let monetagWatched = parseInt(localStorage.getItem('monetagWatched') || 0);
 let lastDailyClaim = localStorage.getItem('lastDailyClaim');
 
 const user = tg.initDataUnsafe?.user;
 const userId = user?.id || "guest";
-const userName = user?.first_name + (user?.last_name? " + user.last_name : "") || "Guest";
+const userName = user?.first_name + (user?.last_name ? " + user.last_name : "") || "Guest"; // FIXED TYPO
 
 let appOpened = false;
 function openApp() {
@@ -214,7 +213,6 @@ function enableAds() {
   }
 }
 
-// UPDATED: SHOW APU + SEPARATE LIMITS
 function updateUI() {
   const usdtValue = (coins * COIN_VALUE).toFixed(4);
   document.getElementById('coins').innerText = coins.toLocaleString();
@@ -226,7 +224,7 @@ function updateUI() {
     document.getElementById('gigaBtn').disabled = true;
     document.getElementById('gigaBtn').innerText = "Daily Limit";
   }
-  if(monetagWatched >= DAILY_LIMIT) { // NEW LIMIT FOR MONETAG
+  if(monetagWatched >= DAILY_LIMIT) {
     document.getElementById('monetagBtn').disabled = true;
     document.getElementById('monetagBtn').innerText = "Daily Limit";
   }
@@ -261,7 +259,7 @@ function claimDaily() {
   tg.showPopup({title: "Daily Reward! 🎉", message: "+50 APU Claimed"});
 }
 
-// ADS FUNCTIONS WITH SEPARATE LIMITS
+// ADS FUNCTIONS
 let gigaQueue = 0; let gigaCompleted = false;
 function startGigaQueue() {
   if(gigaWatched >= DAILY_LIMIT) return tg.showAlert("GigaPub daily limit reached");
@@ -297,12 +295,12 @@ function finishGigaAd() {
 }
 
 function showMonetagAd() {
-  if(monetagWatched >= DAILY_LIMIT) return tg.showAlert("Monetag daily limit reached"); // NEW CHECK
+  if(monetagWatched >= DAILY_LIMIT) return tg.showAlert("Monetag daily limit reached");
   if(typeof window.show_11258922 !== 'function') return tg.showAlert("Monetag not ready yet");
   document.getElementById('monetagBtn').classList.add('loading');
   document.getElementById('monetagBtn').innerText = "Loading...";
   window.show_11258922().then(() => {
-    coins += 50; monetagWatched += 1; // NEW COUNT
+    coins += 50; monetagWatched += 1;
     localStorage.setItem('coins', coins);
     localStorage.setItem('monetagWatched', monetagWatched);
     updateUI(); savePlayer(); loadLeaderboard();
@@ -354,7 +352,7 @@ function withdraw() {
 }
 function swap() { tg.showAlert("Swap feature coming soon"); }
 
-// DAILY RESET FOR BOTH
+// DAILY RESET
 if(!localStorage.getItem('lastReset') || new Date().toDateString() !== localStorage.getItem('lastReset')) {
   localStorage.setItem('gigaWatched', 0);
   localStorage.setItem('monetagWatched', 0);
