@@ -16,33 +16,12 @@
   }
   .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; position: sticky; top: 0; background: rgba(0,10,77,0.8); backdrop-filter: blur(20px); z-index: 10; }
   .topbar h1 { font-size: 18px; font-weight: 700; }
-
-  .balance-card { 
-    margin: 16px; 
-    padding: 24px; 
-    background: linear-gradient(135deg, rgba(255,138,0,0.25) 0%, rgba(24,119,255,0.25) 100%);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 24px; 
-    text-align: center;
-  }
+  .balance-card { margin: 16px; padding: 24px; background: linear-gradient(135deg, rgba(255,138,0,0.25) 0%, rgba(24,119,255,0.25) 100%); border: 1px solid rgba(255,255,255,0.15); border-radius: 24px; text-align: center; }
   .balance-label { font-size: 12px; opacity: 0.8; }
   .balance-apu { font-size: 40px; font-weight: 800; margin: 8px 0; color: #FFD600; }
   .balance-usdt { font-size: 14px; opacity: 0.8; }
-
-  .daily-claim {
-    margin: 0 16px 16px;
-    padding: 14px;
-    background: #00C853;
-    border: none;
-    border-radius: 14px;
-    color: #fff;
-    font-size: 16px;
-    font-weight: 800;
-    width: calc(100% - 32px);
-    transition: all 0.2s;
-  }
+  .daily-claim { margin: 0 16px 16px; padding: 14px; background: #00C853; border: none; border-radius: 14px; color: #fff; font-size: 16px; font-weight: 800; width: calc(100% - 32px); transition: all 0.2s; }
   .daily-claim:disabled { background: #333; opacity: 0.6; }
-
   .btn-row { display: flex; gap: 10px; padding: 0 16px 20px; }
   .btn { flex: 1; padding: 14px; border: none; border-radius: 14px; font-size: 15px; font-weight: 700; }
   .btn-primary { background: #FF8A00; color: #fff; }
@@ -89,7 +68,7 @@
           <div class="card-icon">🎯</div>
           <div class="card-info">
             <div class="card-title">GigaPub Ads</div>
-            <div class="card-sub"><span id="gigaCount">0</span>/100 today</div>
+            <div class="card-sub"><span id="gigaCount">0</span>/100 today = 2 APU each</div>
           </div>
           <button class="btn-get" id="gigaBtn">Watch</button>
         </div>
@@ -100,7 +79,7 @@
           <div class="card-icon">💰</div>
           <div class="card-info">
             <div class="card-title">Monetag Ads</div>
-            <div class="card-sub"><span id="monetagCount">0</span>/100 today</div>
+            <div class="card-sub"><span id="monetagCount">0</span>/100 today = 2 APU each</div>
           </div>
           <button class="btn-get orange" id="monetagBtn">Watch</button>
         </div>
@@ -120,11 +99,13 @@ tg.expand();
 
 const COIN_VALUE = 0.000028;
 const DAILY_LIMIT = 100;
+const REWARD_PER_AD = 2; // CHANGED FROM 50 TO 2
+const MIN_WITHDRAW = 100; // CHANGED FROM 10000 TO 100
+
 let coins = parseInt(localStorage.getItem('coins') || 0);
 let gigaWatched = parseInt(localStorage.getItem('gigaWatched') || 0);
 let monetagWatched = parseInt(localStorage.getItem('monetagWatched') || 0);
 
-// OPEN INSTANTLY - NO LOADER
 updateUI();
 checkDaily();
 
@@ -177,11 +158,12 @@ document.getElementById('gigaBtn').onclick = function(){
   if(gigaWatched >= DAILY_LIMIT) return alert("Giga limit reached");
   if(typeof window.showGiga === 'function'){
     window.showGiga().then(function(){
-      coins += 50; gigaWatched += 1;
+      coins += REWARD_PER_AD; // NOW 2 APU
+      gigaWatched += 1;
       localStorage.setItem('coins', coins);
       localStorage.setItem('gigaWatched', gigaWatched);
       updateUI();
-      alert("+50 APU");
+      alert("+" + REWARD_PER_AD + " APU");
     }).catch(function(e){ alert("No ads"); });
   } else { alert("Giga not loaded"); }
 }
@@ -190,11 +172,12 @@ document.getElementById('monetagBtn').onclick = function(){
   if(monetagWatched >= DAILY_LIMIT) return alert("Monetag limit reached");
   if(typeof window.show_11258922 === 'function'){
     window.show_11258922().then(function(){
-      coins += 50; monetagWatched += 1;
+      coins += REWARD_PER_AD; // NOW 2 APU
+      monetagWatched += 1;
       localStorage.setItem('coins', coins);
       localStorage.setItem('monetagWatched', monetagWatched);
       updateUI();
-      alert("+50 APU");
+      alert("+" + REWARD_PER_AD + " APU");
     }).catch(function(e){ alert("No ads"); });
   } else { alert("Monetag not loaded"); }
 }
@@ -203,7 +186,13 @@ function showTab(id){
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
-function withdraw(){ alert("Min 10000 APU"); }
+function withdraw(){ 
+  if(coins < MIN_WITHDRAW) {
+    alert("Minimum withdraw is " + MIN_WITHDRAW + " APU"); // NOW 100
+    return;
+  }
+  alert("Withdraw request sent!"); 
+}
 function swap(){ alert("Coming soon"); }
 
 // RESET DAILY
