@@ -85,7 +85,7 @@
           <div class="card-icon">🎯</div>
           <div class="card-info">
             <div class="card-title">GigaPub Ads</div>
-            <div class="card-sub">Watch 1 Ad | Earn 50 APU | <span id="adLimit">0</span>/100 today</div>
+            <div class="card-sub">Watch 2 Ads | Earn 50 APU | <span id="adLimit">0</span>/100 today</div>
           </div>
           <button class="btn-get" id="gigaBtn" disabled>Loading...</button>
         </div>
@@ -136,7 +136,7 @@ const user = tg.initDataUnsafe?.user;
 const userId = user?.id || "guest";
 const userName = user?.first_name + (user?.last_name? " " + user.last_name : "") || "Guest";
 
-// WAIT FOR ADS - YOUR ORIGINAL CODE
+// WAIT FOR ADS
 let tries = 0;
 const check = setInterval(() => {
   tries++;
@@ -175,13 +175,13 @@ function updateUI() {
   }
 }
 
-// 1. GIGAPUB: 1 AD = 50 APU - ONLY 2 LINES CHANGED
+// 1. GIGAPUB: 2 ADS = 50 APU
 let gigaQueue = 0;
 let gigaCompleted = false;
 
 function startGigaQueue() {
-  if(adWatched >= DAILY_LIMIT) return tg.showAlert("Daily limit reached"); // changed -1
-  gigaQueue = 1; // was 2
+  if(adWatched >= DAILY_LIMIT - 1) return tg.showAlert("Not enough ads left today");
+  gigaQueue = 2;
   gigaCompleted = false;
   playGigaAd();
 }
@@ -214,7 +214,7 @@ function playGigaAd() {
 function finishGigaAd() {
   if(gigaCompleted) {
     coins += 50;
-    adWatched += 1; // was 2
+    adWatched += 2;
     localStorage.setItem('coins', coins);
     localStorage.setItem('adWatched', adWatched);
     updateUI();
@@ -227,12 +227,13 @@ function finishGigaAd() {
   document.getElementById('gigaBtn').classList.remove('loading');
 }
 
-// 2. MONETAG: 1 AD = 50 APU - UNCHANGED
+// 2. MONETAG: 1 AD = 50 APU
 function showMonetagAd() {
   document.getElementById('monetagBtn').classList.add('loading');
   document.getElementById('monetagBtn').innerText = "Loading...";
 
   window.show_11258922().then(() => {
+    // Monetag reward
     coins += 50;
     localStorage.setItem('coins', coins);
     updateUI();
@@ -269,4 +270,35 @@ function loadLeaderboard() {
     const isMe = player.id === userId;
     html += `
       <div class="list-item" style="${isMe? 'background: rgba(255,138,0,0.1); border-radius:8px; padding: 12px;' : ''}">
-        <span class="rank-num">#${
+        <span class="rank-num">#${index + 1}</span>
+        <span class="player-name">${player.name} ${isMe? '(You)' : ''}</span>
+        <span>${player.coins} APU</span>
+      </div>
+    `;
+  });
+  document.getElementById('board').innerHTML = html;
+}
+
+// NAVIGATION
+function showTab(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if(id === 'rank') loadLeaderboard();
+}
+
+function withdraw() {
+  tg.showPopup({title: "Withdraw", message: `You have ${coins} APU\nMin withdraw: 10000 APU`, buttons: [{type: "close"}]});
+}
+
+function swap() { tg.showAlert("Swap feature coming soon"); }
+
+// Reset daily
+if(!localStorage.getItem('lastReset') || new Date().toDateString() !== localStorage.getItem('lastReset')) {
+  localStorage.setItem('adWatched', 0);
+  localStorage.setItem('lastReset', new Date().toDateString());
+}
+</script>
+</body>
+</html>
