@@ -9,256 +9,217 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
   body { 
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: linear-gradient(180deg, #0A2AFF 0%, #0018B3 50%, #000A4D 100%);
+    background: #000;
     color: #fff;
-    padding-bottom: 80px;
-    min-height: 100vh;
-    background-attachment: fixed;
-    overflow-x: hidden;
+    padding-bottom: 90px;
   }
 
-  /* LOADING SCREEN */
+  /* LOADER */
   #loader {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: #0A2AFF url('./splash.jpg') no-repeat center;
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: #000 url('./splash.jpg') no-repeat center;
     background-size: cover;
     z-index: 9999;
     transition: opacity 0.6s ease;
   }
   #loader.hide { opacity: 0; pointer-events: none; }
 
-  /* APP UI */
-  .header { 
-    padding: 20px 16px 10px; 
-    display: flex; 
-    align-items: center; 
-    justify-content: space-between; 
-    backdrop-filter: blur(10px);
-    position: sticky;
-    top: 0;
-    z-index: 10;
+  /* HEADER */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px;
   }
-  .header h2 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
-  
-  .coins { 
-    background: rgba(255,255,255,0.1); 
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.15);
-    padding: 8px 14px; 
-    border-radius: 20px; 
-    font-weight: 700; 
-    display: flex; 
-    align-items: center;
-    gap: 6px; 
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  .topbar h1 { font-size: 18px; font-weight: 700; }
+  .lang {
+    background: #1A1A1A; padding: 6px 10px; border-radius: 20px;
+    display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600;
   }
 
-  .container { padding: 16px; }
-  
-  .card { 
-    background: rgba(255,255,255,0.08); 
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 20px; 
-    padding: 20px; 
-    margin-bottom: 16px; 
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-    transition: transform 0.2s ease;
-  }
-  .card:active { transform: scale(0.98); }
-  .card h3 { margin: 0 0 8px; font-size: 18px; font-weight: 700; }
-  .card p { margin: 0 0 12px; opacity: 0.75; font-size: 14px; }
+  /* BALANCE */
+  .balance-section { padding: 0 16px 16px; }
+  .balance-label { font-size: 12px; opacity: 0.6; margin-bottom: 4px; }
+  .balance { font-size: 42px; font-weight: 800; display: flex; align-items: baseline; gap: 8px; }
+  .balance span { font-size: 18px; opacity: 0.7; }
+  .usd { font-size: 13px; opacity: 0.6; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
 
-  .btn-primary { 
-    width: 100%; 
-    padding: 16px; 
-    border: none; 
-    border-radius: 14px; 
-    background: linear-gradient(90deg, #FF8A00 0%, #FF6A00 100%); 
-    color: #fff; 
-    font-size: 17px; 
-    font-weight: 700; 
-    box-shadow: 0 4px 20px rgba(255,138,0,0.4);
-    cursor: pointer;
-    transition: transform 0.1s;
+  /* BUTTONS */
+  .btn-row { display: flex; gap: 10px; padding: 0 16px 20px; }
+  .btn {
+    flex: 1; padding: 14px; border: none; border-radius: 12px;
+    font-size: 15px; font-weight: 700; cursor: pointer;
   }
-  .btn-primary:active { transform: scale(0.97); }
-  .btn-secondary {
-    background: rgba(255,255,255,0.1);
-    box-shadow: none;
-  }
+  .btn-primary { background: #1877FF; color: #fff; }
+  .btn-secondary { background: #1A1A1A; color: #fff; }
 
-  .page { display: none; }
-  .page.active { display: block; animation: fade .3s ease; }
-  @keyframes fade { from {opacity:0; transform: translateY(6px)} to {opacity:1; transform: translateY(0)} }
-  
-  .bottom-nav { 
-    position: fixed; 
-    bottom: 0; left: 0; right: 0; 
-    background: rgba(10,10,20,0.8); 
-    backdrop-filter: blur(20px);
-    border-top: 1px solid rgba(255,255,255,0.08);
-    display: flex; 
-    justify-content: space-around; 
-    padding: 10px 0 env(safe-area-inset-bottom); 
+  /* CONTEST BANNER */
+  .contest {
+    margin: 0 16px 20px;
+    background: linear-gradient(135deg, #1a2e1a 0%, #0d1a0d 100%);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex; justify-content: space-between; align-items: center;
   }
-  .nav-item { 
-    flex: 1; 
-    text-align: center; 
-    font-size: 12px; 
-    opacity: 0.6; 
-    border: none; 
-    background: none; 
-    color: #fff; 
-    cursor: pointer;
+  .contest-left { display: flex; flex-direction: column; gap: 4px; }
+  .contest-tag { font-size: 11px; color: #FFD700; font-weight: 700; }
+  .contest-title { font-size: 18px; font-weight: 800; }
+  .contest-sub { font-size: 12px; opacity: 0.7; }
+  .contest-right { text-align: right; }
+  .prize { font-size: 20px; font-weight: 800; }
+  .prize-sub { font-size: 11px; opacity: 0.7; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 8px; padding: 0 16px 16px; }
+  .tab {
+    flex: 1; padding: 10px; background: #1A1A1A; border: none;
+    border-radius: 10px; color: #888; font-weight: 600; font-size: 14px;
   }
-  .nav-item.active { opacity: 1; color: #FF8A00; font-weight: 700; }
-  .nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
-  
-  .list-item { 
-    display: flex; 
-    justify-content: space-between; 
-    padding: 12px 0; 
-    border-bottom: 1px solid rgba(255,255,255,0.08); 
+  .tab.active { background: #2A2A2A; color: #fff; }
+
+  /* SECTION TITLE */
+  .section { padding: 0 16px 8px; text-align: center; }
+  .section h2 { font-size: 16px; font-weight: 800; }
+  .section p { font-size: 12px; opacity: 0.6; margin-top: 4px; }
+
+  /* AD CARD */
+  .ad-card {
+    margin: 0 16px 12px;
+    background: #111;
+    border-radius: 16px;
+    padding: 14px;
+    display: flex; align-items: center; gap: 12px;
   }
-  .list-item:last-child { border-bottom: none; }
+  .ad-icon { width: 48px; height: 48px; border-radius: 12px; background: #1A1A1A; }
+  .ad-info { flex: 1; }
+  .ad-label { font-size: 11px; opacity: 0.6; }
+  .ad-name { font-size: 15px; font-weight: 700; margin: 2px 0 6px; }
+  .ad-reward { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
+  .ad-limit { font-size: 11px; opacity: 0.6; text-align: right; }
+  .btn-get { padding: 10px 18px; background: #1877FF; border: none; border-radius: 10px; color: #fff; font-weight: 700; }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: #1A1A1A; border-radius: 30px; padding: 8px;
+    display: flex; gap: 20px;
+  }
+  .nav-item { text-align: center; font-size: 10px; opacity: 0.5; background: none; border: none; color: #fff; }
+  .nav-item.active { opacity: 1; }
+  .nav-icon { font-size: 22px; display: block; }
+  .nav-center {
+    background: #FF3B30; width: 50px; height: 50px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800;
+  }
 </style>
 </head>
 <body>
 
-  <!-- SPLASH SCREEN -->
   <div id="loader"></div>
 
-  <!-- APP CONTENT -->
   <div id="app" style="display:none">
-    <div class="header">
-      <h2>AdsPayU</h2>
-      <div class="coins">🪙 <span id="coins">0</span></div>
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <h1>AdsPayU</h1>
+      <div class="lang">🇬🇧 EN</div>
     </div>
 
-    <div class="container">
-      <!-- HOME TAB -->
-      <div id="home" class="page active">
-        <div class="card">
-          <h3>Watch & Earn</h3>
-          <p>Watch a short ad and get coins instantly</p>
-          <button class="btn-primary" onclick="watchAd()">▶ Watch Ad +10</button>
-        </div>
-        <div class="card">
-          <h3>Daily Bonus</h3>
-          <p>Come back every 24h for free coins</p>
-          <button class="btn-primary btn-secondary" onclick="claimDaily()">🎁 Claim 25 Coins</button>
-        </div>
-      </div>
+    <!-- BALANCE -->
+    <div class="balance-section">
+      <div class="balance-label">BALANCE</div>
+      <div class="balance"><span id="coins">0</span> <span>APU</span></div>
+      <div class="usd">🪙 ~$<span id="usd">0.00</span></div>
+    </div>
 
-      <!-- REFERRAL TAB -->
-      <div id="referral" class="page">
-        <div class="card">
-          <h3>Invite Friends</h3>
-          <p>Get 50 coins for each friend who joins</p>
-          <button class="btn-primary" onclick="copyLink()">Copy Referral Link</button>
-        </div>
-        <div class="card">
-          <h3>Your Stats</h3>
-          <div class="list-item"><span>Friends invited</span><b id="refCount">0</b></div>
-          <div class="list-item"><span>Bonus earned</span><b id="refBonus">0</b></div>
-        </div>
-      </div>
+    <!-- BUTTONS -->
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="withdraw()">WITHDRAW</button>
+      <button class="btn btn-secondary" onclick="swap()">SWAP</button>
+    </div>
 
-      <!-- LEADERBOARD TAB -->
-      <div id="leaderboard" class="page">
-        <div class="card">
-          <h3>🏆 Top Earners</h3>
-          <div id="board"></div>
-        </div>
+    <!-- CONTEST BANNER -->
+    <div class="contest">
+      <div class="contest-left">
+        <div class="contest-tag">🏆 WEEKLY CONTEST</div>
+        <div class="contest-title">Top Inviters</div>
+        <div class="contest-sub">Take the Prize</div>
+      </div>
+      <div class="contest-right">
+        <div class="prize">$10</div>
+        <div class="prize-sub">Pool Prize</div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active">Daily Adz</button>
+      <button class="tab">Premium Adz</button>
+    </div>
+
+    <!-- SECTION -->
+    <div class="section">
+      <h2>VIEWING ADS</h2>
+      <p>Get paid for watching short Ads on Telegram.</p>
+    </div>
+
+    <!-- AD CARD -->
+    <div class="ad-card">
+      <div class="ad-icon"></div>
+      <div class="ad-info">
+        <div class="ad-label">Sponsored by</div>
+        <div class="ad-name">AdsPayU</div>
+        <div class="ad-reward">🪙 <span id="reward">50</span> APU</div>
+      </div>
+      <div>
+        <div class="ad-limit">AD LIMIT<br><span id="adLimit">0</span>/50</div>
+        <button class="btn-get" onclick="watchAd()">Get APU</button>
       </div>
     </div>
 
     <!-- BOTTOM NAV -->
     <div class="bottom-nav">
-      <button class="nav-item active" onclick="showTab('home')">
-        <span class="nav-icon">🏠</span>Home
-      </button>
-      <button class="nav-item" onclick="showTab('referral')">
-        <span class="nav-icon">👥</span>Referral
-      </button>
-      <button class="nav-item" onclick="showTab('leaderboard')">
-        <span class="nav-icon">🏆</span>Leaderboard
-      </button>
+      <button class="nav-item active"><span class="nav-icon">🏠</span>Home</button>
+      <button class="nav-item"><span class="nav-icon">👥</span>Friends</button>
+      <button class="nav-item"><span class="nav-icon">📋</span>Mission</button>
+      <button class="nav-item"><span class="nav-icon">🏆</span>Rank</button>
+      <button class="nav-item"><span class="nav-center">+</span></button>
     </div>
   </div>
 
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
-tg.setHeaderColor('#0A2AFF');
-tg.setBackgroundColor('#000A4D');
+tg.setBackgroundColor('#000');
 
-// SPLASH: show 3 seconds then hide
-function startApp() {
+// SPLASH
+setTimeout(() => {
   document.getElementById('loader').classList.add('hide');
   document.getElementById('app').style.display = 'block';
-}
-setTimeout(startApp, 3000);
+}, 3000);
 
-// PRELOAD IMAGE CHECK
-const img = new Image();
-img.src = './splash.jpg';
-img.onerror = () => setTimeout(startApp, 1000);
-
-// Data
+// DATA
 let coins = parseInt(localStorage.getItem('coins') || 0);
-let referrals = parseInt(localStorage.getItem('referrals') || 0);
-document.getElementById('coins').innerText = coins;
-document.getElementById('refCount').innerText = referrals;
-document.getElementById('refBonus').innerText = referrals * 50;
+let adWatched = parseInt(localStorage.getItem('adWatched') || 0);
+const COIN_VALUE = 0.000028; // 1 APU = $0.000028
 
-// Tab switching
-function showTab(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  event.currentTarget.classList.add('active');
-  if(id === 'leaderboard') loadLeaderboard();
+function updateUI() {
+  document.getElementById('coins').innerText = coins;
+  document.getElementById('usd').innerText = (coins * COIN_VALUE).toFixed(2);
+  document.getElementById('adLimit').innerText = adWatched;
 }
+updateUI();
 
-// Actions
 function watchAd() {
+  if(adWatched >= 50) return tg.showAlert("Daily ad limit reached");
   tg.HapticFeedback.impactOccurred('light');
-  coins += 10;
+  coins += 50;
+  adWatched += 1;
   localStorage.setItem('coins', coins);
-  document.getElementById('coins').innerText = coins;
-  tg.showPopup({title: "Earned!", message: "+10 coins added"});
+  localStorage.setItem('adWatched', adWatched);
+  updateUI();
+  tg.showPopup({title: "Earned!", message: "+50 APU"});
 }
 
-function claimDaily() {
-  tg.HapticFeedback.notificationOccurred('success');
-  coins += 25;
-  localStorage.setItem('coins', coins);
-  document.getElementById('coins').innerText = coins;
-  tg.showAlert("Daily bonus claimed! +25 coins");
-}
-
-function copyLink() {
-  const userId = tg.initDataUnsafe?.user?.id || "demo";
-  const link = `https://t.me/YourBotName?startapp=ref_${userId}`;
-  navigator.clipboard.writeText(link);
-  tg.showAlert("Referral link copied to clipboard");
-}
-
-function loadLeaderboard() {
-  const demo = [
-    {name: "Alex", coins: 1240},
-    {name: tg.initDataUnsafe?.user?.first_name || "You", coins: coins},
-    {name: "Sam", coins: 800},
-    {name: "Maya", coins: 650}
-  ].sort((a,b) => b.coins - a.coins);
-  
-  document.getElementById('board').innerHTML = demo.map((u,i) => 
-    `<div class="list-item"><span>${i+1}. ${u.name}</span><b>${u.coins} 🪙</b></div>`
-  ).join('');
-}
+function withdraw() { tg.showAlert("Withdraw coming soon"); }
+function swap() { tg.showAlert("Swap coming soon"); }
 </script>
 </body>
 </html>
