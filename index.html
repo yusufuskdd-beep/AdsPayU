@@ -5,74 +5,47 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  :root {
-    --bg: var(--tg-theme-bg-color, #0A2AFF);
-    --card: var(--tg-theme-secondary-bg-color, #1f1f1f);
-    --text: var(--tg-theme-text-color, #fff);
-    --accent: var(--tg-theme-button-color, #FF8A00);
-    --accent-text: var(--tg-theme-button-text-color, #fff);
-  }
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
   body { 
-    margin: 0; 
-    background: var(--bg); 
-    color: var(--text); 
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #0A2AFF;
+    color: #fff;
     padding-bottom: 80px;
   }
 
-  /* LOADING SCREEN */
+  /* LOADING SCREEN - FULL IMAGE ONLY */
   #loader {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(180deg, #0A2AFF 0%, #0018B3 100%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    background: #0A2AFF url('attachment://0') no-repeat center;
+    background-size: cover;
     z-index: 9999;
     transition: opacity 0.6s ease;
   }
   #loader.hide { opacity: 0; pointer-events: none; }
-  #loader img {
-    width: 80%;
-    max-width: 320px;
-    height: auto;
-    animation: pulse 1.8s infinite ease-in-out;
-  }
-  #loader .loading-text {
-    margin-top: 20px;
-    font-size: 14px;
-    opacity: 0.8;
-    letter-spacing: 1px;
-  }
-  @keyframes pulse { 0%,100% {transform: scale(1)} 50% {transform: scale(1.03)} }
-  
+
   /* APP UI */
   .header { padding: 20px 16px 10px; display: flex; align-items: center; justify-content: space-between; }
-  .coins { background: var(--card); padding: 8px 14px; border-radius: 20px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .coins { background: #1f1f1f; padding: 8px 14px; border-radius: 20px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
   .container { padding: 0 16px; }
-  .card { background: var(--card); border-radius: 16px; padding: 18px; margin-bottom: 14px; }
+  .card { background: #1f1f1f; border-radius: 16px; padding: 18px; margin-bottom: 14px; }
   .card h3 { margin: 0 0 8px; font-size: 18px; }
   .card p { margin: 0; opacity: 0.8; font-size: 14px; }
-  .btn-primary { width: 100%; padding: 16px; border: none; border-radius: 14px; background: var(--accent); color: var(--accent-text); font-size: 17px; font-weight: 600; margin-top: 12px; }
+  .btn-primary { width: 100%; padding: 16px; border: none; border-radius: 14px; background: #FF8A00; color: #fff; font-size: 17px; font-weight: 600; margin-top: 12px; }
   .page { display: none; }
   .page.active { display: block; animation: fade .25s ease; }
   @keyframes fade { from {opacity:0; transform: translateY(4px)} to {opacity:1; transform: translateY(0)} }
-  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); display: flex; justify-content: space-around; padding: 10px 0 env(safe-area-inset-bottom); border-top: 1px solid rgba(255,255,255,0.05); }
-  .nav-item { flex: 1; text-align: center; font-size: 12px; opacity: 0.6; border: none; background: none; color: var(--text); }
-  .nav-item.active { opacity: 1; color: var(--accent); font-weight: 600; }
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #1f1f1f; display: flex; justify-content: space-around; padding: 10px 0 env(safe-area-inset-bottom); border-top: 1px solid rgba(255,255,255,0.05); }
+  .nav-item { flex: 1; text-align: center; font-size: 12px; opacity: 0.6; border: none; background: none; color: #fff; }
+  .nav-item.active { opacity: 1; color: #FF8A00; font-weight: 600; }
   .nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
   .list-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
 </style>
 </head>
 <body>
 
-  <!-- LOADING SCREEN WITH YOUR IMAGE -->
-  <div id="loader">
-    <img src="attachment://0" alt="AdsPayU">
-    <div class="loading-text">Loading...</div>
-  </div>
+  <!-- LOADING SCREEN -->
+  <div id="loader"></div>
 
   <!-- APP CONTENT -->
   <div id="app" style="display:none">
@@ -87,11 +60,6 @@
           <h3>Watch & Earn</h3>
           <p>Watch a short ad and get coins instantly</p>
           <button class="btn-primary" onclick="watchAd()">▶ Watch Ad +10</button>
-        </div>
-        <div class="card">
-          <h3>Daily Bonus</h3>
-          <p>Come back every 24h</p>
-          <button class="btn-primary" style="background:#2ea043" onclick="claimDaily()">Claim</button>
         </div>
       </div>
 
@@ -119,7 +87,6 @@
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
-tg.setHeaderColor('#0A2AFF');
 
 // LOADER: show 3 seconds then hide
 window.addEventListener('load', () => {
@@ -148,10 +115,6 @@ function watchAd() {
   localStorage.setItem('coins', coins);
   document.getElementById('coins').innerText = coins;
   tg.showPopup({title: "Earned!", message: "+10 coins"});
-}
-
-function claimDaily() {
-  tg.showAlert("Daily bonus claimed!");
 }
 
 function copyLink() {
