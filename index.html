@@ -5,14 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://ad.gigapub.tech/script?id=7204"></script>
+<!-- MONETAG SDK -->
 <script src='//libtl.com/sdk.js' data-zone='11258922' data-sdk='show_11258922'></script>
 <title>AdsPayU</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0A2AFF; color: #fff; padding-bottom: 90px; min-height: 100vh; }
-  #loader { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0A2AFF; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.6s ease; }
+  body { 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(180deg, #0A2AFF 0%, #0018B3 50%, #000A4D 100%);
+    color: #fff; padding-bottom: 90px; min-height: 100vh; background-attachment: fixed;
+  }
+  #loader { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0A2AFF; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; font-size: 16px; font-weight: 600; transition: opacity 0.6s ease; }
   #loader.hide { opacity: 0; pointer-events: none; }
-  #splashImg { width: 100%; height: 100vh; object-fit: cover; }
+  .spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.2); border-top: 3px solid #FF8A00; border-radius: 50%; animation: spin 1s linear infinite; }
+  @keyframes spin { to {transform: rotate(360deg)} }
   .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; position: sticky; top: 0; background: rgba(0,10,77,0.8); backdrop-filter: blur(20px); z-index: 10; }
   .topbar h1 { font-size: 18px; font-weight: 700; }
   .balance-section { padding: 16px; text-align: center; }
@@ -21,46 +27,59 @@
   .balance span { font-size: 20px; opacity: 0.8; }
   .usd { font-size: 14px; opacity: 0.7; }
   .btn-row { display: flex; gap: 10px; padding: 0 16px 20px; }
-  .btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; }
-  .btn-primary { background: linear-gradient(90deg, #FF8A00 0%, #FF6A00 100%); color: #fff; }
-  .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.15); }
-  .page { display: none; padding: 0 16px; }
+  .btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: transform 0.1s; }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: linear-gradient(90deg, #FF8A00 0%, #FF6A00 100%); color: #fff; box-shadow: 0 4px 20px rgba(255,138,0,0.4); }
+  .btn-secondary { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); color: #fff; border: 1px solid rgba(255,255,255,0.15); }
+  .page { display: none; padding: 0 16px; animation: fade .25s ease; }
   .page.active { display: block; }
+  @keyframes fade { from {opacity:0; transform: translateY(4px)} to {opacity:1; transform: translateY(0)} }
   .card { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
   .card-header { display: flex; align-items: center; gap: 12px; }
   .card-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 22px; }
   .card-info { flex: 1; }
   .card-title { font-size: 15px; font-weight: 700; }
   .card-sub { font-size: 12px; opacity: 0.7; margin-top: 2px; }
-  .btn-get { padding: 10px 18px; background: linear-gradient(90deg, #1877FF 0%, #0A5FFF 100%); border: none; border-radius: 10px; color: #fff; font-weight: 700; }
+  .btn-get { padding: 10px 18px; background: linear-gradient(90deg, #1877FF 0%, #0A5FFF 100%); border: none; border-radius: 10px; color: #fff; font-weight: 700; cursor: pointer; min-width: 100px; }
   .btn-get.orange { background: linear-gradient(90deg, #FF8A00 0%, #FF6A00 100%); }
   .btn-get:disabled { background: #333; opacity: 0.5; }
-  .list-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 14px; }
-  .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,10,20,0.85); backdrop-filter: blur(20px); border-radius: 30px; padding: 8px; display: flex; gap: 16px; }
-  .nav-item { text-align: center; font-size: 10px; opacity: 0.6; background: none; border: none; color: #fff; padding: 4px 8px; }
+  .list-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 14px; align-items: center; }
+  .rank-num { font-weight: 800; color: #FF8A00; margin-right: 8px; }
+  .player-name { flex: 1; font-weight: 600; }
+  .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,10,20,0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; padding: 8px; display: flex; gap: 16px; }
+  .nav-item { text-align: center; font-size: 10px; opacity: 0.6; background: none; border: none; color: #fff; cursor: pointer; padding: 4px 8px; }
   .nav-item.active { opacity: 1; color: #FF8A00; }
-  .nav-icon { font-size: 22px; display: block; }
+  .nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
   .nav-center { background: linear-gradient(135deg, #FF3B30 0%, #FF6A00 100%); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; }
+  .loading { opacity: 0.6; pointer-events: none; }
 </style>
 </head>
 <body>
 
   <div id="loader">
-    <img id="splashImg" src="splash.jpg" alt="AdsPayU">
+    <div class="spinner"></div>
+    Loading Ads...
   </div>
 
   <div id="app" style="display:none">
-    <div class="topbar"><h1>AdsPayU</h1></div>
+    <div class="topbar">
+      <h1>AdsPayU</h1>
+    </div>
+
     <div class="balance-section">
       <div class="balance-label">BALANCE</div>
       <div class="balance"><span id="coins">0</span> <span>APU</span></div>
       <div class="usd">🪙 ~$<span id="usd">0.00</span></div>
     </div>
+
     <div class="btn-row">
       <button class="btn btn-primary" onclick="withdraw()">WITHDRAW</button>
       <button class="btn btn-secondary" onclick="swap()">SWAP</button>
     </div>
+
+    <!-- HOME -->
     <div id="home" class="page active">
+      <!-- GIGAPUB CARD -->
       <div class="card">
         <div class="card-header">
           <div class="card-icon">🎯</div>
@@ -71,6 +90,8 @@
           <button class="btn-get" id="gigaBtn" disabled>Loading...</button>
         </div>
       </div>
+
+      <!-- MONETAG CARD -->
       <div class="card">
         <div class="card-header">
           <div class="card-icon">💰</div>
@@ -82,7 +103,15 @@
         </div>
       </div>
     </div>
-    <div id="rank" class="page"><div class="card"><h3>🏆 Top Earners</h3><div id="board"></div></div></div>
+
+    <!-- RANK -->
+    <div id="rank" class="page">
+      <div class="card">
+        <h3>🏆 Top Earners</h3>
+        <div id="board"></div>
+      </div>
+    </div>
+
     <div class="bottom-nav">
       <button class="nav-item active" onclick="showTab('home')"><span class="nav-icon">🏠</span>Home</button>
       <button class="nav-item" onclick="showTab('friends')"><span class="nav-icon">👥</span>Friends</button>
@@ -95,31 +124,36 @@
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
-tg.setBackgroundColor('#0A2AFF');
+tg.setBackgroundColor('#000A4D');
+
 const COIN_VALUE = 0.000028;
 const DAILY_LIMIT = 100;
 let coins = parseInt(localStorage.getItem('coins') || 0);
 let adWatched = parseInt(localStorage.getItem('adWatched') || 0);
+
+// GET REAL TELEGRAM USER
 const user = tg.initDataUnsafe?.user;
 const userId = user?.id || "guest";
-const userName = user?.first_name + (user?.last_name? " + user.last_name : "") || "Guest";
+const userName = user?.first_name + (user?.last_name? " " + user.last_name : "") || "Guest";
 
-let appOpened = false;
-function openApp() {
-  if(appOpened) return;
-  appOpened = true;
-  document.getElementById('loader').classList.add('hide');
-  document.getElementById('app').style.display = 'block';
-  enableAds(); updateUI(); savePlayer(); loadLeaderboard();
-}
-
-// FORCE OPEN AFTER 1.5S EVEN IF IMAGE IS STUCK
-setTimeout(openApp, 1500);
-
-// ALSO OPEN IF IMAGE LOADS FAST
-document.getElementById('splashImg').onload = () => {
-  setTimeout(openApp, 1500); // still wait 1.5s for splash effect
-}
+// WAIT FOR ADS
+let tries = 0;
+const check = setInterval(() => {
+  tries++;
+  if(typeof window.showGiga === 'function' && typeof window.show_11258922 === 'function') {
+    clearInterval(check);
+    document.getElementById('loader').classList.add('hide');
+    document.getElementById('app').style.display = 'block';
+    enableAds();
+    updateUI();
+    savePlayer();
+    loadLeaderboard();
+  }
+  if(tries > 50) {
+    clearInterval(check);
+    document.getElementById('loader').innerHTML = 'Failed to load. <button onclick="location.reload()" style="margin-top:10px; padding:8px 16px; background:#FF8A00; border:none; border-radius:8px; color:#fff;">Tap to Retry</button>';
+  }
+}, 200);
 
 function enableAds() {
   document.getElementById('gigaBtn').disabled = false;
@@ -129,26 +163,142 @@ function enableAds() {
   document.getElementById('gigaBtn').onclick = startGigaQueue;
   document.getElementById('monetagBtn').onclick = showMonetagAd;
 }
+
 function updateUI() {
   document.getElementById('coins').innerText = coins;
   document.getElementById('usd').innerText = (coins * COIN_VALUE).toFixed(2);
   document.getElementById('adLimit').innerText = adWatched;
+  
   if(adWatched >= DAILY_LIMIT) {
     document.getElementById('gigaBtn').disabled = true;
     document.getElementById('gigaBtn').innerText = "Daily Limit";
   }
 }
-let gigaQueue = 0; let gigaCompleted = false;
-function startGigaQueue() { if(adWatched >= DAILY_LIMIT - 1) return tg.showAlert("Not enough ads left today"); gigaQueue = 2; gigaCompleted = false; playGigaAd(); }
-function playGigaAd() { if(gigaQueue <= 0) return finishGigaAd(); document.getElementById('gigaBtn').innerText = "Loading..."; window.showGiga().then(() => { gigaQueue -= 1; if(gigaQueue > 0) setTimeout(playGigaAd, 3000); else { gigaCompleted = true; finishGigaAd(); } }).catch(e => { gigaQueue = 0; gigaCompleted = false; document.getElementById('gigaBtn').innerText = "Watch"; if(e === 'No ads') tg.showAlert("GigaPub: No ads available."); else if(e === 'Skipped') tg.showAlert("Ad skipped. No reward."); }); }
-function finishGigaAd() { if(gigaCompleted) { coins += 50; adWatched += 2; localStorage.setItem('coins', coins); localStorage.setItem('adWatched', adWatched); updateUI(); savePlayer(); loadLeaderboard(); tg.showPopup({title: "GigaPub Complete!", message: "+50 APU"}); } document.getElementById('gigaBtn').innerText = "Watch"; }
-function showMonetagAd() { document.getElementById('monetagBtn').innerText = "Loading..."; window.show_11258922().then(() => { coins += 50; localStorage.setItem('coins', coins); updateUI(); savePlayer(); loadLeaderboard(); tg.showPopup({title: "Monetag Complete!", message: "+50 APU"}); }).catch(e => { tg.showAlert("Monetag: " + e); }).finally(() => { document.getElementById('monetagBtn').innerText = "Watch"; }); }
-function savePlayer() { let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]'); leaderboard = leaderboard.filter(p => p.id !== userId); leaderboard.push({ id: userId, name: userName, coins: coins }); leaderboard.sort((a,b) => b.coins - a.coins); leaderboard = leaderboard.slice(0, 20); localStorage.setItem('leaderboard', JSON.stringify(leaderboard)); }
-function loadLeaderboard() { let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]'); if(leaderboard.length === 0) { document.getElementById('board').innerHTML = '<p style="opacity:0.6">No players yet</p>'; return; } let html = ''; leaderboard.forEach((player, index) => { const isMe = player.id === userId; html += `<div class="list-item"><span>#${index + 1} ${player.name} ${isMe? '(You)' : ''}</span><span>${player.coins} APU</span></div>`; }); document.getElementById('board').innerHTML = html; }
-function showTab(id) { document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active')); document.getElementById(id).classList.add('active'); event.currentTarget.classList.add('active'); if(id === 'rank') loadLeaderboard(); }
-function withdraw() { tg.showPopup({title: "Withdraw", message: `You have ${coins} APU\nMin withdraw: 10000 APU`, buttons: [{type: "close"}]}); }
+
+// 1. GIGAPUB: 2 ADS = 50 APU
+let gigaQueue = 0;
+let gigaCompleted = false;
+
+function startGigaQueue() {
+  if(adWatched >= DAILY_LIMIT - 1) return tg.showAlert("Not enough ads left today");
+  gigaQueue = 2;
+  gigaCompleted = false;
+  playGigaAd();
+}
+
+function playGigaAd() {
+  if(gigaQueue <= 0) return finishGigaAd();
+  document.getElementById('gigaBtn').classList.add('loading');
+  document.getElementById('gigaBtn').innerText = "Loading...";
+
+  window.showGiga()
+ .then(() => {
+    gigaQueue -= 1;
+    if(gigaQueue > 0) {
+      setTimeout(playGigaAd, 3000);
+    } else {
+      gigaCompleted = true;
+      finishGigaAd();
+    }
+  })
+ .catch(e => {
+    gigaQueue = 0;
+    gigaCompleted = false;
+    document.getElementById('gigaBtn').innerText = "Watch";
+    if(e === 'No ads') tg.showAlert("GigaPub: No ads available.");
+    else if(e === 'Skipped') tg.showAlert("Ad skipped. No reward.");
+    document.getElementById('gigaBtn').classList.remove('loading');
+  });
+}
+
+function finishGigaAd() {
+  if(gigaCompleted) {
+    coins += 50;
+    adWatched += 2;
+    localStorage.setItem('coins', coins);
+    localStorage.setItem('adWatched', adWatched);
+    updateUI();
+    savePlayer();
+    loadLeaderboard();
+    tg.HapticFeedback.notificationOccurred('success');
+    tg.showPopup({title: "GigaPub Complete!", message: "+50 APU"});
+  }
+  document.getElementById('gigaBtn').innerText = "Watch";
+  document.getElementById('gigaBtn').classList.remove('loading');
+}
+
+// 2. MONETAG: 1 AD = 50 APU
+function showMonetagAd() {
+  document.getElementById('monetagBtn').classList.add('loading');
+  document.getElementById('monetagBtn').innerText = "Loading...";
+
+  window.show_11258922().then(() => {
+    // Monetag reward
+    coins += 50;
+    localStorage.setItem('coins', coins);
+    updateUI();
+    savePlayer();
+    loadLeaderboard();
+    tg.HapticFeedback.notificationOccurred('success');
+    tg.showPopup({title: "Monetag Complete!", message: "+50 APU"});
+  }).catch(e => {
+    tg.showAlert("Monetag: " + e);
+  }).finally(() => {
+    document.getElementById('monetagBtn').innerText = "Watch";
+    document.getElementById('monetagBtn').classList.remove('loading');
+  });
+}
+
+// LEADERBOARD
+function savePlayer() {
+  let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+  leaderboard = leaderboard.filter(p => p.id !== userId);
+  leaderboard.push({ id: userId, name: userName, coins: coins });
+  leaderboard.sort((a,b) => b.coins - a.coins);
+  leaderboard = leaderboard.slice(0, 20);
+  localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+}
+
+function loadLeaderboard() {
+  let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+  if(leaderboard.length === 0) {
+    document.getElementById('board').innerHTML = '<p style="opacity:0.6">No players yet</p>';
+    return;
+  }
+  let html = '';
+  leaderboard.forEach((player, index) => {
+    const isMe = player.id === userId;
+    html += `
+      <div class="list-item" style="${isMe? 'background: rgba(255,138,0,0.1); border-radius:8px; padding: 12px;' : ''}">
+        <span class="rank-num">#${index + 1}</span>
+        <span class="player-name">${player.name} ${isMe? '(You)' : ''}</span>
+        <span>${player.coins} APU</span>
+      </div>
+    `;
+  });
+  document.getElementById('board').innerHTML = html;
+}
+
+// NAVIGATION
+function showTab(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if(id === 'rank') loadLeaderboard();
+}
+
+function withdraw() {
+  tg.showPopup({title: "Withdraw", message: `You have ${coins} APU\nMin withdraw: 10000 APU`, buttons: [{type: "close"}]});
+}
+
 function swap() { tg.showAlert("Swap feature coming soon"); }
-if(!localStorage.getItem('lastReset') || new Date().toDateString() !== localStorage.getItem('lastReset')) { localStorage.setItem('adWatched', 0); localStorage.setItem('lastReset', new Date().toDateString()); }
+
+// Reset daily
+if(!localStorage.getItem('lastReset') || new Date().toDateString() !== localStorage.getItem('lastReset')) {
+  localStorage.setItem('adWatched', 0);
+  localStorage.setItem('lastReset', new Date().toDateString());
+}
 </script>
 </body>
 </html>
