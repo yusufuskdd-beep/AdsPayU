@@ -19,6 +19,11 @@
  .daily-claim { margin: 0 16px 16px; padding: 14px; background: #00C853; border: none; border-radius: 14px; color: #fff; font-size: 16px; font-weight: 800; width: calc(100% - 32px); transition: all 0.2s; }
  .daily-claim:disabled { background: #333; opacity: 0.6; }
 
+  /* HOURLY INCOME CARD */
+ .income-card { margin: 0 16px 16px; padding: 16px; background: linear-gradient(135deg, rgba(0,200,83,0.25) 0%, rgba(24,119,255,0.25) 100%); border: 1px solid rgba(0,200,83,0.4); border-radius: 16px; text-align: center; }
+ .income-label { font-size: 12px; opacity: 0.8; }
+ .income-value { font-size: 28px; font-weight: 800; color: #00FF88; margin: 4px 0; }
+
   /* MINER CARDS */
  .miner-card { margin: 0 16px 12px; padding: 16px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; }
  .miner-card.active { background: rgba(255,138,0,0.15); border: 1px solid rgba(255,138,0,0.4); }
@@ -94,6 +99,10 @@
 
     <!-- MINER PAGE -->
     <div id="miner" class="page">
+      <div class="income-card">
+        <div class="income-label">TOTAL HOURLY INCOME</div>
+        <div class="income-value" id="totalIncome">0 APU/h</div>
+      </div>
       <div id="minerList"></div>
     </div>
 
@@ -112,7 +121,7 @@ const COIN_VALUE = 0.000028;
 const DAILY_LIMIT = 100;
 const REWARD_PER_AD = 2;
 const MIN_WITHDRAW = 100;
-const MINER_INTERVAL = 60 * 60 * 1000;
+const MINER_INTERVAL = 60 * 1000; // CHANGED TO 1 MINUTE
 
 const MINERS = [
   {id: 1, name: "Miner Basic", cost: 0.50, reward: 10, icon: "⚡"},
@@ -140,6 +149,7 @@ MINERS.forEach(m => {
 updateUI();
 checkDaily();
 renderMiners();
+updateTotalIncome();
 setInterval(updateAllMiners, 1000);
 
 function updateUI() {
@@ -150,6 +160,15 @@ function updateUI() {
   document.getElementById('monetagCount').innerText = monetagWatched;
   if(gigaWatched >= DAILY_LIMIT) document.getElementById('gigaBtn').disabled = true;
   if(monetagWatched >= DAILY_LIMIT) document.getElementById('monetagBtn').disabled = true;
+}
+
+// TOTAL HOURLY INCOME
+function updateTotalIncome() {
+  let total = 0;
+  MINERS.forEach(m => {
+    if(minerData[m.id].owned) total += m.reward * 60; // reward per min * 60 = per hour
+  });
+  document.getElementById('totalIncome').innerText = total.toLocaleString() + ' APU/h';
 }
 
 // RENDER MINERS
@@ -168,7 +187,7 @@ function renderMiners() {
           <div class="miner-name">${m.icon} ${m.name}</div>
           <div class="miner-status ${data.owned? 'active' : ''}">${data.owned? 'ACTIVE' : 'LOCKED'}</div>
         </div>
-        <div class="miner-info">Cost: ${m.cost} USDT | Earn: ${m.reward} APU/hour</div>
+        <div class="miner-info">Cost: ${m.cost} USDT | Earn: ${m.reward} APU/min</div>
         <div class="miner-progress">${isReady? m.reward + '/'+m.reward+' APU' : '0/'+m.reward+' APU'}</div>
         <button class="miner-btn ${data.owned? (canClaim? 'btn-claim' : 'btn-buy') : 'btn-buy'}"
           onclick="handleMiner(${m.id})"
@@ -190,9 +209,8 @@ function getMinerBtnText(id) {
   if(!data.owned) return `BUY - ${m.cost} USDT`;
   if(!isReady) {
     const timeLeft = MINER_INTERVAL - (now - data.lastClaim);
-    const mins = Math.floor(timeLeft / 60000);
-    const secs = Math.floor((timeLeft % 60000) / 1000);
-    return `MINING... ${mins}m ${secs}s`;
+    const secs = Math.floor(timeLeft / 1000);
+    return `MINING... ${secs}s`;
   }
   if(data.adsWatched < 2) return `WATCH 2 ADS - ${2 - data.adsWatched} left`;
   return `CLAIM ${m.reward} APU`;
@@ -219,6 +237,7 @@ function buyMiner(id) {
 
   updateUI();
   renderMiners();
+  updateTotalIncome();
   alert(`${m.name} Purchased!`);
 }
 
@@ -240,6 +259,7 @@ function claimMiner(id) {
 
   updateUI();
   renderMiners();
+  updateTotalIncome();
   alert(`+${m.reward} APU Claimed from ${m.name}!`);
 }
 
