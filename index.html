@@ -46,8 +46,7 @@
 <body>
 
   <div id="loader">
-    <!-- LOCAL FILE -->
-    <img id="splashImg" src="splash.jpg" alt="AdsPayU" onerror="this.style.display='none'">
+    <img id="splashImg" src="splash.jpg" alt="AdsPayU">
   </div>
 
   <div id="app" style="display:none">
@@ -105,12 +104,22 @@ const user = tg.initDataUnsafe?.user;
 const userId = user?.id || "guest";
 const userName = user?.first_name + (user?.last_name? " + user.last_name : "") || "Guest";
 
-// OPEN AFTER 1.5S
-setTimeout(() => {
+let appOpened = false;
+function openApp() {
+  if(appOpened) return;
+  appOpened = true;
   document.getElementById('loader').classList.add('hide');
   document.getElementById('app').style.display = 'block';
   enableAds(); updateUI(); savePlayer(); loadLeaderboard();
-}, 1500);
+}
+
+// FORCE OPEN AFTER 1.5S EVEN IF IMAGE IS STUCK
+setTimeout(openApp, 1500);
+
+// ALSO OPEN IF IMAGE LOADS FAST
+document.getElementById('splashImg').onload = () => {
+  setTimeout(openApp, 1500); // still wait 1.5s for splash effect
+}
 
 function enableAds() {
   document.getElementById('gigaBtn').disabled = false;
