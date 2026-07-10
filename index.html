@@ -18,7 +18,6 @@
   .balance-usdt { font-size: 14px; opacity: 0.8; }
   .daily-claim { margin: 0 16px 16px; padding: 14px; background: #00C853; border: none; border-radius: 14px; color: #fff; font-size: 16px; font-weight: 800; width: calc(100% - 32px); transition: all 0.2s; }
   .daily-claim:disabled { background: #333; opacity: 0.6; }
-  
   .miner-card { margin: 0 16px 16px; padding: 16px; background: rgba(255,138,0,0.15); border: 1px solid rgba(255,138,0,0.4); border-radius: 16px; }
   .miner-title { font-size: 16px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; }
   .miner-info { font-size: 12px; opacity: 0.8; margin: 8px 0; }
@@ -27,7 +26,6 @@
   .btn-buy { background: #FF8A00; color: #fff; }
   .btn-claim { background: #00C853; color: #fff; }
   .btn-claim:disabled { background: #333; opacity: 0.6; }
-
   .btn-row { display: flex; gap: 10px; padding: 0 16px 20px; }
   .btn { flex: 1; padding: 14px; border: none; border-radius: 14px; font-size: 15px; font-weight: 700; }
   .btn-primary { background: #FF8A00; color: #fff; }
@@ -119,10 +117,10 @@ const REWARD_PER_AD = 2;
 const MIN_WITHDRAW = 100;
 const MINER_COST_USDT = 0.50;
 const MINER_REWARD = 10;
-const MINER_INTERVAL = 60 * 60 * 1000; // 1 hour
+const MINER_INTERVAL = 60 * 60 * 1000;
 
 let coins = parseInt(localStorage.getItem('coins') || 0);
-let usdt = parseFloat(localStorage.getItem('usdt') || 0);
+let usdt = parseFloat(localStorage.getItem('usdt') || 10); // TEST: START WITH 10 USDT
 let gigaWatched = parseInt(localStorage.getItem('gigaWatched') || 0);
 let monetagWatched = parseInt(localStorage.getItem('monetagWatched') || 0);
 let hasMiner = localStorage.getItem('hasMiner') === 'true';
@@ -140,12 +138,10 @@ function updateUI() {
   document.getElementById('usdt').innerText = usdtDisplay + ' USDT | Wallet: ' + usdt.toFixed(2) + ' USDT';
   document.getElementById('gigaCount').innerText = gigaWatched;
   document.getElementById('monetagCount').innerText = monetagWatched;
-  
   if(gigaWatched >= DAILY_LIMIT) document.getElementById('gigaBtn').disabled = true;
   if(monetagWatched >= DAILY_LIMIT) document.getElementById('monetagBtn').disabled = true;
 }
 
-// MINER LOGIC - NO STACKING
 function updateMiner() {
   if(!hasMiner) {
     document.getElementById('minerStatus').innerText = 'LOCKED';
@@ -153,14 +149,11 @@ function updateMiner() {
     document.getElementById('minerBtn').className = 'miner-btn btn-buy';
     return;
   }
-  
   document.getElementById('minerStatus').innerText = 'ACTIVE';
   const now = Date.now();
   const timePassed = now - minerLastClaim;
   const isReady = timePassed >= MINER_INTERVAL;
-  
   document.getElementById('minerProgress').innerText = isReady ? '10/10 APU' : '0/10 APU';
-  
   if(isReady) {
     if(minerAdsWatched >= 2) {
       document.getElementById('minerBtn').innerText = 'CLAIM 10 APU';
@@ -184,15 +177,12 @@ function updateMiner() {
 function buyMiner() {
   if(hasMiner) return claimMiner();
   if(usdt < MINER_COST_USDT) return alert("Not enough USDT. You need 0.50 USDT");
-  
   usdt -= MINER_COST_USDT;
   hasMiner = true;
   minerLastClaim = Date.now();
-  
   localStorage.setItem('usdt', usdt);
   localStorage.setItem('hasMiner', 'true');
   localStorage.setItem('minerLastClaim', minerLastClaim);
-  
   updateUI();
   updateMiner();
   alert("Miner Purchased! Mine 10 APU every hour");
@@ -202,15 +192,12 @@ function claimMiner() {
   const now = Date.now();
   if(now - minerLastClaim < MINER_INTERVAL) return alert("Not ready yet");
   if(minerAdsWatched < 2) return alert("Watch 2 ads first to claim");
-  
   coins += MINER_REWARD;
-  minerLastClaim = now; // RESET TIMER
-  minerAdsWatched = 0; // RESET AD COUNT
-  
+  minerLastClaim = now;
+  minerAdsWatched = 0;
   localStorage.setItem('coins', coins);
   localStorage.setItem('minerLastClaim', minerLastClaim);
   localStorage.setItem('minerAdsWatched', 0);
-  
   updateUI();
   updateMiner();
   alert("+10 APU Claimed from Miner! Timer reset");
@@ -243,7 +230,6 @@ function claimDaily() {
   alert("+50 APU Claimed!");
 }
 
-// TRACK ADS FOR MINER
 function trackAdForMiner() {
   if(hasMiner) {
     const now = Date.now();
@@ -296,7 +282,6 @@ function withdraw(){
 }
 function swap(){ alert("Coming soon"); }
 
-// RESET DAILY
 if(new Date().toDateString() !== localStorage.getItem('lastReset')){
   localStorage.setItem('gigaWatched', 0);
   localStorage.setItem('monetagWatched', 0);
