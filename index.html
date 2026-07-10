@@ -9,59 +9,54 @@
 <title>AdsPayU</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { 
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: linear-gradient(180deg, #0A2AFF 0%, #0018B3 50%, #000A4D 100%);
-    color: #fff; padding-bottom: 90px; min-height: 100vh; background-attachment: fixed;
-  }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: linear-gradient(180deg, #0A2AFF 0%, #0018B3 50%, #000A4D 100%); color: #fff; padding-bottom: 90px; min-height: 100vh; background-attachment: fixed; }
   #loader { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0A2AFF; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; font-size: 16px; font-weight: 600; transition: opacity 0.6s ease; }
   #loader.hide { opacity: 0; pointer-events: none; }
- .spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.2); border-top: 3px solid #FF8A00; border-radius: 50%; animation: spin 1s linear infinite; }
+.spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.2); border-top: 3px solid #FF8A00; border-radius: 50%; animation: spin 1s linear infinite; }
   @keyframes spin { to {transform: rotate(360deg)} }
- .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; position: sticky; top: 0; background: rgba(0,10,77,0.8); backdrop-filter: blur(20px); z-index: 10; }
- .topbar h1 { font-size: 18px; font-weight: 700; }
- .balance-section { padding: 16px; text-align: center; }
- .balance-label { font-size: 12px; opacity: 0.7; letter-spacing: 1px; }
- .balance { font-size: 48px; font-weight: 800; margin: 8px 0; }
- .balance span { font-size: 20px; opacity: 0.8; }
- .usd { font-size: 14px; opacity: 0.7; }
- .btn-row { display: flex; gap: 10px; padding: 0 16px 20px; }
- .btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: transform 0.1s; }
- .btn:active { transform: scale(0.97); }
- .btn-primary { background: linear-gradient(90deg, #FF8A00 0%, #FF6A00 100%); color: #fff; box-shadow: 0 4px 20px rgba(255,138,0,0.4); }
- .btn-secondary { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); color: #fff; border: 1px solid rgba(255,255,255,0.15); }
- .page { display: none; padding: 0 16px; animation: fade.25s ease; }
- .page.active { display: block; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; position: sticky; top: 0; background: rgba(0,10,77,0.8); backdrop-filter: blur(20px); z-index: 10; }
+.topbar h1 { font-size: 18px; font-weight: 700; }
+.balance-section { padding: 16px; text-align: center; }
+.balance-label { font-size: 12px; opacity: 0.7; letter-spacing: 1px; }
+.balance { font-size: 48px; font-weight: 800; margin: 8px 0; }
+.balance span { font-size: 20px; opacity: 0.8; }
+.usd { font-size: 14px; opacity: 0.7; }
+.btn-row { display: flex; gap: 10px; padding: 0 16px 20px; }
+.btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: transform 0.1s; }
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: linear-gradient(90deg, #FF8A00 0%, #FF6A00 100%); color: #fff; box-shadow: 0 4px 20px rgba(255,138,0,0.4); }
+.btn-secondary { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); color: #fff; border: 1px solid rgba(255,255,255,0.15); }
+.btn-danger { background: #D50000; color: #fff; }
+.page { display: none; padding: 0 16px; animation: fade.25s ease; }
+.page.active { display: block; }
   @keyframes fade { from {opacity:0; transform: translateY(4px)} to {opacity:1; transform: translateY(0)} }
- .card { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
- .card-header { display: flex; align-items: center; gap: 12px; }
- .card-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 22px; }
- .card-info { flex: 1; }
- .card-title { font-size: 15px; font-weight: 700; }
- .card-sub { font-size: 12px; opacity: 0.7; margin-top: 2px; }
- .btn-get { padding: 10px 18px; background: linear-gradient(90deg, #1877FF 0%, #0A5FFF 100%); border: none; border-radius: 10px; color: #fff; font-weight: 700; cursor: pointer; min-width: 100px; }
- .btn-get.orange { background: linear-gradient(90deg, #FF8A00 0%, #FF6A00 100%); }
- .btn-get:disabled { background: #333; opacity: 0.5; }
- .list-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 14px; align-items: center; }
- .rank-num { font-weight: 800; color: #FF8A00; margin-right: 8px; }
- .player-name { flex: 1; font-weight: 600; }
- .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,10,20,0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; padding: 8px; display: flex; gap: 12px; }
- .nav-item { text-align: center; font-size: 10px; opacity: 0.6; background: none; border: none; color: #fff; cursor: pointer; padding: 4px 6px; }
- .nav-item.active { opacity: 1; color: #FF8A00; }
- .nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
- .nav-center { background: linear-gradient(135deg, #FF3B30 0%, #FF6A00 100%); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; }
- .loading { opacity: 0.6; pointer-events: none; }
-
-  /* WHEEL STYLES */
- .wheel-wrapper { position: relative; width: 280px; height: 280px; margin: 0 auto 20px; }
- .wheel { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #FF8A00; position: relative; overflow: hidden; transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99); box-shadow: 0 0 30px rgba(255,138,0,0.5); }
- .wheel-pointer { width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #fff; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); z-index: 10; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
- .bet-input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: #fff; font-size: 16px; text-align: center; margin-bottom: 12px; }
- .pot { font-size: 24px; font-weight: 800; color: #FF8A00; margin: 10px 0; }
- .players-list { font-size: 12px; opacity: 0.8; max-height: 80px; overflow-y: auto; }
- .player-legend { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
- .color-dot { width: 12px; height: 12px; border-radius: 50%; }
- .bot-tag { font-size: 9px; background: #555; padding: 2px 5px; border-radius: 4px; margin-left: 4px; }
+.card { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+.card-header { display: flex; align-items: center; gap: 12px; }
+.card-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 22px; }
+.card-info { flex: 1; }
+.card-title { font-size: 15px; font-weight: 700; }
+.card-sub { font-size: 12px; opacity: 0.7; margin-top: 2px; }
+.btn-get { padding: 10px 18px; background: linear-gradient(90deg, #1877FF 0%, #0A5FFF 100%); border: none; border-radius: 10px; color: #fff; font-weight: 700; cursor: pointer; min-width: 100px; }
+.btn-get.orange { background: linear-gradient(90deg, #FF8A00 0%, #FF6A00 100%); }
+.btn-get:disabled { background: #333; opacity: 0.5; }
+.list-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 14px; align-items: center; }
+.rank-num { font-weight: 800; color: #FF8A00; margin-right: 8px; }
+.player-name { flex: 1; font-weight: 600; }
+.bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,10,20,0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; padding: 8px; display: flex; gap: 12px; }
+.nav-item { text-align: center; font-size: 10px; opacity: 0.6; background: none; border: none; color: #fff; cursor: pointer; padding: 4px 6px; }
+.nav-item.active { opacity: 1; color: #FF8A00; }
+.nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
+.nav-center { background: linear-gradient(135deg, #FF3B30 0%, #FF6A00 100%); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; }
+.loading { opacity: 0.6; pointer-events: none; }
+.wheel-wrapper { position: relative; width: 280px; height: 280px; margin: 0 auto 20px; }
+.wheel { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #FF8A00; position: relative; overflow: hidden; transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99); box-shadow: 0 0 30px rgba(255,138,0,0.5); }
+.wheel-pointer { width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #fff; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); z-index: 10; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+.bet-input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: #fff; font-size: 16px; text-align: center; margin-bottom: 12px; }
+.pot { font-size: 24px; font-weight: 800; color: #FF8A00; margin: 10px 0; }
+.players-list { font-size: 12px; opacity: 0.8; max-height: 80px; overflow-y: auto; }
+.player-legend { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.color-dot { width: 12px; height: 12px; border-radius: 50%; }
+.bot-tag { font-size: 9px; background: #555; padding: 2px 5px; border-radius: 4px; margin-left: 4px; }
 </style>
 </head>
 <body>
@@ -123,6 +118,7 @@
         <input type="number" id="betAmount" class="bet-input" placeholder="Enter bet amount" min="10" value="100">
         <button class="btn btn-primary" id="betBtn" onclick="placeBet()">PLACE BET & JOIN</button>
         <button class="btn btn-primary" id="spinBtn" onclick="spinWheel()" style="display:none; margin-top:10px;">SPIN WHEEL</button>
+        <button class="btn btn-danger" id="resetBtn" onclick="resetRound()" style="display:none; margin-top:10px;">RESET ROUND</button>
       </div>
     </div>
 
@@ -144,7 +140,7 @@ tg.expand(); tg.setBackgroundColor('#000A4D');
 const COIN_VALUE = 0.000028;
 const DAILY_LIMIT = 100;
 const COLORS = ['#1877FF','#FF8A00','#00C853','#D50000','#AA00FF','#FFD600','#FF4081','#29B6F6'];
-const BOT_NAMES = ['Bot_Alex', 'Bot_Sara', 'Bot_Max']; // 3 bots
+const BOT_NAMES = ['Bot_Alex', 'Bot_Sara', 'Bot_Max'];
 
 let coins = parseInt(localStorage.getItem('coins') || 0);
 let adWatched = parseInt(localStorage.getItem('adWatched') || 0);
@@ -156,7 +152,13 @@ let wheelPlayers = JSON.parse(localStorage.getItem('wheelPlayers') || '[]');
 let wheelPot = parseInt(localStorage.getItem('wheelPot') || 0);
 let spinning = false;
 
-// OPEN APP
+// FIX: AUTO RESET IF STUCK
+if(wheelPlayers.length === 1 && wheelPlayers[0].id === userId) {
+  setTimeout(() => {
+    if(wheelPlayers.length === 1) resetRound();
+  }, 10000); // 10 seconds
+}
+
 let appOpened = false;
 function openApp() {
   if(appOpened) return; appOpened = true; clearInterval(check);
@@ -179,11 +181,26 @@ function updateUI() {
   document.getElementById('adLimit').innerText = adWatched;
 }
 
-// WHEEL FUNCTIONS WITH BOTS
+// WHEEL FUNCTIONS WITH BOTS + RESET
+function resetRound() {
+  // Refund user if stuck
+  const myBet = wheelPlayers.find(p => p.id === userId);
+  if(myBet) {
+    coins += myBet.bet;
+    localStorage.setItem('coins', coins);
+  }
+  wheelPlayers = [];
+  wheelPot = 0;
+  localStorage.setItem('wheelPlayers', JSON.stringify(wheelPlayers));
+  localStorage.setItem('wheelPot', wheelPot);
+  updateUI();
+  updateWheelUI();
+  tg.showAlert("Round reset. Your bet was refunded.");
+}
+
 function addBots(bet) {
-  // Add 2 random bots when user joins
   for(let i = 0; i < 2; i++) {
-    const botBet = Math.floor(Math.random() * 3 + 1) * bet; // bot bets 1x to 3x your bet
+    const botBet = Math.floor(Math.random() * 3 + 1) * bet;
     const botId = 'bot_' + i + Date.now();
     wheelPlayers.push({id: botId, name: BOT_NAMES[i], bet: botBet, isBot: true});
     wheelPot += botBet;
@@ -217,6 +234,7 @@ function updateWheelUI() {
   const hasBet = wheelPlayers.some(p => p.id === userId);
   document.getElementById('betBtn').style.display = hasBet? 'none' : 'block';
   document.getElementById('spinBtn').style.display = wheelPlayers.length >= 2 &&!spinning? 'block' : 'none';
+  document.getElementById('resetBtn').style.display = hasBet && wheelPlayers.length < 2? 'block' : 'none'; // show reset if stuck
   drawWheel();
 }
 
@@ -230,7 +248,7 @@ function placeBet() {
   wheelPot += bet;
   wheelPlayers.push({id: userId, name: userName, bet: bet});
   
-  addBots(bet); // ADD BOTS HERE
+  addBots(bet); // ADD BOTS IMMEDIATELY
 
   localStorage.setItem('coins', coins);
   localStorage.setItem('wheelPlayers', JSON.stringify(wheelPlayers));
@@ -260,7 +278,6 @@ function spinWheel() {
     } else {
       tg.showPopup({title: "Round Over", message: `${winner.name} won ${wheelPot} APU!`});
     }
-    // Reset
     wheelPlayers = []; wheelPot = 0;
     localStorage.setItem('wheelPlayers', JSON.stringify(wheelPlayers));
     localStorage.setItem('wheelPot', wheelPot);
@@ -275,7 +292,7 @@ function playGigaAd() {
   if(gigaQueue <= 0) return finishGigaAd();
   document.getElementById('gigaBtn').classList.add('loading'); document.getElementById('gigaBtn').innerText = "Loading...";
   window.showGiga().then(() => { gigaQueue -= 1; if(gigaQueue > 0) setTimeout(playGigaAd, 3000); else { gigaCompleted = true; finishGigaAd(); } })
- .catch(e => { gigaQueue = 0; gigaCompleted = false; document.getElementById('gigaBtn').innerText = "Watch"; tg.showAlert("GigaPub: " + e); document.getElementById('gigaBtn').classList.remove('loading'); });
+.catch(e => { gigaQueue = 0; gigaCompleted = false; document.getElementById('gigaBtn').innerText = "Watch"; tg.showAlert("GigaPub: " + e); document.getElementById('gigaBtn').classList.remove('loading'); });
 }
 function finishGigaAd() {
   if(gigaCompleted) { coins += 50; adWatched += 1; localStorage.setItem('coins', coins); localStorage.setItem('adWatched', adWatched); updateUI(); savePlayer(); loadLeaderboard(); tg.showPopup({title: "GigaPub Complete!", message: "+50 APU"}); }
@@ -284,8 +301,8 @@ function finishGigaAd() {
 function showMonetagAd() {
   document.getElementById('monetagBtn').classList.add('loading'); document.getElementById('monetagBtn').innerText = "Loading...";
   window.show_11258922().then(() => { coins += 50; localStorage.setItem('coins', coins); updateUI(); savePlayer(); loadLeaderboard(); tg.showPopup({title: "Monetag Complete!", message: "+50 APU"}); })
- .catch(e => tg.showAlert("Monetag: " + e))
- .finally(() => { document.getElementById('monetagBtn').innerText = "Watch"; document.getElementById('monetagBtn').classList.remove('loading'); });
+.catch(e => tg.showAlert("Monetag: " + e))
+.finally(() => { document.getElementById('monetagBtn').innerText = "Watch"; document.getElementById('monetagBtn').classList.remove('loading'); });
 }
 function savePlayer() { let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]'); leaderboard = leaderboard.filter(p => p.id!== userId); leaderboard.push({ id: userId, name: userName, coins: coins }); leaderboard.sort((a,b) => b.coins - a.coins); leaderboard = leaderboard.slice(0, 20); localStorage.setItem('leaderboard', JSON.stringify(leaderboard)); }
 function loadLeaderboard() { let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]'); let html = ''; leaderboard.forEach((player, index) => { const isMe = player.id === userId; html += `<div class="list-item" style="${isMe? 'background: rgba(255,138,0,0.1); border-radius:8px; padding: 12px;' : ''}"><span class="rank-num">#${index + 1}</span><span class="player-name">${player.name} ${isMe? '(You)' : ''}</span><span>${player.coins} APU</span></div>`; }); document.getElementById('board').innerHTML = html || '<p style="opacity:0.6">No players yet</p>'; }
