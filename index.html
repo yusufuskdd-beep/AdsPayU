@@ -2,23 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <title>AdsPayU</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { 
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: #0A2AFF;
-    color: #fff;
-    padding-bottom: 80px;
-    overflow-x: hidden;
-  }
+  body { background: #0A2AFF; color: #fff; font-family: system-ui; padding-bottom: 80px; }
 
   /* LOADING SCREEN */
   #loader {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background: #0A2AFF url('./splash.jpg') no-repeat center;
     background-size: cover;
     z-index: 9999;
@@ -26,21 +19,73 @@
   }
   #loader.hide { opacity: 0; pointer-events: none; }
 
-  /* APP UI */
-  .header { 
-    padding: 20px 16px 10px; 
-    display: flex; 
-    align-items: center; 
-    justify-content: space-between; 
-  }
-  .header h2 { font-size: 24px; font-weight: 700; }
-  .coins { 
-    background: #1f1f1f; 
-    padding: 8px 14px; 
-    border-radius: 20px; 
-    font-weight: 600; 
-    display: flex; 
-    align-items: center;
-    gap: 6px; 
-  }
+  /* APP UI - shortened for clarity */
+  .header { padding: 20px 16px; display: flex; justify-content: space-between; }
+  .coins { background: #1f1f1f; padding: 8px 14px; border-radius: 20px; }
   .container { padding: 0 16px; }
+  .card { background: #1f1f1f; border-radius: 16px; padding: 18px; margin-bottom: 14px; }
+  .btn-primary { width: 100%; padding: 16px; border: none; border-radius: 14px; background: #FF8A00; color: #fff; font-weight: 600; }
+  .page { display: none; } .page.active { display: block; }
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #1f1f1f; display: flex; justify-content: space-around; padding: 10px 0; }
+  .nav-item { flex: 1; text-align: center; background: none; border: none; color: #fff; opacity: 0.6; }
+  .nav-item.active { opacity: 1; color: #FF8A00; }
+</style>
+</head>
+<body>
+
+  <div id="loader"></div>
+
+  <div id="app" style="display:none">
+    <div class="header"><h2>AdsPayU</h2><div class="coins">🪙 <span id="coins">0</span></div></div>
+    <div class="container">
+      <div id="home" class="page active">
+        <div class="card"><h3>Watch & Earn</h3><button class="btn-primary" onclick="watchAd()">▶ Watch Ad +10</button></div>
+      </div>
+      <div id="referral" class="page"><div class="card"><h3>Referral</h3></div></div>
+      <div id="leaderboard" class="page"><div class="card"><h3>Leaderboard</h3><div id="board"></div></div></div>
+    </div>
+    <div class="bottom-nav">
+      <button class="nav-item active" onclick="showTab('home')">🏠<br>Home</button>
+      <button class="nav-item" onclick="showTab('referral')">👥<br>Referral</button>
+      <button class="nav-item" onclick="showTab('leaderboard')">🏆<br>Leaderboard</button>
+    </div>
+  </div>
+
+<script>
+const tg = window.Telegram.WebApp;
+tg.expand();
+
+// FORCE LOAD AFTER 3S EVEN IF IMAGE FAILS
+function startApp() {
+  document.getElementById('loader').classList.add('hide');
+  document.getElementById('app').style.display = 'block';
+}
+setTimeout(startApp, 3000); // this runs no matter what
+
+// PRELOAD IMAGE TO CHECK IF IT EXISTS
+const img = new Image();
+img.src = './splash.jpg';
+img.onerror = () => {
+  console.log("splash.jpg not found. Check file name and path.");
+  // still start app after 1s if image fails
+  setTimeout(startApp, 1000);
+}
+
+let coins = parseInt(localStorage.getItem('coins') || 0);
+document.getElementById('coins').innerText = coins;
+
+function showTab(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+function watchAd() {
+  coins += 10;
+  localStorage.setItem('coins', coins);
+  document.getElementById('coins').innerText = coins;
+}
+</script>
+</body>
+</html>
