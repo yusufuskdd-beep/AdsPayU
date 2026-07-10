@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://ad.gigapub.tech/script?id=7204"></script>
-<!-- MONETAG SDK -->
 <script src='//libtl.com/sdk.js' data-zone='11258922' data-sdk='show_11258922'></script>
 <title>AdsPayU</title>
 <style>
@@ -15,10 +14,17 @@
     background: linear-gradient(180deg, #0A2AFF 0%, #0018B3 50%, #000A4D 100%);
     color: #fff; padding-bottom: 90px; min-height: 100vh; background-attachment: fixed;
   }
-  #loader { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0A2AFF; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; font-size: 16px; font-weight: 600; transition: opacity 0.6s ease; }
+  
+  /* SPLASH SCREEN */
+  #loader { 
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+    background: #0A2AFF; z-index: 9999; 
+    display: flex; align-items: center; justify-content: center; 
+    transition: opacity 0.6s ease; 
+  }
   #loader.hide { opacity: 0; pointer-events: none; }
-  .spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.2); border-top: 3px solid #FF8A00; border-radius: 50%; animation: spin 1s linear infinite; }
-  @keyframes spin { to {transform: rotate(360deg)} }
+  #splashImg { width: 100%; height: 100vh; object-fit: cover; }
+
   .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; position: sticky; top: 0; background: rgba(0,10,77,0.8); backdrop-filter: blur(20px); z-index: 10; }
   .topbar h1 { font-size: 18px; font-weight: 700; }
   .balance-section { padding: 16px; text-align: center; }
@@ -56,9 +62,9 @@
 </head>
 <body>
 
+  <!-- SPLASH WITH YOUR IMAGE -->
   <div id="loader">
-    <div class="spinner"></div>
-    Loading Ads...
+    <img id="splashImg" src="splash.jpg" alt="AdsPayU" onerror="this.style.display='none'">
   </div>
 
   <div id="app" style="display:none">
@@ -79,7 +85,6 @@
 
     <!-- HOME -->
     <div id="home" class="page active">
-      <!-- GIGAPUB CARD -->
       <div class="card">
         <div class="card-header">
           <div class="card-icon">🎯</div>
@@ -87,11 +92,10 @@
             <div class="card-title">GigaPub Ads</div>
             <div class="card-sub">Watch 2 Ads | Earn 50 APU | <span id="adLimit">0</span>/100 today</div>
           </div>
-          <button class="btn-get" id="gigaBtn" disabled>Loading...</button>
+          <button class="btn-get" id="gigaBtn" disabled></button>
         </div>
       </div>
 
-      <!-- MONETAG CARD -->
       <div class="card">
         <div class="card-header">
           <div class="card-icon">💰</div>
@@ -99,7 +103,7 @@
             <div class="card-title">Monetag Ads</div>
             <div class="card-sub">Watch 1 Ad | Earn 50 APU</div>
           </div>
-          <button class="btn-get orange" id="monetagBtn" disabled>Loading...</button>
+          <button class="btn-get orange" id="monetagBtn" disabled></button>
         </div>
       </div>
     </div>
@@ -131,37 +135,53 @@ const DAILY_LIMIT = 100;
 let coins = parseInt(localStorage.getItem('coins') || 0);
 let adWatched = parseInt(localStorage.getItem('adWatched') || 0);
 
-// GET REAL TELEGRAM USER
 const user = tg.initDataUnsafe?.user;
 const userId = user?.id || "guest";
-const userName = user?.first_name + (user?.last_name? " " + user.last_name : "") || "Guest";
+const userName = user?.first_name + (user?.last_name? " + user.last_name : "") || "Guest";
 
-// WAIT FOR ADS
-let tries = 0;
-const check = setInterval(() => {
-  tries++;
+// FORCE OPEN AFTER 1.5S NO MATTER WHAT
+let appOpened = false;
+function startApp() {
+  if(appOpened) return;
+  appOpened = true;
+  document.getElementById('loader').classList.add('hide');
+  document.getElementById('app').style.display = 'block';
+  enableAds();
+  updateUI();
+  savePlayer();
+  loadLeaderboard();
+}
+setTimeout(startApp, 1500); // Show splash for 1.5 seconds
+
+// CHECK ADS IN BACKGROUND
+let adTries = 0;
+const checkAds = setInterval(() => {
+  adTries++;
   if(typeof window.showGiga === 'function' && typeof window.show_11258922 === 'function') {
-    clearInterval(check);
-    document.getElementById('loader').classList.add('hide');
-    document.getElementById('app').style.display = 'block';
-    enableAds();
-    updateUI();
-    savePlayer();
-    loadLeaderboard();
+    clearInterval(checkAds);
   }
-  if(tries > 50) {
-    clearInterval(check);
-    document.getElementById('loader').innerHTML = 'Failed to load. <button onclick="location.reload()" style="margin-top:10px; padding:8px 16px; background:#FF8A00; border:none; border-radius:8px; color:#fff;">Tap to Retry</button>';
-  }
+  if(adTries > 20) clearInterval(checkAds);
 }, 200);
 
 function enableAds() {
-  document.getElementById('gigaBtn').disabled = false;
-  document.getElementById('monetagBtn').disabled = false;
-  document.getElementById('gigaBtn').innerText = "Watch";
-  document.getElementById('monetagBtn').innerText = "Watch";
-  document.getElementById('gigaBtn').onclick = startGigaQueue;
-  document.getElementById('monetagBtn').onclick = showMonetagAd;
+  const gigaBtn = document.getElementById('gigaBtn');
+  const monetagBtn = document.getElementById('monetagBtn');
+  
+  if(typeof window.showGiga === 'function') {
+    gigaBtn.disabled = false;
+    gigaBtn.innerText = "Watch";
+    gigaBtn.onclick = startGigaQueue;
+  } else {
+    gigaBtn.innerText = "Unavailable";
+  }
+
+  if(typeof window.show_11258922 === 'function') {
+    monetagBtn.disabled = false;
+    monetagBtn.innerText = "Watch";
+    monetagBtn.onclick = showMonetagAd;
+  } else {
+    monetagBtn.innerText = "Unavailable";
+  }
 }
 
 function updateUI() {
@@ -175,11 +195,12 @@ function updateUI() {
   }
 }
 
-// 1. GIGAPUB: 2 ADS = 50 APU
+// GIGAPUB
 let gigaQueue = 0;
 let gigaCompleted = false;
 
 function startGigaQueue() {
+  if(typeof window.showGiga !== 'function') return tg.showAlert("GigaPub not loaded");
   if(adWatched >= DAILY_LIMIT - 1) return tg.showAlert("Not enough ads left today");
   gigaQueue = 2;
   gigaCompleted = false;
@@ -227,13 +248,13 @@ function finishGigaAd() {
   document.getElementById('gigaBtn').classList.remove('loading');
 }
 
-// 2. MONETAG: 1 AD = 50 APU
+// MONETAG
 function showMonetagAd() {
+  if(typeof window.show_11258922 !== 'function') return tg.showAlert("Monetag not loaded");
   document.getElementById('monetagBtn').classList.add('loading');
   document.getElementById('monetagBtn').innerText = "Loading...";
 
   window.show_11258922().then(() => {
-    // Monetag reward
     coins += 50;
     localStorage.setItem('coins', coins);
     updateUI();
