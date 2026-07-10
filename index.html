@@ -37,7 +37,7 @@
   .card-title { font-size: 15px; font-weight: 700; }
   .card-sub { font-size: 12px; opacity: 0.7; }
   .btn-get { padding: 10px 18px; background: linear-gradient(90deg, #1877FF 0%, #0A5FFF 100%); border: none; border-radius: 10px; color: #fff; font-weight: 700; }
-  .btn-get:disabled { background: rgba(255,255,255,0.1); opacity: 0.5; }
+  .btn-get:disabled { background: #444; opacity: 0.5; }
   .list-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
   .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,10,20,0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; padding: 8px; display: flex; gap: 20px; }
   .nav-item { text-align: center; font-size: 10px; opacity: 0.6; background: none; border: none; color: #fff; cursor: pointer; }
@@ -76,48 +76,18 @@
             <div class="card-title">Watch Ad</div>
             <div class="card-sub">Reward: 50 APU | <span id="adLimit">0</span>/50 today</div>
           </div>
-          <button class="btn-get" id="watchBtn" onclick="showGigaAd()">Get APU</button>
+          <button class="btn-get" id="watchBtn" disabled onclick="showGigaAd()">Loading...</button>
         </div>
       </div>
     </div>
 
-    <div id="friends" class="page">
-      <div class="card">
-        <h3 style="margin-bottom:8px;">Invite Friends</h3>
-        <p style="opacity:0.7; font-size:13px; margin-bottom:12px;">Get 100 APU for each friend who joins</p>
-        <button class="btn btn-primary" onclick="copyLink()">Copy Referral Link</button>
-      </div>
-      <div class="card">
-        <h3 style="margin-bottom:8px;">Your Stats</h3>
-        <div class="list-item"><span>Friends invited</span><b id="refCount">0</b></div>
-        <div class="list-item"><span>Bonus earned</span><b id="refBonus">0</b> APU</div>
-      </div>
-    </div>
-
-    <div id="mission" class="page">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-icon">📅</div>
-          <div class="card-info">
-            <div class="card-title">Daily Login</div>
-            <div class="card-sub">Reward: 25 APU</div>
-          </div>
-          <button class="btn-get" id="dailyBtn" onclick="claimDaily()">Claim</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="rank" class="page">
-      <div class="card">
-        <h3 style="margin-bottom:12px;">🏆 Leaderboard</h3>
-        <div id="board"></div>
-      </div>
-    </div>
-
+    <div id="friends" class="page">...</div>
+    <div id="mission" class="page">...</div>
+    <div id="rank" class="page">...</div>
     <div id="add" class="page">
       <div class="card">
         <h3>Quick Earn</h3>
-        <button class="btn btn-primary" id="quickAdBtn" style="margin-top:10px;" onclick="showGigaAd()">Watch Ad +50</button>
+        <button class="btn btn-primary" id="quickAdBtn" disabled style="margin-top:10px;" onclick="showGigaAd()">Loading...</button>
         <button class="btn btn-secondary" style="margin-top:10px;" onclick="claimDaily()">Daily Bonus +25</button>
       </div>
     </div>
@@ -136,26 +106,44 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 tg.setBackgroundColor('#000A4D');
 
-// FORCE START APP AFTER 3S NO MATTER WHAT
-function startApp() {
+let gigaReady = false;
+
+// WAIT FOR GIGAPUB TO LOAD
+function initGigaPub() {
+  if(typeof GigaPub !== 'undefined') {
+    try {
+      GigaPub.init({ appId: "7204", token: "main" });
+      gigaReady = true;
+      enableAdButtons();
+      console.log("GigaPub Ready");
+    } catch(e) { 
+      console.log("GigaPub init error", e);
+      retryGigaPub();
+    }
+  } else {
+    retryGigaPub();
+  }
+}
+
+function retryGigaPub() {
+  setTimeout(() => {
+    if(!gigaReady) initGigaPub();
+  }, 1000);
+}
+
+function enableAdButtons() {
+  document.getElementById('watchBtn').disabled = false;
+  document.getElementById('quickAdBtn').disabled = false;
+  document.getElementById('watchBtn').innerText = "Get APU";
+  document.getElementById('quickAdBtn').innerText = "Watch Ad +50";
+}
+
+// FORCE START APP AFTER 3S
+setTimeout(() => {
   document.getElementById('loader').classList.add('hide');
   document.getElementById('app').style.display = 'block';
-}
-setTimeout(startApp, 3000);
-
-// INIT GIGAPUB WITH ERROR HANDLING
-try {
-  if(typeof GigaPub !== 'undefined') {
-    GigaPub.init({
-      appId: "7204",
-      token: "main"
-    });
-  } else {
-    console.log("GigaPub SDK failed to load");
-  }
-} catch(e) {
-  console.log("GigaPub init error:", e);
-}
+  initGigaPub(); // start trying to init
+}, 3000);
 
 // DATA
 let coins = parseInt(localStorage.getItem('coins') || 0);
@@ -168,22 +156,19 @@ function updateUI() {
   document.getElementById('coins').innerText = coins;
   document.getElementById('usd').innerText = (coins * COIN_VALUE).toFixed(2);
   document.getElementById('adLimit').innerText = adWatched;
-  document.getElementById('refCount').innerText = referrals;
-  document.getElementById('refBonus').innerText = referrals * 100;
   if(adWatched >= 50) {
     document.getElementById('watchBtn').disabled = true;
     document.getElementById('quickAdBtn').disabled = true;
+    document.getElementById('watchBtn').innerText = "Limit";
+    document.getElementById('quickAdBtn').innerText = "Limit";
   }
-  
-  const today = new Date().toDateString();
-  if(lastDaily === today) document.getElementById('dailyBtn').disabled = true;
 }
 updateUI();
 
 // SHOW GIGAPUB AD
 async function showGigaAd() {
+  if(!gigaReady) return tg.showAlert("Ads are still loading. Wait 3 seconds.");
   if(adWatched >= 50) return tg.showAlert("Daily ad limit reached");
-  if(typeof GigaPub === 'undefined') return tg.showAlert("Ads not loaded. Please restart app.");
   
   document.getElementById('watchBtn').classList.add('loading');
   document.getElementById('quickAdBtn').classList.add('loading');
@@ -204,7 +189,7 @@ async function showGigaAd() {
     }
     
   } catch (error) {
-    tg.showAlert("Ad failed to load. Try again later.");
+    tg.showAlert("No ads available right now. Try again later.");
     console.log(error)
   }
   
@@ -218,7 +203,6 @@ function showTab(id) {
   document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   event.currentTarget.classList.add('active');
-  if(id === 'rank') loadLeaderboard();
 }
 
 function claimDaily() {
@@ -232,29 +216,10 @@ function claimDaily() {
   tg.showAlert("Daily bonus claimed! +25 APU");
 }
 
-function copyLink() {
-  const userId = tg.initDataUnsafe?.user?.id || "demo";
-  const link = `https://t.me/YourBotName?startapp=ref_${userId}`;
-  navigator.clipboard.writeText(link);
-  tg.showAlert("Referral link copied");
-}
-
 function withdraw() { tg.showAlert("Withdraw page coming soon"); }
 function swap() { tg.showAlert("Swap page coming soon"); }
 
-function loadLeaderboard() {
-  const demo = [
-    {name: "Alex", coins: 1240},
-    {name: tg.initDataUnsafe?.user?.first_name || "You", coins: coins},
-    {name: "Sam", coins: 800}
-  ].sort((a,b) => b.coins - a.coins);
-  
-  document.getElementById('board').innerHTML = demo.map((u,i) => 
-    `<div class="list-item"><span>${i+1}. ${u.name}</span><b>${u.coins} APU</b></div>`
-  ).join('');
-}
-
-// Reset daily limits at midnight
+// Reset daily limits
 if(!localStorage.getItem('lastReset') || new Date().toDateString() !== localStorage.getItem('lastReset')) {
   localStorage.setItem('adWatched', 0);
   localStorage.setItem('lastReset', new Date().toDateString());
