@@ -79,7 +79,7 @@
           <div class="card-icon">📺</div>
           <div class="card-info">
             <div class="card-title">Watch Rewarded Ad</div>
-            <div class="card-sub">Earn 50 APU | <span id="adLimit">0</span>/100 today</div> <!-- CHANGED TO 100 -->
+            <div class="card-sub">Earn 50 APU | <span id="adLimit">0</span>/100 today</div>
           </div>
           <button class="btn-get" id="watchBtn" disabled>Loading...</button>
         </div>
@@ -137,7 +137,7 @@ tg.expand();
 tg.setBackgroundColor('#000A4D');
 
 const COIN_VALUE = 0.000028;
-const DAILY_LIMIT = 100; // NEW: 100 ADS PER DAY
+const DAILY_LIMIT = 100;
 let coins = parseInt(localStorage.getItem('coins') || 0);
 let adWatched = parseInt(localStorage.getItem('adWatched') || 0);
 let referrals = parseInt(localStorage.getItem('referrals') || 0);
@@ -177,7 +177,7 @@ function updateUI() {
   document.getElementById('adLimit').innerText = adWatched;
   document.getElementById('refCount').innerText = referrals;
   
-  if(adWatched >= DAILY_LIMIT) { // CHANGED
+  if(adWatched >= DAILY_LIMIT) {
     document.getElementById('watchBtn').disabled = true;
     document.getElementById('quickAdBtn').disabled = true;
     document.getElementById('watchBtn').innerText = "Daily Limit";
@@ -185,9 +185,9 @@ function updateUI() {
   }
 }
 
-// 2 ADS WITH 3S DELAY, CREDIT 50 AFTER BOTH
+// 2 ADS WITH 3S DELAY, NO POPUP IN MIDDLE
 function startAdQueue() {
-  if(adWatched >= DAILY_LIMIT - 1) return tg.showAlert("Not enough ads left today"); // CHANGED
+  if(adWatched >= DAILY_LIMIT - 1) return tg.showAlert("Not enough ads left today");
   
   adsInQueue = 2;
   bothAdsCompleted = false;
@@ -206,7 +206,7 @@ function playNextAd() {
     adsInQueue -= 1;
     
     if(adsInQueue > 0) {
-      tg.showPopup({title: "Ad 1/2 Complete", message: "Loading next ad in 3s..."});
+      // REMOVED POPUP HERE - just wait 3s silently
       setTimeout(playNextAd, 3000); // 3 SECOND DELAY
     } else {
       bothAdsCompleted = true;
@@ -228,12 +228,12 @@ function playNextAd() {
 function finishAdQueue() {
   if(bothAdsCompleted) {
     coins += 50;
-    adWatched += 2; // 2 ads = +2 to daily count
+    adWatched += 2;
     localStorage.setItem('coins', coins);
     localStorage.setItem('adWatched', adWatched);
     updateUI();
     tg.HapticFeedback.notificationOccurred('success');
-    tg.showPopup({title: "Completed!", message: "+50 APU"});
+    tg.showPopup({title: "Completed!", message: "+50 APU"}); // ONLY POPUP AT END
   }
   
   document.getElementById('watchBtn').innerText = "Watch Ad";
