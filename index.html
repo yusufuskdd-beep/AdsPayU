@@ -136,17 +136,26 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 tg.setBackgroundColor('#000A4D');
 
-// INIT GIGAPUB WITH YOUR CREDENTIALS
-GigaPub.init({
-  appId: "7204",
-  token: "main"
-});
-
-// SPLASH
-setTimeout(() => {
+// FORCE START APP AFTER 3S NO MATTER WHAT
+function startApp() {
   document.getElementById('loader').classList.add('hide');
   document.getElementById('app').style.display = 'block';
-}, 3000);
+}
+setTimeout(startApp, 3000);
+
+// INIT GIGAPUB WITH ERROR HANDLING
+try {
+  if(typeof GigaPub !== 'undefined') {
+    GigaPub.init({
+      appId: "7204",
+      token: "main"
+    });
+  } else {
+    console.log("GigaPub SDK failed to load");
+  }
+} catch(e) {
+  console.log("GigaPub init error:", e);
+}
 
 // DATA
 let coins = parseInt(localStorage.getItem('coins') || 0);
@@ -171,9 +180,10 @@ function updateUI() {
 }
 updateUI();
 
-// SHOW GIGAPUB AD - BOTH BUTTONS USE THIS
+// SHOW GIGAPUB AD
 async function showGigaAd() {
   if(adWatched >= 50) return tg.showAlert("Daily ad limit reached");
+  if(typeof GigaPub === 'undefined') return tg.showAlert("Ads not loaded. Please restart app.");
   
   document.getElementById('watchBtn').classList.add('loading');
   document.getElementById('quickAdBtn').classList.add('loading');
@@ -181,7 +191,7 @@ async function showGigaAd() {
   try {
     const result = await GigaPub.showRewarded();
     
-    if(result.success) {
+    if(result && result.success) {
       coins += 50;
       adWatched += 1;
       localStorage.setItem('coins', coins);
