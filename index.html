@@ -1,76 +1,87 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src='//lib.gigapub.tech/tag.min.js'></script>
-    <style>
-        body { 
-            font-family: sans-serif; 
-            text-align: center; 
-            padding: 50px;
-            background: #1a1a1a;
-            color: white;
-        }
-        #watchBtn {
-            background: #2AABEE;
-            color: white;
-            border: none;
-            padding: 20px 40px;
-            font-size: 18px;
-            border-radius: 12px;
-            cursor: pointer;
-        }
-        #watchBtn:disabled {
-            background: #555;
-            cursor: not-allowed;
-        }
-        #balance { font-size: 24px; margin-bottom: 20px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  body { font-family: system-ui; background: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); margin: 0; padding: 16px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tab { flex: 1; padding: 10px; border: none; border-radius: 10px; background: var(--tg-theme-secondary-bg-color); }
+  .tab.active { background: var(--tg-theme-button-color); color: var(--tg-theme-button-text-color); }
+  .page { display: none; }
+  .page.active { display: block; }
+  .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; background: var(--tg-theme-button-color); color: var(--tg-theme-button-text-color); font-size: 16px; }
+</style>
 </head>
 <body>
-    <div id="balance">Balance: 0 Coins</div>
-    <button id="watchBtn">Watch Ad +10 Coins</button>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('home')">Home</button>
+    <button class="tab" onclick="showTab('referral')">Referral</button>
+    <button class="tab" onclick="showTab('leaderboard')">Leaderboard</button>
+  </div>
 
-    <script>
-        let tg = window.Telegram.WebApp;
-        tg.expand(); // Make app full screen
-        tg.ready();
-        
-        let userId = tg.initDataUnsafe.user?.id;
-        let balance = 0;
+  <div id="home" class="page active">
+    <h2>Welcome</h2>
+    <p>Earn coins by watching ads</p>
+    <button class="btn" onclick="watchAd()">Watch Ad +10</button>
+    <p id="coins">Coins: 0</p>
+  </div>
 
-        // INIT GIGAPUB
-        GigaPub.init({
-            appId: '7204', 
-            zoneId: 'main'
-        });
+  <div id="referral" class="page">
+    <h2>Referral</h2>
+    <p>Invite friends and get 50 coins each</p>
+    <button class="btn" onclick="copyLink()">Copy Referral Link</button>
+    <p id="refCount">Referred: 0</p>
+  </div>
 
-        document.getElementById('watchBtn').onclick = () => {
-            document.getElementById('watchBtn').disabled = true;
-            document.getElementById('watchBtn').innerText = "Loading Ad...";
+  <div id="leaderboard" class="page">
+    <h2>Leaderboard</h2>
+    <ol id="board"></ol>
+  </div>
 
-            GigaPub.showRewardedAd({
-                onReward: () => {
-                    balance += 10;
-                    document.getElementById('balance').innerText = `Balance: ${balance} Coins`;
-                    alert('✅ You earned 10 coins!');
-                    document.getElementById('watchBtn').disabled = false;
-                    document.getElementById('watchBtn').innerText = "Watch Ad +10 Coins";
-                    
-                    // NEXT STEP: Send to backend
-                    // fetch(`/api/credit?user_id=${userId}&amount=10`)
-                },
-                onError: (err) => {
-                    alert('❌ Ad failed to load. Try again in 30s.');
-                    document.getElementById('watchBtn').disabled = false;
-                    document.getElementById('watchBtn').innerText = "Watch Ad +10 Coins";
-                },
-                onClose: () => {
-                    document.getElementById('watchBtn').disabled = false;
-                    document.getElementById('watchBtn').innerText = "Watch Ad +10 Coins";
-                }
-            });
-        };
-    </script>
+<script>
+const tg = window.Telegram.WebApp;
+tg.expand();
+
+let coins = parseInt(localStorage.getItem('coins') || 0);
+let referrals = parseInt(localStorage.getItem('referrals') || 0);
+document.getElementById('coins').innerText = `Coins: ${coins}`;
+document.getElementById('refCount').innerText = `Referred: ${referrals}`;
+
+function showTab(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+  if(id === 'leaderboard') loadLeaderboard();
+}
+
+function watchAd() {
+  // Replace this with your real ad SDK call
+  alert("Ad would play here");
+  coins += 10;
+  localStorage.setItem('coins', coins);
+  document.getElementById('coins').innerText = `Coins: ${coins}`;
+}
+
+function copyLink() {
+  const userId = tg.initDataUnsafe?.user?.id || "demo";
+  const link = `https://t.me/YourBotName?startapp=ref_${userId}`;
+  navigator.clipboard.writeText(link);
+  tg.showAlert("Referral link copied!");
+}
+
+function loadLeaderboard() {
+  // Demo data. Later replace with fetch from your backend
+  const demo = [
+    {name: "Alex", coins: 1200},
+    {name: "You", coins: coins},
+    {name: "Sam", coins: 800}
+  ].sort((a,b) => b.coins - a.coins);
+  
+  document.getElementById('board').innerHTML = demo.map(u => `<li>${u.name} - ${u.coins}</li>`).join('');
+}
+</script>
 </body>
 </html>
