@@ -45,12 +45,20 @@
   .list-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 14px; align-items: center; }
   .rank-num { font-weight: 800; color: #FF8A00; margin-right: 8px; }
   .player-name { flex: 1; font-weight: 600; }
-  .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,10,20,0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; padding: 8px; display: flex; gap: 16px; }
-  .nav-item { text-align: center; font-size: 10px; opacity: 0.6; background: none; border: none; color: #fff; cursor: pointer; padding: 4px 8px; }
+  .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,10,20,0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; padding: 8px; display: flex; gap: 12px; }
+  .nav-item { text-align: center; font-size: 10px; opacity: 0.6; background: none; border: none; color: #fff; cursor: pointer; padding: 4px 6px; }
   .nav-item.active { opacity: 1; color: #FF8A00; }
   .nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
   .nav-center { background: linear-gradient(135deg, #FF3B30 0%, #FF6A00 100%); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; }
   .loading { opacity: 0.6; pointer-events: none; }
+
+  /* WHEEL STYLES */
+  .wheel-container { text-align: center; padding: 20px 0; }
+  .wheel { width: 280px; height: 280px; border-radius: 50%; border: 8px solid #FF8A00; margin: 0 auto 20px; position: relative; overflow: hidden; transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99); background: conic-gradient(#1877FF 0deg 60deg, #FF8A00 60deg 120deg, #00C853 120deg 180deg, #D50000 180deg 240deg, #AA00FF 240deg 300deg, #FFD600 300deg 360deg); }
+  .wheel-pointer { width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #fff; margin: 0 auto; position: relative; top: -10px; z-index: 2; }
+  .bet-input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: #fff; font-size: 16px; text-align: center; margin-bottom: 12px; }
+  .pot { font-size: 24px; font-weight: 800; color: #FF8A00; margin: 10px 0; }
+  .players-list { font-size: 12px; opacity: 0.8; max-height: 80px; overflow-y: auto; }
 </style>
 </head>
 <body>
@@ -76,6 +84,7 @@
       <button class="btn btn-secondary" onclick="swap()">SWAP</button>
     </div>
 
+    <!-- HOME -->
     <div id="home" class="page active">
       <div class="card">
         <div class="card-header">
@@ -100,6 +109,31 @@
       </div>
     </div>
 
+    <!-- WHEEL GAME -->
+    <div id="wheel" class="page">
+      <div class="card">
+        <h3 style="text-align:center; margin-bottom: 10px;">🎡 Spin Wheel</h3>
+        <div class="wheel-pointer"></div>
+        <div class="wheel" id="wheelSpin"></div>
+        <div style="text-align:center">
+          <div class="card-sub">Current Pot</div>
+          <div class="pot"><span id="pot">0</span> APU</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-sub" style="margin-bottom:8px">Players in round: <span id="playerCount">0</span></div>
+        <div class="players-list" id="wheelPlayers"></div>
+      </div>
+
+      <div class="card">
+        <input type="number" id="betAmount" class="bet-input" placeholder="Enter bet amount" min="10" value="100">
+        <button class="btn btn-primary" id="betBtn" onclick="placeBet()">PLACE BET & JOIN</button>
+        <button class="btn btn-primary" id="spinBtn" onclick="spinWheel()" style="display:none; margin-top:10px;">SPIN WHEEL</button>
+      </div>
+    </div>
+
+    <!-- RANK -->
     <div id="rank" class="page">
       <div class="card">
         <h3>🏆 Top Earners</h3>
@@ -109,8 +143,8 @@
 
     <div class="bottom-nav">
       <button class="nav-item active" onclick="showTab('home')"><span class="nav-icon">🏠</span>Home</button>
+      <button class="nav-item" onclick="showTab('wheel')"><span class="nav-icon">🎡</span>Wheel</button>
       <button class="nav-item" onclick="showTab('friends')"><span class="nav-icon">👥</span>Friends</button>
-      <button class="nav-item" onclick="showTab('mission')"><span class="nav-icon">📋</span>Mission</button>
       <button class="nav-item" onclick="showTab('rank')"><span class="nav-icon">🏆</span>Rank</button>
       <button class="nav-item" onclick="showTab('add')"><span class="nav-center">+</span></button>
     </div>
@@ -130,7 +164,11 @@ const user = tg.initDataUnsafe?.user;
 const userId = user?.id || "guest";
 const userName = user?.first_name + (user?.last_name? " " + user.last_name : "") || "Guest";
 
-// FIX: OPEN AFTER 2S EVEN IF ADS FAIL
+// WHEEL GAME DATA
+let wheelPlayers = JSON.parse(localStorage.getItem('wheelPlayers') || '[]');
+let wheelPot = parseInt(localStorage.getItem('wheelPot') || 0);
+let spinning = false;
+
 let appOpened = false;
 function openApp() {
   if(appOpened) return;
@@ -140,127 +178,155 @@ function openApp() {
   document.getElementById('app').style.display = 'block';
   enableAds();
   updateUI();
+  updateWheelUI();
   savePlayer();
   loadLeaderboard();
 }
+setTimeout(openApp, 2000);
 
-setTimeout(openApp, 2000); // Force open after 2 seconds
-
-// CHECK ADS IN BACKGROUND
 let tries = 0;
 const check = setInterval(() => {
   tries++;
   if(typeof window.showGiga === 'function' && typeof window.show_11258922 === 'function') {
-    openApp(); // Open immediately if both loaded
+    openApp();
   }
 }, 200);
 
 function enableAds() {
   const gigaBtn = document.getElementById('gigaBtn');
   const monetagBtn = document.getElementById('monetagBtn');
-  
   if(typeof window.showGiga === 'function') {
-    gigaBtn.disabled = false;
-    gigaBtn.innerText = "Watch";
-    gigaBtn.onclick = startGigaQueue;
-  } else {
-    gigaBtn.innerText = "Unavailable";
-  }
-
+    gigaBtn.disabled = false; gigaBtn.innerText = "Watch"; gigaBtn.onclick = startGigaQueue;
+  } else { gigaBtn.innerText = "Unavailable"; }
   if(typeof window.show_11258922 === 'function') {
-    monetagBtn.disabled = false;
-    monetagBtn.innerText = "Watch";
-    monetagBtn.onclick = showMonetagAd;
-  } else {
-    monetagBtn.innerText = "Unavailable";
-  }
+    monetagBtn.disabled = false; monetagBtn.innerText = "Watch"; monetagBtn.onclick = showMonetagAd;
+  } else { monetagBtn.innerText = "Unavailable"; }
 }
 
 function updateUI() {
   document.getElementById('coins').innerText = coins;
   document.getElementById('usd').innerText = (coins * COIN_VALUE).toFixed(2);
   document.getElementById('adLimit').innerText = adWatched;
-  
   if(adWatched >= DAILY_LIMIT) {
     document.getElementById('gigaBtn').disabled = true;
     document.getElementById('gigaBtn').innerText = "Daily Limit";
   }
 }
 
-// 1. GIGAPUB: 1 AD = 50 APU
-let gigaQueue = 0;
-let gigaCompleted = false;
-
-function startGigaQueue() {
-  if(adWatched >= DAILY_LIMIT) return tg.showAlert("Daily limit reached");
-  gigaQueue = 1;
-  gigaCompleted = false;
-  playGigaAd();
+// WHEEL FUNCTIONS
+function updateWheelUI() {
+  document.getElementById('pot').innerText = wheelPot;
+  document.getElementById('playerCount').innerText = wheelPlayers.length;
+  document.getElementById('wheelPlayers').innerHTML = wheelPlayers.map(p => `${p.name}: ${p.bet} APU`).join('<br>');
+  
+  const hasBet = wheelPlayers.some(p => p.id === userId);
+  document.getElementById('betBtn').style.display = hasBet ? 'none' : 'block';
+  document.getElementById('spinBtn').style.display = wheelPlayers.length >= 2 && !spinning ? 'block' : 'none';
 }
 
+function placeBet() {
+  const bet = parseInt(document.getElementById('betAmount').value);
+  if(bet < 10) return tg.showAlert("Min bet 10 APU");
+  if(bet > coins) return tg.showAlert("Not enough APU");
+  if(wheelPlayers.some(p => p.id === userId)) return tg.showAlert("You already bet this round");
+
+  coins -= bet;
+  wheelPot += bet;
+  wheelPlayers.push({id: userId, name: userName, bet: bet});
+  
+  localStorage.setItem('coins', coins);
+  localStorage.setItem('wheelPlayers', JSON.stringify(wheelPlayers));
+  localStorage.setItem('wheelPot', wheelPot);
+  
+  updateUI();
+  updateWheelUI();
+  tg.showPopup({title: "Bet Placed!", message: `You bet ${bet} APU`});
+}
+
+function spinWheel() {
+  if(wheelPlayers.length < 2) return tg.showAlert("Need at least 2 players");
+  spinning = true;
+  document.getElementById('spinBtn').disabled = true;
+  
+  const degrees = 360 * 5 + Math.floor(Math.random() * 360); // 5 full spins + random
+  document.getElementById('wheelSpin').style.transform = `rotate(${degrees}deg)`;
+  
+  setTimeout(() => {
+    const winnerIndex = Math.floor(Math.random() * wheelPlayers.length);
+    const winner = wheelPlayers[winnerIndex];
+    
+    if(winner.id === userId) {
+      coins += wheelPot;
+      localStorage.setItem('coins', coins);
+      tg.showPopup({title: "YOU WON! 🎉", message: `You won ${wheelPot} APU!`});
+    } else {
+      tg.showPopup({title: "Round Over", message: `${winner.name} won ${wheelPot} APU!`});
+    }
+    
+    // Reset round
+    wheelPlayers = [];
+    wheelPot = 0;
+    localStorage.setItem('wheelPlayers', JSON.stringify(wheelPlayers));
+    localStorage.setItem('wheelPot', wheelPot);
+    spinning = false;
+    
+    updateUI();
+    updateWheelUI();
+    savePlayer();
+    loadLeaderboard();
+  }, 4000);
+}
+
+// ADS FUNCTIONS - YOUR WORKING CODE
+let gigaQueue = 0; let gigaCompleted = false;
+function startGigaQueue() {
+  if(adWatched >= DAILY_LIMIT) return tg.showAlert("Daily limit reached");
+  gigaQueue = 1; gigaCompleted = false; playGigaAd();
+}
 function playGigaAd() {
   if(gigaQueue <= 0) return finishGigaAd();
   document.getElementById('gigaBtn').classList.add('loading');
   document.getElementById('gigaBtn').innerText = "Loading...";
-
-  window.showGiga()
- .then(() => {
+  window.showGiga().then(() => {
     gigaQueue -= 1;
-    if(gigaQueue > 0) {
-      setTimeout(playGigaAd, 3000);
-    } else {
-      gigaCompleted = true;
-      finishGigaAd();
-    }
-  })
- .catch(e => {
-    gigaQueue = 0;
-    gigaCompleted = false;
+    if(gigaQueue > 0) { setTimeout(playGigaAd, 3000); } 
+    else { gigaCompleted = true; finishGigaAd(); }
+  }).catch(e => {
+    gigaQueue = 0; gigaCompleted = false;
     document.getElementById('gigaBtn').innerText = "Watch";
     if(e === 'No ads') tg.showAlert("GigaPub: No ads available.");
     else if(e === 'Skipped') tg.showAlert("Ad skipped. No reward.");
     document.getElementById('gigaBtn').classList.remove('loading');
   });
 }
-
 function finishGigaAd() {
   if(gigaCompleted) {
-    coins += 50;
-    adWatched += 1;
+    coins += 50; adWatched += 1;
     localStorage.setItem('coins', coins);
     localStorage.setItem('adWatched', adWatched);
-    updateUI();
-    savePlayer();
-    loadLeaderboard();
+    updateUI(); savePlayer(); loadLeaderboard();
     tg.HapticFeedback.notificationOccurred('success');
     tg.showPopup({title: "GigaPub Complete!", message: "+50 APU"});
   }
   document.getElementById('gigaBtn').innerText = "Watch";
   document.getElementById('gigaBtn').classList.remove('loading');
 }
-
-// 2. MONETAG: 1 AD = 50 APU
 function showMonetagAd() {
   document.getElementById('monetagBtn').classList.add('loading');
   document.getElementById('monetagBtn').innerText = "Loading...";
-
   window.show_11258922().then(() => {
-    coins += 50;
-    localStorage.setItem('coins', coins);
-    updateUI();
-    savePlayer();
-    loadLeaderboard();
+    coins += 50; localStorage.setItem('coins', coins);
+    updateUI(); savePlayer(); loadLeaderboard();
     tg.HapticFeedback.notificationOccurred('success');
     tg.showPopup({title: "Monetag Complete!", message: "+50 APU"});
-  }).catch(e => {
-    tg.showAlert("Monetag: " + e);
+  }).catch(e => { tg.showAlert("Monetag: " + e);
   }).finally(() => {
     document.getElementById('monetagBtn').innerText = "Watch";
     document.getElementById('monetagBtn').classList.remove('loading');
   });
 }
 
-// LEADERBOARD
+// LEADERBOARD + NAV
 function savePlayer() {
   let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
   leaderboard = leaderboard.filter(p => p.id !== userId);
@@ -269,7 +335,6 @@ function savePlayer() {
   leaderboard = leaderboard.slice(0, 20);
   localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
 }
-
 function loadLeaderboard() {
   let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
   if(leaderboard.length === 0) {
@@ -279,30 +344,25 @@ function loadLeaderboard() {
   let html = '';
   leaderboard.forEach((player, index) => {
     const isMe = player.id === userId;
-    html += `
-      <div class="list-item" style="${isMe? 'background: rgba(255,138,0,0.1); border-radius:8px; padding: 12px;' : ''}">
+    html += `<div class="list-item" style="${isMe? 'background: rgba(255,138,0,0.1); border-radius:8px; padding: 12px;' : ''}">
         <span class="rank-num">#${index + 1}</span>
         <span class="player-name">${player.name} ${isMe? '(You)' : ''}</span>
         <span>${player.coins} APU</span>
-      </div>
-    `;
+      </div>`;
   });
   document.getElementById('board').innerHTML = html;
 }
-
-// NAVIGATION
 function showTab(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   event.currentTarget.classList.add('active');
   if(id === 'rank') loadLeaderboard();
+  if(id === 'wheel') updateWheelUI();
 }
-
 function withdraw() {
   tg.showPopup({title: "Withdraw", message: `You have ${coins} APU\nMin withdraw: 10000 APU`, buttons: [{type: "close"}]});
 }
-
 function swap() { tg.showAlert("Swap feature coming soon"); }
 
 // Reset daily
