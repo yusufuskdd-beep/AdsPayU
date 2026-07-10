@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<title>AdsPayU</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
   body { 
@@ -11,13 +12,14 @@
     background: #0A2AFF;
     color: #fff;
     padding-bottom: 80px;
+    overflow-x: hidden;
   }
 
-  /* LOADING SCREEN - FULL IMAGE ONLY */
+  /* LOADING SCREEN */
   #loader {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: #0A2AFF url('attachment://0') no-repeat center;
+    background: #0A2AFF url('./splash.jpg') no-repeat center;
     background-size: cover;
     z-index: 9999;
     transition: opacity 0.6s ease;
@@ -25,116 +27,20 @@
   #loader.hide { opacity: 0; pointer-events: none; }
 
   /* APP UI */
-  .header { padding: 20px 16px 10px; display: flex; align-items: center; justify-content: space-between; }
-  .coins { background: #1f1f1f; padding: 8px 14px; border-radius: 20px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .header { 
+    padding: 20px 16px 10px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+  }
+  .header h2 { font-size: 24px; font-weight: 700; }
+  .coins { 
+    background: #1f1f1f; 
+    padding: 8px 14px; 
+    border-radius: 20px; 
+    font-weight: 600; 
+    display: flex; 
+    align-items: center;
+    gap: 6px; 
+  }
   .container { padding: 0 16px; }
-  .card { background: #1f1f1f; border-radius: 16px; padding: 18px; margin-bottom: 14px; }
-  .card h3 { margin: 0 0 8px; font-size: 18px; }
-  .card p { margin: 0; opacity: 0.8; font-size: 14px; }
-  .btn-primary { width: 100%; padding: 16px; border: none; border-radius: 14px; background: #FF8A00; color: #fff; font-size: 17px; font-weight: 600; margin-top: 12px; }
-  .page { display: none; }
-  .page.active { display: block; animation: fade .25s ease; }
-  @keyframes fade { from {opacity:0; transform: translateY(4px)} to {opacity:1; transform: translateY(0)} }
-  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #1f1f1f; display: flex; justify-content: space-around; padding: 10px 0 env(safe-area-inset-bottom); border-top: 1px solid rgba(255,255,255,0.05); }
-  .nav-item { flex: 1; text-align: center; font-size: 12px; opacity: 0.6; border: none; background: none; color: #fff; }
-  .nav-item.active { opacity: 1; color: #FF8A00; font-weight: 600; }
-  .nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
-  .list-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-</style>
-</head>
-<body>
-
-  <!-- LOADING SCREEN -->
-  <div id="loader"></div>
-
-  <!-- APP CONTENT -->
-  <div id="app" style="display:none">
-    <div class="header">
-      <h2>AdsPayU</h2>
-      <div class="coins">🪙 <span id="coins">0</span></div>
-    </div>
-
-    <div class="container">
-      <div id="home" class="page active">
-        <div class="card">
-          <h3>Watch & Earn</h3>
-          <p>Watch a short ad and get coins instantly</p>
-          <button class="btn-primary" onclick="watchAd()">▶ Watch Ad +10</button>
-        </div>
-      </div>
-
-      <div id="referral" class="page">
-        <div class="card">
-          <h3>Invite Friends</h3>
-          <p>Get 50 coins for each friend who joins</p>
-          <button class="btn-primary" onclick="copyLink()">Copy Referral Link</button>
-        </div>
-        <div class="card"><h3>Your Stats</h3><p>Friends invited: <b id="refCount">0</b></p></div>
-      </div>
-
-      <div id="leaderboard" class="page">
-        <div class="card"><h3>Top Earners</h3><div id="board"></div></div>
-      </div>
-    </div>
-
-    <div class="bottom-nav">
-      <button class="nav-item active" onclick="showTab('home')"><span class="nav-icon">🏠</span>Home</button>
-      <button class="nav-item" onclick="showTab('referral')"><span class="nav-icon">👥</span>Referral</button>
-      <button class="nav-item" onclick="showTab('leaderboard')"><span class="nav-icon">🏆</span>Leaderboard</button>
-    </div>
-  </div>
-
-<script>
-const tg = window.Telegram.WebApp;
-tg.expand();
-
-// LOADER: show 3 seconds then hide
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    document.getElementById('loader').classList.add('hide');
-    document.getElementById('app').style.display = 'block';
-  }, 3000);
-});
-
-let coins = parseInt(localStorage.getItem('coins') || 0);
-let referrals = parseInt(localStorage.getItem('referrals') || 0);
-document.getElementById('coins').innerText = coins;
-document.getElementById('refCount').innerText = referrals;
-
-function showTab(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  event.currentTarget.classList.add('active');
-  if(id === 'leaderboard') loadLeaderboard();
-}
-
-function watchAd() {
-  tg.HapticFeedback.impactOccurred('light');
-  coins += 10;
-  localStorage.setItem('coins', coins);
-  document.getElementById('coins').innerText = coins;
-  tg.showPopup({title: "Earned!", message: "+10 coins"});
-}
-
-function copyLink() {
-  const userId = tg.initDataUnsafe?.user?.id || "demo";
-  const link = `https://t.me/YourBotName?startapp=ref_${userId}`;
-  navigator.clipboard.writeText(link);
-  tg.showAlert("Link copied to clipboard");
-}
-
-function loadLeaderboard() {
-  const demo = [
-    {name: "Alex", coins: 1240},
-    {name: tg.initDataUnsafe?.user?.first_name || "You", coins: coins},
-    {name: "Sam", coins: 800}
-  ].sort((a,b) => b.coins - a.coins);
-  
-  document.getElementById('board').innerHTML = demo.map((u,i) => 
-    `<div class="list-item"><span>${i+1}. ${u.name}</span><b>${u.coins}</b></div>`
-  ).join('');
-}
-</script>
-</body>
-</html>
