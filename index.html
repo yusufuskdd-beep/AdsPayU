@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://ad.gigapub.tech/script?id=7204"></script>
+<!-- MONETAG SDK -->
 <script src='//libtl.com/sdk.js' data-zone='11258922' data-sdk='show_11258922'></script>
 <title>AdsPayU</title>
 <style>
@@ -14,6 +15,10 @@
     background: linear-gradient(180deg, #0A2AFF 0%, #0018B3 50%, #000A4D 100%);
     color: #fff; padding-bottom: 90px; min-height: 100vh; background-attachment: fixed;
   }
+  #loader { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0A2AFF; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; font-size: 16px; font-weight: 600; transition: opacity 0.6s ease; }
+  #loader.hide { opacity: 0; pointer-events: none; }
+  .spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.2); border-top: 3px solid #FF8A00; border-radius: 50%; animation: spin 1s linear infinite; }
+  @keyframes spin { to {transform: rotate(360deg)} }
   .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; position: sticky; top: 0; background: rgba(0,10,77,0.8); backdrop-filter: blur(20px); z-index: 10; }
   .topbar h1 { font-size: 18px; font-weight: 700; }
   .balance-section { padding: 16px; text-align: center; }
@@ -37,11 +42,11 @@
   .card-sub { font-size: 12px; opacity: 0.7; margin-top: 2px; }
   .btn-get { padding: 10px 18px; background: linear-gradient(90deg, #1877FF 0%, #0A5FFF 100%); border: none; border-radius: 10px; color: #fff; font-weight: 700; cursor: pointer; min-width: 100px; }
   .btn-get.orange { background: linear-gradient(90deg, #FF8A00 0%, #FF6A00 100%); }
-  .btn-get:disabled { background: #333; opacity: 0.5; cursor: not-allowed; }
+  .btn-get:disabled { background: #333; opacity: 0.5; }
   .list-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 14px; align-items: center; }
   .rank-num { font-weight: 800; color: #FF8A00; margin-right: 8px; }
   .player-name { flex: 1; font-weight: 600; }
-  .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,10,20,0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; padding: 8px; display: flex; gap: 16px; z-index: 20; }
+  .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,10,20,0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; padding: 8px; display: flex; gap: 16px; }
   .nav-item { text-align: center; font-size: 10px; opacity: 0.6; background: none; border: none; color: #fff; cursor: pointer; padding: 4px 8px; }
   .nav-item.active { opacity: 1; color: #FF8A00; }
   .nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
@@ -51,7 +56,12 @@
 </head>
 <body>
 
-  <div id="app">
+  <div id="loader">
+    <div class="spinner"></div>
+    Loading Ads...
+  </div>
+
+  <div id="app" style="display:none">
     <div class="topbar">
       <h1>AdsPayU</h1>
     </div>
@@ -69,6 +79,7 @@
 
     <!-- HOME -->
     <div id="home" class="page active">
+      <!-- GIGAPUB CARD -->
       <div class="card">
         <div class="card-header">
           <div class="card-icon">🎯</div>
@@ -76,10 +87,11 @@
             <div class="card-title">GigaPub Ads</div>
             <div class="card-sub">Watch 2 Ads | Earn 50 APU | <span id="adLimit">0</span>/100 today</div>
           </div>
-          <button class="btn-get" id="gigaBtn" onclick="startGigaQueue()">Watch</button>
+          <button class="btn-get" id="gigaBtn" disabled>Loading...</button>
         </div>
       </div>
 
+      <!-- MONETAG CARD -->
       <div class="card">
         <div class="card-header">
           <div class="card-icon">💰</div>
@@ -87,7 +99,7 @@
             <div class="card-title">Monetag Ads</div>
             <div class="card-sub">Watch 1 Ad | Earn 50 APU</div>
           </div>
-          <button class="btn-get orange" id="monetagBtn" onclick="showMonetagAd()">Watch</button>
+          <button class="btn-get orange" id="monetagBtn" disabled>Loading...</button>
         </div>
       </div>
     </div>
@@ -100,16 +112,12 @@
       </div>
     </div>
 
-    <div id="friends" class="page"><div class="card"><h3>👥 Invite Friends</h3></div></div>
-    <div id="mission" class="page"><div class="card"><h3>📋 Missions Coming Soon</h3></div></div>
-    <div id="add" class="page"><div class="card"><h3>+ Add</h3></div></div>
-
     <div class="bottom-nav">
-      <button class="nav-item active" onclick="showTab(event, 'home')"><span class="nav-icon">🏠</span>Home</button>
-      <button class="nav-item" onclick="showTab(event, 'friends')"><span class="nav-icon">👥</span>Friends</button>
-      <button class="nav-item" onclick="showTab(event, 'mission')"><span class="nav-icon">📋</span>Mission</button>
-      <button class="nav-item" onclick="showTab(event, 'rank')"><span class="nav-icon">🏆</span>Rank</button>
-      <button class="nav-item" onclick="showTab(event, 'add')"><span class="nav-center">+</span></button>
+      <button class="nav-item active" onclick="showTab('home')"><span class="nav-icon">🏠</span>Home</button>
+      <button class="nav-item" onclick="showTab('friends')"><span class="nav-icon">👥</span>Friends</button>
+      <button class="nav-item" onclick="showTab('mission')"><span class="nav-icon">📋</span>Mission</button>
+      <button class="nav-item" onclick="showTab('rank')"><span class="nav-icon">🏆</span>Rank</button>
+      <button class="nav-item" onclick="showTab('add')"><span class="nav-center">+</span></button>
     </div>
   </div>
 
@@ -123,32 +131,37 @@ const DAILY_LIMIT = 100;
 let coins = parseInt(localStorage.getItem('coins') || 0);
 let adWatched = parseInt(localStorage.getItem('adWatched') || 0);
 
+// GET REAL TELEGRAM USER
 const user = tg.initDataUnsafe?.user;
 const userId = user?.id || "guest";
-const userName = user?.first_name + (user?.last_name? " + user.last_name : "") || "Guest";
+const userName = user?.first_name + (user?.last_name? " " + user.last_name : "") || "Guest";
 
-window.onload = () => {
-  checkAdsAndEnable();
-  updateUI();
-  savePlayer();
-  loadLeaderboard();
-}
+// WAIT FOR ADS
+let tries = 0;
+const check = setInterval(() => {
+  tries++;
+  if(typeof window.showGiga === 'function' && typeof window.show_11258922 === 'function') {
+    clearInterval(check);
+    document.getElementById('loader').classList.add('hide');
+    document.getElementById('app').style.display = 'block';
+    enableAds();
+    updateUI();
+    savePlayer();
+    loadLeaderboard();
+  }
+  if(tries > 50) {
+    clearInterval(check);
+    document.getElementById('loader').innerHTML = 'Failed to load. <button onclick="location.reload()" style="margin-top:10px; padding:8px 16px; background:#FF8A00; border:none; border-radius:8px; color:#fff;">Tap to Retry</button>';
+  }
+}, 200);
 
-function checkAdsAndEnable() {
-  const gigaBtn = document.getElementById('gigaBtn');
-  const monetagBtn = document.getElementById('monetagBtn');
-  
-  // Enable buttons after 2s even if SDK fails
-  setTimeout(() => {
-    if(typeof window.showGiga !== 'function') {
-      gigaBtn.innerText = "No Ads";
-      gigaBtn.disabled = true;
-    }
-    if(typeof window.show_11258922 !== 'function') {
-      monetagBtn.innerText = "No Ads";
-      monetagBtn.disabled = true;
-    }
-  }, 2000);
+function enableAds() {
+  document.getElementById('gigaBtn').disabled = false;
+  document.getElementById('monetagBtn').disabled = false;
+  document.getElementById('gigaBtn').innerText = "Watch";
+  document.getElementById('monetagBtn').innerText = "Watch";
+  document.getElementById('gigaBtn').onclick = startGigaQueue;
+  document.getElementById('monetagBtn').onclick = showMonetagAd;
 }
 
 function updateUI() {
@@ -162,12 +175,11 @@ function updateUI() {
   }
 }
 
-// GIGAPUB
+// 1. GIGAPUB: 2 ADS = 50 APU
 let gigaQueue = 0;
 let gigaCompleted = false;
 
 function startGigaQueue() {
-  if(typeof window.showGiga !== 'function') return tg.showAlert("GigaPub ads not loaded yet");
   if(adWatched >= DAILY_LIMIT - 1) return tg.showAlert("Not enough ads left today");
   gigaQueue = 2;
   gigaCompleted = false;
@@ -215,13 +227,13 @@ function finishGigaAd() {
   document.getElementById('gigaBtn').classList.remove('loading');
 }
 
-// MONETAG
+// 2. MONETAG: 1 AD = 50 APU
 function showMonetagAd() {
-  if(typeof window.show_11258922 !== 'function') return tg.showAlert("Monetag ads not loaded yet");
   document.getElementById('monetagBtn').classList.add('loading');
   document.getElementById('monetagBtn').innerText = "Loading...";
 
   window.show_11258922().then(() => {
+    // Monetag reward
     coins += 50;
     localStorage.setItem('coins', coins);
     updateUI();
@@ -267,13 +279,12 @@ function loadLeaderboard() {
   document.getElementById('board').innerHTML = html;
 }
 
-// NAVIGATION - FIXED with event parameter
-function showTab(e, id) {
-  e.preventDefault();
+// NAVIGATION
+function showTab(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  e.currentTarget.classList.add('active');
+  event.currentTarget.classList.add('active');
   if(id === 'rank') loadLeaderboard();
 }
 
