@@ -33,10 +33,9 @@
   }
   .balance-label { font-size: 12px; opacity: 0.8; letter-spacing: 2px; font-weight: 600; }
   
-  /* NEW BALANCE ROWS */
-  .balance-main { font-size: 48px; font-weight: 800; margin: 10px 0 2px; background: linear-gradient(90deg, #FFD600 0%, #FF8A00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  .balance-main span { font-size: 20px; opacity: 0.9; }
-  .balance-usdt { font-size: 16px; opacity: 0.8; display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 8px; }
+  .balance-apu { font-size: 42px; font-weight: 800; margin: 10px 0 2px; background: linear-gradient(90deg, #FFD600 0%, #FF8A00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .balance-apu span { font-size: 18px; opacity: 0.9; }
+  .balance-usdt { font-size: 15px; opacity: 0.8; display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 8px; }
   .usdt-badge { background: rgba(38,161,123,0.2); color: #26A17B; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
 
   .daily-claim {
@@ -100,12 +99,12 @@
       <h1>AdsPayU</h1>
     </div>
 
-    <!-- BALANCE CARD UPDATED -->
+    <!-- BALANCE CARD WITH APU VISIBLE -->
     <div class="balance-card">
       <div class="balance-label">YOUR BALANCE</div>
-      <div class="balance-main"><span id="coins">0</span> <span>APU</span></div>
+      <div class="balance-apu"><span id="coins">0</span> <span>APU</span></div>
       <div class="balance-usdt">
-        💵 <span id="usdt">0.00</span> USDT 
+        💵 <span id="usdt">0.0000</span> USDT 
         <span class="usdt-badge">1 APU = $0.000028</span>
       </div>
     </div>
@@ -123,7 +122,7 @@
           <div class="card-icon">🎯</div>
           <div class="card-info">
             <div class="card-title">GigaPub Ads</div>
-            <div class="card-sub">Watch 1 Ad | Earn 50 APU | <span id="adLimit">0</span>/100 today</div>
+            <div class="card-sub">Watch 1 Ad | Earn 50 APU | <span id="gigaCount">0</span>/100 today</div>
           </div>
           <button class="btn-get" id="gigaBtn">Loading...</button>
         </div>
@@ -134,7 +133,7 @@
           <div class="card-icon">💰</div>
           <div class="card-info">
             <div class="card-title">Monetag Ads</div>
-            <div class="card-sub">Watch 1 Ad | Earn 50 APU</div>
+            <div class="card-sub">Watch 1 Ad | Earn 50 APU | <span id="monetagCount">0</span>/100 today</div>
           </div>
           <button class="btn-get orange" id="monetagBtn">Loading...</button>
         </div>
@@ -161,15 +160,16 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 tg.setBackgroundColor('#000A4D');
 
-const COIN_VALUE = 0.000028; // 1 APU = 0.000028 USDT
+const COIN_VALUE = 0.000028;
 const DAILY_LIMIT = 100;
 let coins = parseInt(localStorage.getItem('coins') || 0);
-let adWatched = parseInt(localStorage.getItem('adWatched') || 0);
+let gigaWatched = parseInt(localStorage.getItem('gigaWatched') || 0); // SEPARATE COUNT
+let monetagWatched = parseInt(localStorage.getItem('monetagWatched') || 0); // SEPARATE COUNT
 let lastDailyClaim = localStorage.getItem('lastDailyClaim');
 
 const user = tg.initDataUnsafe?.user;
 const userId = user?.id || "guest";
-const userName = user?.first_name + (user?.last_name? " " + user.last_name : "") || "Guest";
+const userName = user?.first_name + (user?.last_name? " + user.last_name : "") || "Guest";
 
 let appOpened = false;
 function openApp() {
@@ -214,15 +214,21 @@ function enableAds() {
   }
 }
 
-// UPDATED: SHOW BOTH APU AND USDT
+// UPDATED: SHOW APU + SEPARATE LIMITS
 function updateUI() {
   const usdtValue = (coins * COIN_VALUE).toFixed(4);
   document.getElementById('coins').innerText = coins.toLocaleString();
   document.getElementById('usdt').innerText = usdtValue;
-  document.getElementById('adLimit').innerText = adWatched;
-  if(adWatched >= DAILY_LIMIT) {
+  document.getElementById('gigaCount').innerText = gigaWatched;
+  document.getElementById('monetagCount').innerText = monetagWatched;
+  
+  if(gigaWatched >= DAILY_LIMIT) {
     document.getElementById('gigaBtn').disabled = true;
     document.getElementById('gigaBtn').innerText = "Daily Limit";
+  }
+  if(monetagWatched >= DAILY_LIMIT) { // NEW LIMIT FOR MONETAG
+    document.getElementById('monetagBtn').disabled = true;
+    document.getElementById('monetagBtn').innerText = "Daily Limit";
   }
 }
 
@@ -255,10 +261,10 @@ function claimDaily() {
   tg.showPopup({title: "Daily Reward! 🎉", message: "+50 APU Claimed"});
 }
 
-// ADS FUNCTIONS
+// ADS FUNCTIONS WITH SEPARATE LIMITS
 let gigaQueue = 0; let gigaCompleted = false;
 function startGigaQueue() {
-  if(adWatched >= DAILY_LIMIT) return tg.showAlert("Daily limit reached");
+  if(gigaWatched >= DAILY_LIMIT) return tg.showAlert("GigaPub daily limit reached");
   if(typeof window.showGiga !== 'function') return tg.showAlert("GigaPub not ready yet");
   gigaQueue = 1; gigaCompleted = false; playGigaAd();
 }
@@ -279,9 +285,9 @@ function playGigaAd() {
 }
 function finishGigaAd() {
   if(gigaCompleted) {
-    coins += 50; adWatched += 1;
+    coins += 50; gigaWatched += 1;
     localStorage.setItem('coins', coins);
-    localStorage.setItem('adWatched', adWatched);
+    localStorage.setItem('gigaWatched', gigaWatched);
     updateUI(); savePlayer(); loadLeaderboard();
     tg.HapticFeedback.notificationOccurred('success');
     tg.showPopup({title: "GigaPub Complete!", message: "+50 APU"});
@@ -289,12 +295,16 @@ function finishGigaAd() {
   document.getElementById('gigaBtn').innerText = "Watch";
   document.getElementById('gigaBtn').classList.remove('loading');
 }
+
 function showMonetagAd() {
+  if(monetagWatched >= DAILY_LIMIT) return tg.showAlert("Monetag daily limit reached"); // NEW CHECK
   if(typeof window.show_11258922 !== 'function') return tg.showAlert("Monetag not ready yet");
   document.getElementById('monetagBtn').classList.add('loading');
   document.getElementById('monetagBtn').innerText = "Loading...";
   window.show_11258922().then(() => {
-    coins += 50; localStorage.setItem('coins', coins);
+    coins += 50; monetagWatched += 1; // NEW COUNT
+    localStorage.setItem('coins', coins);
+    localStorage.setItem('monetagWatched', monetagWatched);
     updateUI(); savePlayer(); loadLeaderboard();
     tg.HapticFeedback.notificationOccurred('success');
     tg.showPopup({title: "Monetag Complete!", message: "+50 APU"});
@@ -344,9 +354,10 @@ function withdraw() {
 }
 function swap() { tg.showAlert("Swap feature coming soon"); }
 
-// Reset daily
+// DAILY RESET FOR BOTH
 if(!localStorage.getItem('lastReset') || new Date().toDateString() !== localStorage.getItem('lastReset')) {
-  localStorage.setItem('adWatched', 0);
+  localStorage.setItem('gigaWatched', 0);
+  localStorage.setItem('monetagWatched', 0);
   localStorage.setItem('lastReset', new Date().toDateString());
 }
 </script>
