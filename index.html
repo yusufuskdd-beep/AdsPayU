@@ -43,6 +43,7 @@
     font-size: 16px;
     font-weight: 800;
     width: calc(100% - 32px);
+    transition: all 0.2s;
   }
   .daily-claim:disabled { background: #333; opacity: 0.6; }
 
@@ -131,7 +132,6 @@ const DAILY_LIMIT = 100;
 let coins = parseInt(localStorage.getItem('coins') || 0);
 let gigaWatched = parseInt(localStorage.getItem('gigaWatched') || 0);
 let monetagWatched = parseInt(localStorage.getItem('monetagWatched') || 0);
-let lastDailyClaim = localStorage.getItem('lastDailyClaim');
 
 // FORCE OPEN IN 2 SECONDS
 setTimeout(function(){
@@ -152,20 +152,36 @@ function updateUI() {
   if(monetagWatched >= DAILY_LIMIT) document.getElementById('monetagBtn').disabled = true;
 }
 
+// FIXED DAILY CLAIM
 function checkDaily() {
+  const btn = document.getElementById('dailyClaimBtn');
   const today = new Date().toDateString();
+  const lastDailyClaim = localStorage.getItem('lastDailyClaim'); // RELOAD FROM STORAGE
+  
   if(lastDailyClaim === today) {
-    document.getElementById('dailyClaimBtn').disabled = true;
-    document.getElementById('dailyClaimBtn').innerText = "✅ CLAIMED TODAY";
+    btn.disabled = true;
+    btn.innerText = "✅ CLAIMED TODAY";
+    btn.style.background = "#333";
+  } else {
+    btn.disabled = false;
+    btn.innerText = "🎁 CLAIM DAILY 50 APU";
+    btn.style.background = "#00C853";
   }
 }
 
 function claimDaily() {
   const today = new Date().toDateString();
-  if(lastDailyClaim === today) return;
+  const lastDailyClaim = localStorage.getItem('lastDailyClaim'); // CHECK AGAIN
+  
+  if(lastDailyClaim === today) {
+    alert("You already claimed today!");
+    return;
+  }
+  
   coins += 50;
   localStorage.setItem('coins', coins);
   localStorage.setItem('lastDailyClaim', today);
+  
   updateUI();
   checkDaily();
   alert("+50 APU Claimed!");
