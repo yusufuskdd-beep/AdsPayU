@@ -12,55 +12,56 @@
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: linear-gradient(180deg, #0A2AFF 0%, #0018B3 50%, #000A4D 100%); color: #fff; padding-bottom: 90px; min-height: 100vh; background-attachment: fixed; }
   #loader { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0A2AFF; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; font-size: 16px; font-weight: 600; transition: opacity 0.6s ease; }
   #loader.hide { opacity: 0; pointer-events: none; }
- .spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.2); border-top: 3px solid #FF8A00; border-radius: 50%; animation: spin 1s linear infinite; }
+.spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.2); border-top: 3px solid #FF8A00; border-radius: 50%; animation: spin 1s linear infinite; }
   @keyframes spin { to {transform: rotate(360deg)} }
- .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; position: sticky; top: 0; background: rgba(0,10,77,0.8); backdrop-filter: blur(20px); z-index: 10; }
- .topbar h1 { font-size: 18px; font-weight: 700; }
- .balance-section { padding: 16px; text-align: center; }
- .balance-label { font-size: 12px; opacity: 0.7; letter-spacing: 1px; }
- .balance { font-size: 48px; font-weight: 800; margin: 8px 0; }
- .balance span { font-size: 20px; opacity: 0.8; }
- .usd { font-size: 14px; opacity: 0.7; }
- .btn-row { display: flex; gap: 10px; padding: 0 16px 20px; }
- .btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: transform 0.1s; }
- .btn:active { transform: scale(0.97); }
- .btn-primary { background: linear-gradient(90deg, #FF8A00 0%, #FF6A00 100%); color: #fff; box-shadow: 0 4px 20px rgba(255,138,0,0.4); }
- .btn-secondary { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); color: #fff; border: 1px solid rgba(255,255,255,0.15); }
- .page { display: none; padding: 0 16px; animation: fade.25s ease; }
- .page.active { display: block; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; position: sticky; top: 0; background: rgba(0,10,77,0.8); backdrop-filter: blur(20px); z-index: 10; }
+.topbar h1 { font-size: 18px; font-weight: 700; }
+.balance-section { padding: 16px; text-align: center; }
+.balance-label { font-size: 12px; opacity: 0.7; letter-spacing: 1px; }
+.balance { font-size: 48px; font-weight: 800; margin: 8px 0; }
+.balance span { font-size: 20px; opacity: 0.8; }
+.usd { font-size: 14px; opacity: 0.7; }
+.btn-row { display: flex; gap: 10px; padding: 0 16px 20px; }
+.btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: transform 0.1s; }
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: linear-gradient(90deg, #FF8A00 0%, #FF6A00 100%); color: #fff; box-shadow: 0 4px 20px rgba(255,138,0,0.4); }
+.btn-secondary { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); color: #fff; border: 1px solid rgba(255,255,255,0.15); }
+.page { display: none; padding: 0 16px; animation: fade.25s ease; }
+.page.active { display: block; }
   @keyframes fade { from {opacity:0; transform: translateY(4px)} to {opacity:1; transform: translateY(0)} }
- .card { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
- .card-header { display: flex; align-items: center; gap: 12px; }
- .card-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 22px; }
- .card-info { flex: 1; }
- .card-title { font-size: 15px; font-weight: 700; }
- .card-sub { font-size: 12px; opacity: 0.7; margin-top: 2px; }
- .btn-get { padding: 10px 18px; background: linear-gradient(90deg, #1877FF 0%, #0A5FFF 100%); border: none; border-radius: 10px; color: #fff; font-weight: 700; cursor: pointer; min-width: 100px; }
- .btn-get.orange { background: linear-gradient(90deg, #FF8A00 0%, #FF6A00 100%); }
- .btn-get:disabled { background: #333; opacity: 0.5; }
- .list-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 14px; align-items: center; }
- .rank-num { font-weight: 800; color: #FF8A00; margin-right: 8px; }
- .player-name { flex: 1; font-weight: 600; }
- .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,10,20,0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; padding: 8px; display: flex; gap: 12px; }
- .nav-item { text-align: center; font-size: 10px; opacity: 0.6; background: none; border: none; color: #fff; cursor: pointer; padding: 4px 6px; }
- .nav-item.active { opacity: 1; color: #FF8A00; }
- .nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
- .nav-center { background: linear-gradient(135deg, #FF3B30 0%, #FF6A00 100%); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; }
- .loading { opacity: 0.6; pointer-events: none; }
+.card { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+.card-header { display: flex; align-items: center; gap: 12px; }
+.card-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 22px; }
+.card-info { flex: 1; }
+.card-title { font-size: 15px; font-weight: 700; }
+.card-sub { font-size: 12px; opacity: 0.7; margin-top: 2px; }
+.btn-get { padding: 10px 18px; background: linear-gradient(90deg, #1877FF 0%, #0A5FFF 100%); border: none; border-radius: 10px; color: #fff; font-weight: 700; cursor: pointer; min-width: 100px; }
+.btn-get.orange { background: linear-gradient(90deg, #FF8A00 0%, #FF6A00 100%); }
+.btn-get:disabled { background: #333; opacity: 0.5; }
+.list-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 14px; align-items: center; }
+.rank-num { font-weight: 800; color: #FF8A00; margin-right: 8px; }
+.player-name { flex: 1; font-weight: 600; }
+.bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,10,20,0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; padding: 8px; display: flex; gap: 12px; }
+.nav-item { text-align: center; font-size: 10px; opacity: 0.6; background: none; border: none; color: #fff; cursor: pointer; padding: 4px 6px; }
+.nav-item.active { opacity: 1; color: #FF8A00; }
+.nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
+.nav-center { background: linear-gradient(135deg, #FF3B30 0%, #FF6A00 100%); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; }
+.loading { opacity: 0.6; pointer-events: none; }
 
   /* NEW STYLES */
- .streak-bar { display: flex; justify-content: space-between; margin-bottom: 12px; }
- .streak-day { text-align: center; font-size: 10px; opacity: 0.5; }
- .streak-day.active { opacity: 1; color: #FF8A00; }
- .streak-day.dot { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; margin: 0 auto 4px; font-weight: 800; }
- .streak-day.active.dot { background: linear-gradient(135deg, #FF8A00 0%, #FF6A00 100%); }
- .mission { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 12px; margin-bottom: 8px; }
- .mission-info { flex: 1; }
- .mission-progress { font-size: 11px; opacity: 0.7; }
- .claim-btn { padding: 8px 14px; background: #00C853; border: none; border-radius: 8px; color: #fff; font-weight: 700; font-size: 12px; }
- .claim-btn:disabled { background: #333; }
- .spin-wheel { width: 260px; height: 260px; border-radius: 50%; border: 8px solid #FF8A00; margin: 10px auto; background: conic-gradient(#FF8A00 0 60deg, #1877FF 60 120deg, #00C853 120 180deg, #D50000 180 240deg, #AA00FF 240 300deg, #FFD600 300 360deg); transition: transform 3s cubic-bezier(0.17, 0.67, 0.12, 0.99); }
- .spin-pointer { width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 20px solid #fff; margin: 0 auto; }
+.streak-bar { display: flex; justify-content: space-between; margin-bottom: 12px; }
+.streak-day { text-align: center; font-size: 10px; opacity: 0.5; }
+.streak-day.active { opacity: 1; color: #FF8A00; }
+.streak-day.dot { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; margin: 0 auto 4px; font-weight: 800; }
+.streak-day.active.dot { background: linear-gradient(135deg, #FF8A00 0%, #FF6A00 100%); }
+.mission { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 12px; margin-bottom: 8px; }
+.mission-info { flex: 1; }
+.mission-progress { font-size: 11px; opacity: 0.7; }
+.claim-btn { padding: 8px 14px; background: #00C853; border: none; border-radius: 8px; color: #fff; font-weight: 700; font-size: 12px; }
+.claim-btn:disabled { background: #333; }
+.spin-wrapper { position: relative; width: 260px; height: 260px; margin: 10px auto; }
+.spin-wheel { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #FF8A00; background: conic-gradient(from 0deg, #FF8A00 0 60deg, #1877FF 60deg 120deg, #00C853 120deg 180deg, #D50000 180deg 240deg, #AA00FF 240deg 300deg, #FFD600 300deg 360deg); transition: transform 3s cubic-bezier(0.17, 0.67, 0.12, 0.99); }
+.spin-pointer { width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 20px solid #fff; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); z-index: 2; }
 </style>
 </head>
 <body>
@@ -95,7 +96,7 @@
             <div class="card-title">GigaPub Ads</div>
             <div class="card-sub">Watch 1 Ad | Earn 50 APU | <span id="adLimit">0</span>/100 today</div>
           </div>
-          <button class="btn-get" id="gigaBtn" disabled>Loading...</button>
+          <button class="btn-get" id="gigaBtn">Loading...</button>
         </div>
       </div>
 
@@ -106,7 +107,7 @@
             <div class="card-title">Monetag Ads</div>
             <div class="card-sub">Watch 1 Ad | Earn 50 APU</div>
           </div>
-          <button class="btn-get orange" id="monetagBtn" disabled>Loading...</button>
+          <button class="btn-get orange" id="monetagBtn">Loading...</button>
         </div>
       </div>
     </div>
@@ -123,8 +124,10 @@
     <div id="spin" class="page">
       <div class="card">
         <h3 style="text-align:center">🎁 Daily Spin</h3>
-        <div class="spin-pointer"></div>
-        <div class="spin-wheel" id="dailySpin"></div>
+        <div class="spin-wrapper">
+          <div class="spin-pointer"></div>
+          <div class="spin-wheel" id="dailySpin"></div>
+        </div>
         <button class="btn btn-primary" id="spinBtn" onclick="doSpin()">SPIN NOW</button>
         <p style="text-align:center; font-size:12px; opacity:0.7; margin-top:8px">Free spin resets in 24h. Win up to 200 APU!</p>
       </div>
@@ -148,7 +151,7 @@ tg.expand(); tg.setBackgroundColor('#000A4D');
 
 const COIN_VALUE = 0.000028;
 const DAILY_LIMIT = 100;
-const STREAK_REWARDS = [50, 100, 150, 200, 250, 300, 500]; // Day 1 to 7
+const STREAK_REWARDS = [50, 100, 150, 200, 250, 300, 500];
 const SPIN_REWARDS = [10, 25, 50, 75, 100, 200];
 
 let coins = parseInt(localStorage.getItem('coins') || 0);
@@ -165,20 +168,48 @@ const userName = user?.first_name + (user?.last_name? " " + user.last_name : "")
 // INIT
 let appOpened = false;
 function openApp() {
-  if(appOpened) return; appOpened = true; clearInterval(check);
+  if(appOpened) return; appOpened = true; clearInterval(check); clearTimeout(fallback);
   document.getElementById('loader').classList.add('hide');
   document.getElementById('app').style.display = 'block';
   enableAds(); updateUI(); updateStreak(); updateMissions(); checkSpin();
   savePlayer(); loadLeaderboard();
 }
 setTimeout(openApp, 2000);
-const check = setInterval(() => { if(typeof window.showGiga === 'function') openApp(); }, 200);
+
+// FALLBACK: open even if ads don't load
+const fallback = setTimeout(openApp, 3000);
+
+let tries = 0;
+const check = setInterval(() => {
+  tries++;
+  if(typeof window.showGiga === 'function' || typeof window.show_11258922 === 'function') {
+    openApp();
+  }
+  if(tries > 20) clearInterval(check);
+}, 200);
+
+function enableAds() {
+  const gigaBtn = document.getElementById('gigaBtn');
+  const monetagBtn = document.getElementById('monetagBtn');
+  
+  if(typeof window.showGiga === 'function') {
+    gigaBtn.disabled = false; gigaBtn.innerText = "Watch"; gigaBtn.onclick = startGigaQueue;
+  } else { 
+    gigaBtn.disabled = false; gigaBtn.innerText = "Watch"; gigaBtn.onclick = startGigaQueue; // still clickable for test
+  }
+  
+  if(typeof window.show_11258922 === 'function') {
+    monetagBtn.disabled = false; monetagBtn.innerText = "Watch"; monetagBtn.onclick = showMonetagAd;
+  } else {
+    monetagBtn.disabled = false; monetagBtn.innerText = "Watch"; monetagBtn.onclick = showMonetagAd;
+  }
+}
 
 function updateUI() {
   document.getElementById('coins').innerText = coins;
   document.getElementById('usd').innerText = (coins * COIN_VALUE).toFixed(2);
   document.getElementById('adLimit').innerText = adWatched;
-  missions.ads = adWatched; // sync missions with ads
+  missions.ads = adWatched;
   localStorage.setItem('missions', JSON.stringify(missions));
 }
 
@@ -202,28 +233,23 @@ function updateStreak() {
 function claimStreak() {
   const today = new Date().toDateString();
   if(lastStreakClaim === today) return;
-
   const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-  if(lastStreakClaim!== yesterday.toDateString() && lastStreakClaim!== null) streak = 0; // reset if missed day
-
+  if(lastStreakClaim!== yesterday.toDateString() && lastStreakClaim!== null) streak = 0;
   coins += STREAK_REWARDS[streak];
   streak = (streak + 1) % 7;
   lastStreakClaim = today;
-
   localStorage.setItem('coins', coins);
   localStorage.setItem('streak', streak);
   localStorage.setItem('lastStreakClaim', today);
-
   updateUI(); updateStreak();
   tg.showPopup({title: "Streak Claimed! 🔥", message: `+${STREAK_REWARDS[streak===0?6:streak-1]} APU`});
 }
 
-// 2. MISSIONS SYSTEM
+// 2. MISSIONS
 function updateMissions() {
   const list = document.getElementById('missionsList');
   const adMissionDone = missions.ads >= 5;
   const adClaimed = missions.claimed;
-
   list.innerHTML = `
     <div class="mission">
       <div class="mission-info">
@@ -237,8 +263,7 @@ function updateMissions() {
 
 function claimMission() {
   if(missions.ads >= 5 &&!missions.claimed) {
-    coins += 200;
-    missions.claimed = true;
+    coins += 200; missions.claimed = true;
     localStorage.setItem('coins', coins);
     localStorage.setItem('missions', JSON.stringify(missions));
     updateUI(); updateMissions();
@@ -246,12 +271,14 @@ function claimMission() {
   }
 }
 
-// 3. DAILY SPIN
+// 3. DAILY SPIN - FIXED
 function checkSpin() {
   const btn = document.getElementById('spinBtn');
   const now = Date.now();
-  if(lastSpin && now - parseInt(lastSpin) < 86400000) { // 24h
+  if(lastSpin && now - parseInt(lastSpin) < 86400000) {
     btn.disabled = true; btn.innerText = "COMING SOON";
+  } else {
+    btn.disabled = false; btn.innerText = "SPIN NOW";
   }
 }
 
@@ -259,29 +286,33 @@ function doSpin() {
   const btn = document.getElementById('spinBtn');
   if(lastSpin && Date.now() - parseInt(lastSpin) < 86400000) return;
 
-  const degrees = 360 * 4 + Math.floor(Math.random() * 360);
+  const rewardIndex = Math.floor(Math.random() * SPIN_REWARDS.length);
+  const reward = SPIN_REWARDS[rewardIndex];
+  const degrees = 360 * 4 + (rewardIndex * 60) + 30; // land on the slice
+  
   document.getElementById('dailySpin').style.transform = `rotate(${degrees}deg)`;
   btn.disabled = true;
 
   setTimeout(() => {
-    const rewardIndex = Math.floor(Math.random() * SPIN_REWARDS.length);
-    const reward = SPIN_REWARDS[rewardIndex];
     coins += reward;
     lastSpin = Date.now();
-
     localStorage.setItem('coins', coins);
     localStorage.setItem('lastSpin', lastSpin);
-
     updateUI();
     tg.showPopup({title: "You Won! 🎉", message: `+${reward} APU`});
-    btn.innerText = "COMING SOON";
+    checkSpin();
   }, 3000);
 }
 
-// ADS FUNCTIONS
+// ADS FUNCTIONS WITH TEST MODE
 let gigaQueue = 0; let gigaCompleted = false;
 function startGigaQueue() {
   if(adWatched >= DAILY_LIMIT) return tg.showAlert("Daily limit reached");
+  if(typeof window.showGiga!== 'function') { // TEST MODE
+    coins += 50; adWatched += 1; localStorage.setItem('coins', coins); localStorage.setItem('adWatched', adWatched);
+    updateUI(); updateMissions(); savePlayer(); loadLeaderboard();
+    return tg.showPopup({title: "Test Reward!", message: "+50 APU"});
+  }
   gigaQueue = 1; gigaCompleted = false; playGigaAd();
 }
 function playGigaAd() {
@@ -310,6 +341,11 @@ function finishGigaAd() {
   document.getElementById('gigaBtn').classList.remove('loading');
 }
 function showMonetagAd() {
+  if(typeof window.show_11258922!== 'function') { // TEST MODE
+    coins += 50; adWatched += 1; localStorage.setItem('coins', coins); localStorage.setItem('adWatched', adWatched);
+    updateUI(); updateMissions(); savePlayer(); loadLeaderboard();
+    return tg.showPopup({title: "Test Reward!", message: "+50 APU"});
+  }
   document.getElementById('monetagBtn').classList.add('loading');
   document.getElementById('monetagBtn').innerText = "Loading...";
   window.show_11258922().then(() => {
@@ -317,7 +353,7 @@ function showMonetagAd() {
     updateUI(); updateMissions(); savePlayer(); loadLeaderboard();
     tg.showPopup({title: "Monetag Complete!", message: "+50 APU"});
   }).catch(e => tg.showAlert("Monetag: " + e))
- .finally(() => { document.getElementById('monetagBtn').innerText = "Watch"; document.getElementById('monetagBtn').classList.remove('loading'); });
+.finally(() => { document.getElementById('monetagBtn').innerText = "Watch"; document.getElementById('monetagBtn').classList.remove('loading'); });
 }
 
 // LEADERBOARD + NAV
