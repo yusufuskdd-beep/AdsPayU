@@ -79,13 +79,13 @@
 
     <!-- HOME -->
     <div id="home" class="page active">
-      <!-- GIGAPUB CARD -->
+      <!-- GIGAPUB CARD - CHANGED TO 1 AD -->
       <div class="card">
         <div class="card-header">
           <div class="card-icon">🎯</div>
           <div class="card-info">
             <div class="card-title">GigaPub Ads</div>
-            <div class="card-sub">Watch 2 Ads | Earn 50 APU | <span id="adLimit">0</span>/100 today</div>
+            <div class="card-sub">Watch 1 Ad | Earn 50 APU | <span id="adLimit">0</span>/100 today</div>
           </div>
           <button class="btn-get" id="gigaBtn" disabled>Loading...</button>
         </div>
@@ -134,7 +134,7 @@ let adWatched = parseInt(localStorage.getItem('adWatched') || 0);
 // GET REAL TELEGRAM USER
 const user = tg.initDataUnsafe?.user;
 const userId = user?.id || "guest";
-const userName = user?.first_name + (user?.last_name? " " + user.last_name : "") || "Guest";
+const userName = user?.first_name + (user?.last_name? " + user.last_name : "") || "Guest";
 
 // WAIT FOR ADS
 let tries = 0;
@@ -175,13 +175,13 @@ function updateUI() {
   }
 }
 
-// 1. GIGAPUB: 2 ADS = 50 APU
+// 1. GIGAPUB: 1 AD = 50 APU - CHANGED
 let gigaQueue = 0;
 let gigaCompleted = false;
 
 function startGigaQueue() {
-  if(adWatched >= DAILY_LIMIT - 1) return tg.showAlert("Not enough ads left today");
-  gigaQueue = 2;
+  if(adWatched >= DAILY_LIMIT) return tg.showAlert("Daily limit reached"); // was DAILY_LIMIT - 1
+  gigaQueue = 1; // was 2
   gigaCompleted = false;
   playGigaAd();
 }
@@ -214,7 +214,7 @@ function playGigaAd() {
 function finishGigaAd() {
   if(gigaCompleted) {
     coins += 50;
-    adWatched += 2;
+    adWatched += 1; // was 2
     localStorage.setItem('coins', coins);
     localStorage.setItem('adWatched', adWatched);
     updateUI();
@@ -233,7 +233,6 @@ function showMonetagAd() {
   document.getElementById('monetagBtn').innerText = "Loading...";
 
   window.show_11258922().then(() => {
-    // Monetag reward
     coins += 50;
     localStorage.setItem('coins', coins);
     updateUI();
