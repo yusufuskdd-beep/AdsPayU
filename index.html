@@ -32,10 +32,12 @@
     box-shadow: 0 8px 32px rgba(0,10,77,0.4);
   }
   .balance-label { font-size: 12px; opacity: 0.8; letter-spacing: 2px; font-weight: 600; }
-  .balance { font-size: 52px; font-weight: 800; margin: 10px 0 4px; background: linear-gradient(90deg, #FFD600 0%, #FF8A00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  .balance span { font-size: 22px; opacity: 0.9; }
-  .usd-row { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 15px; opacity: 0.8; }
-  .usd-badge { background: rgba(0,200,83,0.2); color: #00C853; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+  
+  /* NEW BALANCE ROWS */
+  .balance-main { font-size: 48px; font-weight: 800; margin: 10px 0 2px; background: linear-gradient(90deg, #FFD600 0%, #FF8A00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .balance-main span { font-size: 20px; opacity: 0.9; }
+  .balance-usdt { font-size: 16px; opacity: 0.8; display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 8px; }
+  .usdt-badge { background: rgba(38,161,123,0.2); color: #26A17B; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
 
   .daily-claim {
     margin: 0 16px 16px;
@@ -98,12 +100,13 @@
       <h1>AdsPayU</h1>
     </div>
 
+    <!-- BALANCE CARD UPDATED -->
     <div class="balance-card">
       <div class="balance-label">YOUR BALANCE</div>
-      <div class="balance"><span id="coins">0</span> <span>APU</span></div>
-      <div class="usd-row">
-        🪙 <span id="usd">0.00</span> USD 
-        <span class="usd-badge">+$0.00</span>
+      <div class="balance-main"><span id="coins">0</span> <span>APU</span></div>
+      <div class="balance-usdt">
+        💵 <span id="usdt">0.00</span> USDT 
+        <span class="usdt-badge">1 APU = $0.000028</span>
       </div>
     </div>
 
@@ -158,7 +161,7 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 tg.setBackgroundColor('#000A4D');
 
-const COIN_VALUE = 0.000028;
+const COIN_VALUE = 0.000028; // 1 APU = 0.000028 USDT
 const DAILY_LIMIT = 100;
 let coins = parseInt(localStorage.getItem('coins') || 0);
 let adWatched = parseInt(localStorage.getItem('adWatched') || 0);
@@ -168,7 +171,6 @@ const user = tg.initDataUnsafe?.user;
 const userId = user?.id || "guest";
 const userName = user?.first_name + (user?.last_name? " " + user.last_name : "") || "Guest";
 
-// FIXED: FORCE OPEN AFTER 3 SECONDS
 let appOpened = false;
 function openApp() {
   if(appOpened) return;
@@ -185,7 +187,7 @@ function openApp() {
 }
 
 setTimeout(openApp, 2000);
-const forceOpen = setTimeout(openApp, 3000); // FORCE OPEN
+const forceOpen = setTimeout(openApp, 3000);
 
 let tries = 0;
 const check = setInterval(() => {
@@ -212,9 +214,11 @@ function enableAds() {
   }
 }
 
+// UPDATED: SHOW BOTH APU AND USDT
 function updateUI() {
-  document.getElementById('coins').innerText = coins;
-  document.getElementById('usd').innerText = (coins * COIN_VALUE).toFixed(2);
+  const usdtValue = (coins * COIN_VALUE).toFixed(4);
+  document.getElementById('coins').innerText = coins.toLocaleString();
+  document.getElementById('usdt').innerText = usdtValue;
   document.getElementById('adLimit').innerText = adWatched;
   if(adWatched >= DAILY_LIMIT) {
     document.getElementById('gigaBtn').disabled = true;
@@ -322,7 +326,7 @@ function loadLeaderboard() {
     html += `<div class="list-item" style="${isMe? 'background: rgba(255,138,0,0.1); border-radius:8px; padding: 12px;' : ''}">
         <span class="rank-num">#${index + 1}</span>
         <span class="player-name">${player.name} ${isMe? '(You)' : ''}</span>
-        <span>${player.coins} APU</span>
+        <span>${player.coins.toLocaleString()} APU</span>
       </div>`;
   });
   document.getElementById('board').innerHTML = html;
@@ -335,7 +339,8 @@ function showTab(id) {
   if(id === 'rank') loadLeaderboard();
 }
 function withdraw() {
-  tg.showPopup({title: "Withdraw", message: `You have ${coins} APU\nMin withdraw: 10000 APU`, buttons: [{type: "close"}]});
+  const usdt = (coins * COIN_VALUE).toFixed(4);
+  tg.showPopup({title: "Withdraw", message: `You have ${coins.toLocaleString()} APU\n≈ ${usdt} USDT\nMin withdraw: 10000 APU`, buttons: [{type: "close"}]});
 }
 function swap() { tg.showAlert("Swap feature coming soon"); }
 
