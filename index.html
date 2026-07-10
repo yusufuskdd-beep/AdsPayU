@@ -52,13 +52,16 @@
   .nav-center { background: linear-gradient(135deg, #FF3B30 0%, #FF6A00 100%); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; }
   .loading { opacity: 0.6; pointer-events: none; }
 
-  /* WHEEL STYLES */
+  /* WHEEL STYLES - UPDATED */
   .wheel-container { text-align: center; padding: 20px 0; }
-  .wheel { width: 280px; height: 280px; border-radius: 50%; border: 8px solid #FF8A00; margin: 0 auto 20px; position: relative; overflow: hidden; transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99); background: conic-gradient(#1877FF 0deg 60deg, #FF8A00 60deg 120deg, #00C853 120deg 180deg, #D50000 180deg 240deg, #AA00FF 240deg 300deg, #FFD600 300deg 360deg); }
-  .wheel-pointer { width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #fff; margin: 0 auto; position: relative; top: -10px; z-index: 2; }
+  .wheel-wrapper { position: relative; width: 280px; height: 280px; margin: 0 auto 20px; }
+  .wheel { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #FF8A00; position: relative; overflow: hidden; transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99); box-shadow: 0 0 30px rgba(255,138,0,0.5); }
+  .wheel-pointer { width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #fff; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); z-index: 10; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
   .bet-input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: #fff; font-size: 16px; text-align: center; margin-bottom: 12px; }
   .pot { font-size: 24px; font-weight: 800; color: #FF8A00; margin: 10px 0; }
   .players-list { font-size: 12px; opacity: 0.8; max-height: 80px; overflow-y: auto; }
+  .player-legend { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .color-dot { width: 12px; height: 12px; border-radius: 50%; }
 </style>
 </head>
 <body>
@@ -113,8 +116,10 @@
     <div id="wheel" class="page">
       <div class="card">
         <h3 style="text-align:center; margin-bottom: 10px;">🎡 Spin Wheel</h3>
-        <div class="wheel-pointer"></div>
-        <div class="wheel" id="wheelSpin"></div>
+        <div class="wheel-wrapper">
+          <div class="wheel-pointer"></div>
+          <div class="wheel" id="wheelSpin"></div>
+        </div>
         <div style="text-align:center">
           <div class="card-sub">Current Pot</div>
           <div class="pot"><span id="pot">0</span> APU</div>
@@ -157,6 +162,8 @@ tg.setBackgroundColor('#000A4D');
 
 const COIN_VALUE = 0.000028;
 const DAILY_LIMIT = 100;
+const COLORS = ['#1877FF','#FF8A00','#00C853','#D50000','#AA00FF','#FFD600','#FF4081','#29B6F6']; // 8 colors
+
 let coins = parseInt(localStorage.getItem('coins') || 0);
 let adWatched = parseInt(localStorage.getItem('adWatched') || 0);
 
@@ -213,15 +220,45 @@ function updateUI() {
   }
 }
 
-// WHEEL FUNCTIONS
+// WHEEL FUNCTIONS - UPDATED FOR PIE CHART
+function drawWheel() {
+  const wheel = document.getElementById('wheelSpin');
+  if(wheelPlayers.length === 0) {
+    wheel.style.background = '#333';
+    return;
+  }
+  
+  let gradient = 'conic-gradient(';
+  let currentAngle = 0;
+  
+  wheelPlayers.forEach((player, index) => {
+    const percentage = player.bet / wheelPot;
+    const angle = percentage * 360;
+    const color = COLORS[index % COLORS.length];
+    gradient += `${color} ${currentAngle}deg ${currentAngle + angle}deg,`;
+    currentAngle += angle;
+  });
+  
+  gradient = gradient.slice(0, -1) + ')';
+  wheel.style.background = gradient;
+}
+
 function updateWheelUI() {
   document.getElementById('pot').innerText = wheelPot;
   document.getElementById('playerCount').innerText = wheelPlayers.length;
-  document.getElementById('wheelPlayers').innerHTML = wheelPlayers.map(p => `${p.name}: ${p.bet} APU`).join('<br>');
+  
+  let html = '';
+  wheelPlayers.forEach((p, i) => {
+    const color = COLORS[i % COLORS.length];
+    html += `<div class="player-legend"><div class="color-dot" style="background:${color}"></div>${p.name}: ${p.bet} APU</div>`;
+  });
+  document.getElementById('wheelPlayers').innerHTML = html || 'No players yet';
   
   const hasBet = wheelPlayers.some(p => p.id === userId);
   document.getElementById('betBtn').style.display = hasBet ? 'none' : 'block';
   document.getElementById('spinBtn').style.display = wheelPlayers.length >= 2 && !spinning ? 'block' : 'none';
+  
+  drawWheel();
 }
 
 function placeBet() {
@@ -248,12 +285,25 @@ function spinWheel() {
   spinning = true;
   document.getElementById('spinBtn').disabled = true;
   
-  const degrees = 360 * 5 + Math.floor(Math.random() * 360); // 5 full spins + random
+  const degrees = 360 * 5 + Math.floor(Math.random() * 360);
   document.getElementById('wheelSpin').style.transform = `rotate(${degrees}deg)`;
   
   setTimeout(() => {
-    const winnerIndex = Math.floor(Math.random() * wheelPlayers.length);
-    const winner = wheelPlayers[winnerIndex];
+    // Determine winner based on where pointer lands
+    const finalAngle = degrees % 360;
+    const stopAngle = (360 - finalAngle + 90) % 360; // +90 because pointer is at top
+    
+    let currentAngle = 0;
+    let winner = wheelPlayers[0];
+    for(let i = 0; i < wheelPlayers.length; i++) {
+      const percentage = wheelPlayers[i].bet / wheelPot;
+      const angle = percentage * 360;
+      if(stopAngle >= currentAngle && stopAngle < currentAngle + angle) {
+        winner = wheelPlayers[i];
+        break;
+      }
+      currentAngle += angle;
+    }
     
     if(winner.id === userId) {
       coins += wheelPot;
@@ -277,7 +327,7 @@ function spinWheel() {
   }, 4000);
 }
 
-// ADS FUNCTIONS - YOUR WORKING CODE
+// ADS FUNCTIONS
 let gigaQueue = 0; let gigaCompleted = false;
 function startGigaQueue() {
   if(adWatched >= DAILY_LIMIT) return tg.showAlert("Daily limit reached");
