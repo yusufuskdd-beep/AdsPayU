@@ -77,11 +77,6 @@
 .modal-btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 16px; font-weight: 800; }
 .btn-confirm { background: #00C853; color: #fff; }
 .btn-cancel { background: #333; color: #fff; }
-
-.ad-timer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 200; display: none; align-items: center; justify-content: center; flex-direction: column; }
-.ad-timer.active { display: flex; }
-.timer-circle { width: 120px; height: 120px; border: 4px solid #00C853; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; color: #00FF88; }
-.timer-text { margin-top: 16px; font-size: 16px; opacity: 0.8; }
 </style>
 </head>
 <body>
@@ -157,11 +152,6 @@
     </div>
   </div>
 
-  <div class="ad-timer" id="adTimer">
-    <div class="timer-circle" id="timerCount">15</div>
-    <div class="timer-text">Watch the ad to earn reward</div>
-  </div>
-
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
@@ -172,8 +162,7 @@ const REWARD_PER_AD = 2;
 const MIN_WITHDRAW = 100;
 const MIN_SWAP = 200;
 const MINER_INTERVAL = 60 * 60 * 1000;
-const AD_WATCH_TIME = 15;
-const COOLDOWN_TIME = 5; // 5 SECOND COOLDOWN
+const COOLDOWN_TIME = 5;
 
 const MINERS = [
   {id: 0, name: "Starter Miner", cost: 0, reward: 28, icon: "🎁", roi: "Free", type: "starter", unlockAds: 200},
@@ -189,7 +178,7 @@ let usdt = parseFloat(localStorage.getItem('usdt') || 50);
 let gigaWatched = parseInt(localStorage.getItem('gigaWatched') || 0);
 let monetagWatched = parseInt(localStorage.getItem('monetagWatched') || 0);
 let totalAdsWatched = parseInt(localStorage.getItem('totalAdsWatched') || 0);
-let lastAdTime = parseInt(localStorage.getItem('lastAdTime') || 0); // COOLDOWN TRACKER
+let lastAdTime = parseInt(localStorage.getItem('lastAdTime') || 0);
 
 let minerData = {};
 MINERS.forEach(m => {
@@ -199,10 +188,6 @@ MINERS.forEach(m => {
     adsWatched: parseInt(localStorage.getItem(`miner${m.id}_adsWatched`) || 0)
   }
 });
-
-let adTimer = null;
-let adTimerCount = AD_WATCH_TIME;
-let pendingReward = null;
 
 updateUI();
 checkDaily();
@@ -216,10 +201,6 @@ function updateUI() {
   document.getElementById('usdt').innerText = usdtFromCoins + ' USDT | Wallet: ' + usdt.toFixed(2) + ' USDT';
   document.getElementById('gigaCount').innerText = gigaWatched;
   document.getElementById('monetagCount').innerText = monetagWatched;
-  if(gigaWatched >= DAILY_LIMIT) document.getElementById('gigaBtn').disabled = true;
-  if(monetagWatched >= DAILY_LIMIT) document.getElementById('monetagBtn').disabled = true;
-
-  // UPDATE COOLDOWN ON BUTTONS
   checkCooldown();
 }
 
@@ -348,40 +329,13 @@ function buyMiner(id) {
   alert(`${m.name} Purchased for $${m.cost.toFixed(2)}!`);
 }
 
-function startAdTimer(callback) {
-  pendingReward = callback;
-  adTimerCount = AD_WATCH_TIME;
-  document.getElementById('adTimer').classList.add('active');
-  document.getElementById('timerCount').innerText = adTimerCount;
-
-  adTimer = setInterval(() => {
-    adTimerCount--;
-    document.getElementById('timerCount').innerText = adTimerCount;
-    if(adTimerCount <= 0) {
-      clearInterval(adTimer);
-      document.getElementById('adTimer').classList.remove('active');
-      lastAdTime = Date.now(); // SET COOLDOWN
-      localStorage.setItem('lastAdTime', lastAdTime);
-      if(pendingReward) pendingReward();
-      pendingReward = null;
-      updateUI();
-      renderMiners();
-    }
-  }, 1000);
+function giveAdReward(callback) {
+  lastAdTime = Date.now();
+  localStorage.setItem('lastAdTime', lastAdTime);
+  callback();
+  updateUI();
+  renderMiners();
 }
-
-function cancelAdTimer() {
-  clearInterval(adTimer);
-  document.getElementById('adTimer').classList.remove('active');
-  pendingReward = null;
-  alert("Ad skipped! No reward given.");
-}
-
-document.addEventListener('visibilitychange', () => {
-  if(document.hidden && pendingReward) {
-    cancelAdTimer();
-  }
-});
 
 function watchAdForMiner(id) {
   const now = Date.now();
@@ -390,17 +344,15 @@ function watchAdForMiner(id) {
   const data = minerData[id];
   if(data.adsWatched >= 2) return;
   if(typeof window.showGiga === 'function'){
-    window.showGiga().then(function(){
-      startAdTimer(() => {
+    window.showGiga().then(function(){ // REWARD INSTANT AFTER AD
+      giveAdReward(() => {
         data.adsWatched += 1;
         totalAdsWatched += 1;
         localStorage.setItem(`miner${id}_adsWatched`, data.adsWatched);
         localStorage.setItem('totalAdsWatched', totalAdsWatched);
         coins += REWARD_PER_AD;
         localStorage.setItem('coins', coins);
-        updateUI();
-        renderMiners();
-        alert(`Ad Watched 15s! +${REWARD_PER_AD} APU. ${2 - data.adsWatched} left to claim miner`);
+        alert(`Ad Completed! +${REWARD_PER_AD} APU. ${2 - data.adsWatched} left to claim miner`);
       });
     }).catch(function(e){ alert("No ads available"); });
   } else { alert("Ad SDK not loaded"); }
@@ -426,7 +378,7 @@ function claimMiner(id) {
 
 function updateAllMiners() {
   renderMiners();
-  checkCooldown(); // UPDATE COOLDOWN EVERY SECOND
+  checkCooldown();
 }
 
 function openSwap() {
@@ -496,14 +448,12 @@ document.getElementById('gigaBtn').onclick = function(){
   if((COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0) return alert("Wait 5 seconds before watching another ad");
   if(gigaWatched >= DAILY_LIMIT) return alert("Giga limit reached");
   if(typeof window.showGiga === 'function'){
-    window.showGiga().then(function(){
-      startAdTimer(() => {
+    window.showGiga().then(function(){ // REWARD INSTANT
+      giveAdReward(() => {
         coins += REWARD_PER_AD; gigaWatched += 1;
         trackTotalAds();
         localStorage.setItem('coins', coins);
         localStorage.setItem('gigaWatched', gigaWatched);
-        updateUI();
-        renderMiners();
         alert("+2 APU Earned!");
       });
     }).catch(function(e){ alert("No ads"); });
@@ -515,14 +465,12 @@ document.getElementById('monetagBtn').onclick = function(){
   if((COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0) return alert("Wait 5 seconds before watching another ad");
   if(monetagWatched >= DAILY_LIMIT) return alert("Monetag limit reached");
   if(typeof window.show_11258922 === 'function'){
-    window.show_11258922().then(function(){
-      startAdTimer(() => {
+    window.show_11258922().then(function(){ // REWARD INSTANT
+      giveAdReward(() => {
         coins += REWARD_PER_AD; monetagWatched += 1;
         trackTotalAds();
         localStorage.setItem('coins', coins);
         localStorage.setItem('monetagWatched', monetagWatched);
-        updateUI();
-        renderMiners();
         alert("+2 APU Earned!");
       });
     }).catch(function(e){ alert("No ads"); });
