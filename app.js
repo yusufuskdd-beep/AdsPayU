@@ -272,5 +272,5 @@ function tickMiners() {
 window.state = state;
 window.saveState = saveState;
 window.renderAll = renderAll;
-window.showToast = showToast;
+window.showToast = showToast; 
 window.onAdComplete = onAdComplete;
