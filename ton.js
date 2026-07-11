@@ -1,18 +1,30 @@
-let depositInputEl, withdrawInputEl, tonConnectUI = null;
+let depositInputEl, withdrawInputEl, tonConnectUI = null, walletConnected = false, userWalletAddress = null;
 
 function loadTonPrice(){fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd').then(res=>res.json()).then(data=>{currentTonPrice=data['the-open-network'].usd}).catch(()=>{}).finally(()=>{const el=document.getElementById('tonRateText');if(el)el.innerText=`Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT\nSend TON to your in-game balance`})}
 
-function openDeposit(){if(!window.tonConnectUI){showToast("Wallet loading...",'warning');return}loadTonPrice();depositInputEl=document.getElementById('depositInput');depositInputEl.value="0.5";depositInputEl.oninput=updateDepositPreview;updateDepositPreview();document.getElementById('depositModal').classList.add('active')}
+function openDeposit(){loadTonPrice();depositInputEl=document.getElementById('depositInput');depositInputEl.value="0.5";depositInputEl.oninput=updateDepositPreview;updateDepositPreview();document.getElementById('depositModal').classList.add('active')}
 function closeDeposit(){document.getElementById('depositModal').classList.remove('active')}
 function updateDepositPreview(){const ton=parseFloat(depositInputEl.value)||0;const usdtValue=(ton*currentTonPrice).toFixed(2);document.getElementById('depositPreview').innerText=`You will receive: ${usdtValue} USDT`}
-async function confirmDeposit(){if(!walletConnected)return showToast("Connect TON wallet first",'error');const amountTON=parseFloat(depositInputEl.value);if(!amountTON||amountTON<0.1)return showToast("Min deposit 0.1 TON",'error');const usdtToReceive=(amountTON*currentTonPrice).toFixed(2);if(!confirm(`Send ${amountTON} TON = ${usdtToReceive} USDT?\n\nTo: ${YOUR_TON_WALLET}`))return;document.getElementById('depositConfirmBtn').disabled=true;const amountNano=(amountTON*1e6).toString();const transaction={validUntil:Math.floor(Date.now()/1e3)+600,messages:[{address:YOUR_TON_WALLET,amount:amountNano,payload:userWalletAddress}]};try{await tonConnectUI.sendTransaction(transaction);showToast(`Sent ${amountTON} TON! Crediting...`,'success');setTimeout(()=>{usdt+=parseFloat(usdtToReceive);localStorage.setItem('usdt',usdt);updateUI();closeDeposit();showToast(`+${usdtToReceive} USDT Credited!`,'success')},15e3)}catch(e){showToast("Transaction cancelled",'error')}document.getElementById('depositConfirmBtn').disabled=false}
+async function confirmDeposit(){if(!walletConnected)return showToast("Connect TON wallet first",'error');const amountTON=parseFloat(depositInputEl.value);if(!amountTON||amountTON<0.1)return showToast("Min deposit 0.1 TON",'error');const usdtToReceive=(amountTON*currentTonPrice).toFixed(2);if(!confirm(`Send ${amountTON} TON = ${usdtToReceive} USDT?\n\nTo: ${YOUR_TON_WALLET}`))return;document.getElementById('depositConfirmBtn').disabled=true;const amountNano=(amountTON*1e9).toString();const transaction={validUntil:Math.floor(Date.now()/1e3)+600,messages:[{address:YOUR_TON_WALLET,amount:amountNano}]};try{await tonConnectUI.sendTransaction(transaction);showToast(`Sent ${amountTON} TON! Crediting...`,'success');setTimeout(()=>{usdt+=parseFloat(usdtToReceive);localStorage.setItem('usdt',usdt);updateUI();closeDeposit();showToast(`+${usdtToReceive} USDT Credited!`,'success')},15e3)}catch(e){showToast("Transaction cancelled",'error')}document.getElementById('depositConfirmBtn').disabled=false}
 
 function initTonConnect(){
     if(!window.TON_CONNECT_UI)return setTimeout(initTonConnect,500);
     tonConnectUI=new TON_CONNECT_UI.TonConnectUI({manifestUrl:'https://adspayu.vercel.app/tonconnect-manifest.json',buttonRootId:'connectBtn'});
     tonConnectUI.onStatusChange(wallet=>{
-        if(wallet){userWalletAddress=wallet.account.address;walletConnected=true;localStorage.setItem('walletConnected','true');localStorage.setItem('walletAddress',userWalletAddress)}
-        else{userWalletAddress=null;walletConnected=false;localStorage.setItem('walletConnected','false');localStorage.setItem('walletAddress','');showToast("TON Wallet Disconnected",'warning')}
+        if(wallet){
+            userWalletAddress=wallet.account.address;
+            walletConnected=true;
+            localStorage.setItem('walletConnected','true');
+            localStorage.setItem('walletAddress',userWalletAddress);
+            showToast("TON Wallet Connected!") // <-- POPUP IS BACK
+        }
+        else{
+            userWalletAddress=null;
+            walletConnected=false;
+            localStorage.setItem('walletConnected','false');
+            localStorage.setItem('walletAddress','');
+            showToast("TON Wallet Disconnected",'warning')
+        }
         setTimeout(updateConnectBtn,100);updateUI()
     })
 }
