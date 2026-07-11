@@ -12,8 +12,8 @@
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: linear-gradient(180deg, #0A2AFF 0%, #0018B3 50%, #000A4D 100%); color: #fff; padding-bottom: 90px; min-height: 100vh; background-attachment: fixed; }
 .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; position: sticky; top: 0; background: rgba(0,10,77,0.8); backdrop-filter: blur(20px); z-index: 10; }
 .topbar h1 { font-size: 18px; font-weight: 700; }
-.top-tabs { display: flex; gap: 8px; }
-.top-tab { padding: 6px 10px; background: rgba(255,255,255,0.1); border-radius: 10px; font-size: 11px; font-weight: 700; border: none; color: #fff; transition: all 0.2s; }
+.top-tabs { display: flex; gap: 10px; }
+.top-tab { padding: 6px 12px; background: rgba(255,255,255,0.1); border-radius: 10px; font-size: 12px; font-weight: 700; border: none; color: #fff; transition: all 0.2s; }
 .top-tab.active { background: #FF8A00; }
 
 .balance-card { margin: 16px; padding: 24px; background: linear-gradient(135deg, rgba(255,138,0,0.25) 0%, rgba(24,119,255,0.25) 100%); border: 1px solid rgba(255,255,255,0.15); border-radius: 24px; text-align: center; }
@@ -109,14 +109,19 @@
     <div class="topbar">
       <h1>AdsPayU</h1>
       <div class="top-tabs">
-        <button class="top-tab active" id="tabHome" onclick="showTopTab('home')">🏠 Home</button>
-        <button class="top-tab" id="tabWallet" onclick="showTopTab('wallet')">💰 Wallet</button>
+        <button class="top-tab active" id="tabWallet" onclick="showTopTab('wallet')">💰 Wallet</button>
         <button class="top-tab" id="tabProfile" onclick="showTopTab('profile')">👤 Profile</button>
       </div>
     </div>
 
-    <!-- HOME PAGE -->
+    <!-- HOME PAGE - BALANCE + ADS -->
     <div id="home" class="page active">
+      <div class="balance-card">
+        <div class="balance-label">YOUR BALANCE</div>
+        <div class="balance-apu" id="coinsHome">0 APU</div>
+        <div class="balance-usdt" id="usdtHome">0.0000 USDT</div>
+      </div>
+
       <button class="daily-claim" id="dailyClaimBtn" onclick="claimDaily()">🎁 CLAIM DAILY 50 APU</button>
 
       <div class="card">
@@ -142,12 +147,12 @@
       </div>
     </div>
 
-    <!-- WALLET PAGE -->
+    <!-- WALLET PAGE - BALANCE + BUTTONS -->
     <div id="wallet" class="page">
       <div class="balance-card">
         <div class="balance-label">YOUR BALANCE</div>
-        <div class="balance-apu" id="coins">0 APU</div>
-        <div class="balance-usdt" id="usdt">0.0000 USDT</div>
+        <div class="balance-apu" id="coinsWallet">0 APU</div>
+        <div class="balance-usdt" id="usdtWallet">0.0000 USDT</div>
       </div>
 
       <div class="btn-row">
@@ -341,8 +346,13 @@ function proceedAd() {
 
 function updateUI() {
   const usdtFromCoins = (coins * COIN_VALUE).toFixed(4);
-  document.getElementById('coins').innerText = coins.toLocaleString() + ' APU';
-  document.getElementById('usdt').innerText = usdtFromCoins + ' USDT | Wallet: ' + usdt.toFixed(2) + ' USDT';
+
+  // Update BOTH home and wallet balance
+  document.getElementById('coinsHome').innerText = coins.toLocaleString() + ' APU';
+  document.getElementById('usdtHome').innerText = usdtFromCoins + ' USDT | Wallet: ' + usdt.toFixed(2) + ' USDT';
+  document.getElementById('coinsWallet').innerText = coins.toLocaleString() + ' APU';
+  document.getElementById('usdtWallet').innerText = usdtFromCoins + ' USDT | Wallet: ' + usdt.toFixed(2) + ' USDT';
+
   document.getElementById('gigaCount').innerText = gigaWatched;
   document.getElementById('monetagCount').innerText = monetagWatched;
   document.getElementById('totalEarned').innerText = coins.toLocaleString();
