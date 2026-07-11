@@ -14,5 +14,19 @@ function trackTotalAds(){totalAdsWatched+=1;localStorage.setItem('totalAdsWatche
 function openAdmin(){document.getElementById('adminPassModal').classList.add('active')}
 function closeAdminPass(){document.getElementById('adminPassModal').classList.remove('active')}
 function checkAdminPass(){const pass=document.getElementById('adminPassInput').value;if(pass!==ADMIN_PASS)return showToast("Wrong Password",'error');closeAdminPass();showTab('admin');renderAdminRequests()}
-function renderAdminRequests(){const list=document.getElementById('reqList');const requests=JSON.parse(localStorage.getItem('withdrawRequests')||'[]');document.getElementById('totalReq').innerText=requests.length;if(requests.length===0){list.innerHTML='<div class="card"><div class="card-sub">No withdraw requests yet</div></div>';return}list.innerHTML='';requests.reverse().forEach(r=>{list.innerHTML+=`<div class="req-item"><b>Amount:</b> ${r.amount.toFixed(2)} USDT<br><b>Fee 5%:</b> ${r.fee.toFixed(4)} USDT<br><b>You Send:</b> ${r.receive.toFixed(4)} USDT<br><b>Wallet:</b> ${r.wallet}<br><b>Date:</b> ${r.date}<br><b>Status:</b> ${r.status}</div>`})}
+function renderAdminRequests(){
+    const list=document.getElementById('reqList');
+    const requests=JSON.parse(localStorage.getItem('withdrawRequests')||'[]');
+    console.log("LOADED REQUESTS:", requests);
+    document.getElementById('totalReq').innerText=requests.length;
+
+    if(requests.length===0){
+        list.innerHTML='<div class="card"><div class="card-sub">No withdraw requests yet. Storage is empty.</div></div>';
+        return
+    }
+    list.innerHTML='';
+    requests.reverse().forEach(r=>{
+        list.innerHTML+=`<div class="req-item"><b>ID:</b> ${r.id}<br><b>Amount:</b> ${r.amount.toFixed(2)} USDT<br><b>Fee 5%:</b> ${r.fee.toFixed(4)} USDT<br><b>You Send:</b> ${r.receive.toFixed(4)} USDT<br><b>Wallet:</b> ${r.wallet}<br><b>Date:</b> ${r.date}<br><b>Status:</b> ${r.status}</div>`
+    })
+}
 function clearAllReq(){if(!confirm("Delete all withdraw requests?"))return;localStorage.removeItem('withdrawRequests');renderAdminRequests();showToast("All requests cleared",'success')}
