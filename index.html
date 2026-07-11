@@ -90,6 +90,18 @@
 
   <div id="toast" class="toast"></div>
 
+  <!-- AD CONFIRM MODAL -->
+  <div class="modal" id="adConfirmModal">
+    <div class="modal-content">
+      <div class="modal-title">⚠️ Important</div>
+      <div class="modal-info">Watch the ad for at least <b>10 seconds</b> to get credit. Skipping will give no reward.</div>
+      <div class="modal-btns">
+        <button class="modal-btn btn-cancel" onclick="closeAdConfirm()">CANCEL</button>
+        <button class="modal-btn btn-confirm" onclick="proceedAd()">WATCH AD</button>
+      </div>
+    </div>
+  </div>
+
   <div id="app">
     <div class="topbar"><h1>AdsPayU</h1></div>
 
@@ -188,6 +200,8 @@ let gigaWatched = parseInt(localStorage.getItem('gigaWatched') || 0);
 let monetagWatched = parseInt(localStorage.getItem('monetagWatched') || 0);
 let totalAdsWatched = parseInt(localStorage.getItem('totalAdsWatched') || 0);
 let lastAdTime = parseInt(localStorage.getItem('lastAdTime') || 0);
+let pendingAdType = null;
+let pendingMinerId = null;
 
 let minerData = {};
 MINERS.forEach(m => {
@@ -205,6 +219,62 @@ function showToast(msg, type = 'success') {
   toast.className = 'toast ' + type;
   toast.classList.add('show');
   setTimeout(() => { toast.classList.remove('show'); }, 2500);
+}
+
+// AD CONFIRM FUNCTIONS
+function openAdConfirm(type, minerId = null) {
+  pendingAdType = type;
+  pendingMinerId = minerId;
+  document.getElementById('adConfirmModal').classList.add('active');
+}
+
+function closeAdConfirm() {
+  pendingAdType = null;
+  pendingMinerId = null;
+  document.getElementById('adConfirmModal').classList.remove('active');
+}
+
+function proceedAd() {
+  closeAdConfirm();
+
+  if(pendingAdType === 'giga') {
+    window.showGiga().then(function(){
+      giveAdReward(() => {
+        coins += REWARD_PER_AD; gigaWatched += 1;
+        trackTotalAds();
+        localStorage.setItem('coins', coins);
+        localStorage.setItem('gigaWatched', gigaWatched);
+        showToast("+2 APU Earned!", 'success');
+      });
+    }).catch(function(e){ showToast("No ads", 'error'); });
+  }
+
+  if(pendingAdType === 'monetag') {
+    window.show_11258922().then(function(){
+      giveAdReward(() => {
+        coins += REWARD_PER_AD; monetagWatched += 1;
+        trackTotalAds();
+        localStorage.setItem('coins', coins);
+        localStorage.setItem('monetagWatched', monetagWatched);
+        showToast("+2 APU Earned!", 'success');
+      });
+    }).catch(function(e){ showToast("No ads", 'error'); });
+  }
+
+  if(pendingAdType === 'miner') {
+    const data = minerData[pendingMinerId];
+    window.showGiga().then(function(){
+      giveAdReward(() => {
+        data.adsWatched += 1;
+        totalAdsWatched += 1;
+        localStorage.setItem(`miner${pendingMinerId}_adsWatched`, data.adsWatched);
+        localStorage.setItem('totalAdsWatched', totalAdsWatched);
+        coins += REWARD_PER_AD;
+        localStorage.setItem('coins', coins);
+        showToast(`+${REWARD_PER_AD} APU! ${2 - data.adsWatched} left`, 'success');
+      });
+    }).catch(function(e){ showToast("No ads available", 'error'); });
+  }
 }
 
 updateUI();
@@ -336,19 +406,7 @@ function watchAdForMiner(id) {
   const data = minerData[id];
   if(data.adsWatched >= 2) return;
   if(typeof window.showGiga === 'function'){
-    if(confirm("⚠️ Watch ad for at least 10 seconds to get credit. Click OK to continue")) {
-      window.showGiga().then(function(){
-        giveAdReward(() => {
-          data.adsWatched += 1;
-          totalAdsWatched += 1;
-          localStorage.setItem(`miner${id}_adsWatched`, data.adsWatched);
-          localStorage.setItem('totalAdsWatched', totalAdsWatched);
-          coins += REWARD_PER_AD;
-          localStorage.setItem('coins', coins);
-          showToast(`+${REWARD_PER_AD} APU! ${2 - data.adsWatched} left`, 'success');
-        });
-      }).catch(function(e){ showToast("No ads available", 'error'); });
-    }
+    openAdConfirm('miner', id);
   }
 }
 
@@ -433,43 +491,23 @@ function trackTotalAds() {
   localStorage.setItem('totalAdsWatched', totalAdsWatched);
 }
 
-// GIGAPUB WITH CONFIRM
+// GIGAPUB WITH CUSTOM CONFIRM
 document.getElementById('gigaBtn').onclick = function(){
   const now = Date.now();
   if((COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0) return showToast("Wait 5 seconds", 'warning');
   if(gigaWatched >= DAILY_LIMIT) return showToast("Giga limit reached", 'error');
   if(typeof window.showGiga === 'function'){
-    if(confirm("⚠️ Watch ad for at least 10 seconds to get credit. Click OK to continue")) {
-      window.showGiga().then(function(){
-        giveAdReward(() => {
-          coins += REWARD_PER_AD; gigaWatched += 1;
-          trackTotalAds();
-          localStorage.setItem('coins', coins);
-          localStorage.setItem('gigaWatched', gigaWatched);
-          showToast("+2 APU Earned!", 'success');
-        });
-      }).catch(function(e){ showToast("No ads", 'error'); });
-    }
+    openAdConfirm('giga');
   }
 }
 
-// MONETAG WITH CONFIRM
+// MONETAG WITH CUSTOM CONFIRM
 document.getElementById('monetagBtn').onclick = function(){
   const now = Date.now();
   if((COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0) return showToast("Wait 5 seconds", 'warning');
   if(monetagWatched >= DAILY_LIMIT) return showToast("Monetag limit reached", 'error');
   if(typeof window.show_11258922 === 'function'){
-    if(confirm("⚠️ Watch ad for at least 10 seconds to get credit. Click OK to continue")) {
-      window.show_11258922().then(function(){
-        giveAdReward(() => {
-          coins += REWARD_PER_AD; monetagWatched += 1;
-          trackTotalAds();
-          localStorage.setItem('coins', coins);
-          localStorage.setItem('monetagWatched', monetagWatched);
-          showToast("+2 APU Earned!", 'success');
-        });
-      }).catch(function(e){ showToast("No ads", 'error'); });
-    }
+    openAdConfirm('monetag');
   }
 }
 
