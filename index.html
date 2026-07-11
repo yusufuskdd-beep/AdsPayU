@@ -1,2 +1,120 @@
-<button class="btn btn-secondary" onclick="openDeposit()">DEPOSIT</button>
-<button class="btn btn-primary" onclick="openWithdraw()">WITHDRAW</button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<title>AdsPayU</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="toast" class="toast"></div>
+
+<div class="modal" id="adminPassModal"><div class="modal-content"><div class="modal-title">🔒 ADMIN LOGIN</div><div class="input-group"><label>Enter Password</label><input type="password" id="adminPassInput" placeholder="admin123"></div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeAdminPass()">CANCEL</button><button class="modal-btn btn-confirm" onclick="checkAdminPass()">LOGIN</button></div></div></div>
+
+<div class="modal" id="adConfirmModal"><div class="modal-content"><div class="modal-title">⚠️ Important</div><div class="modal-info">Watch the ad for at least <b>10 seconds</b> to get credit. Skipping will give no reward.</div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeAdConfirm()">CANCEL</button><button class="modal-btn btn-confirm" onclick="proceedAd()">WATCH AD</button></div></div></div>
+
+<div id="app">
+  <div class="topbar">
+    <h1>AdsPayU</h1>
+    <div class="top-tabs">
+      <button class="top-tab active" id="tabWallet" onclick="showTopTab('wallet')">💰 Wallet</button>
+      <button class="top-tab" id="tabProfile" onclick="showTopTab('profile')">👤 Profile</button>
+    </div>
+  </div>
+
+  <div id="home" class="page active">
+    <div class="balance-card">
+      <div class="balance-label">YOUR BALANCE</div>
+      <div class="balance-apu" id="coinsHome">0 APU</div>
+      <div class="balance-usdt" id="usdtHome">0.0000 USDT</div>
+    </div>
+    <button class="daily-claim" id="dailyClaimBtn" onclick="claimDaily()">🎁 CLAIM DAILY 50 APU</button>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🎯</div>
+        <div class="card-info">
+          <div class="card-title">GigaPub Ads</div>
+          <div class="card-sub">⚠️ Watch 10s to get credit | <span id="gigaCount">0</span>/100 today = 2 APU each</div>
+        </div>
+        <button class="btn-get" id="gigaBtn">Watch</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">💰</div>
+        <div class="card-info">
+          <div class="card-title">Monetag Ads</div>
+          <div class="card-sub">⚠️ Watch 10s to get credit | <span id="monetagCount">0</span>/100 today = 2 APU each</div>
+        </div>
+        <button class="btn-get orange" id="monetagBtn">Watch</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="wallet" class="page">
+    <div class="balance-card">
+      <div class="balance-label">YOUR BALANCE</div>
+      <div class="balance-apu" id="coinsWallet">0 APU</div>
+      <div class="balance-usdt" id="usdtWallet">0.0000 USDT</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="connectBtn">🔗 CONNECT TON</button>
+      <button class="btn btn-secondary" onclick="openDeposit()">DEPOSIT</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="openWithdraw()">WITHDRAW</button>
+      <button class="btn btn-secondary" onclick="openSwap()">SWAP</button>
+    </div>
+  </div>
+
+  <div id="profile" class="page">
+    <div class="card">
+      <div class="card-title">👤 Your Profile</div>
+      <div class="card-sub" style="margin-top:8px">User ID: <span id="userId">Guest</span></div>
+      <div class="card-sub">Username: <span id="username">-</span></div>
+      <div class="card-sub">TON Wallet: <span id="tonAddress">Not Connected</span></div>
+      <div class="card-sub">Total Earned: <span id="totalEarned">0</span> APU</div>
+      <div class="card-sub">Total Ads Watched: <span id="totalAds">0</span></div>
+    </div>
+  </div>
+
+  <div id="miner" class="page">
+    <div class="income-card">
+      <div class="income-label">TOTAL HOURLY INCOME</div>
+      <div class="income-value" id="totalIncome">0 APU/h</div>
+    </div>
+    <div id="minerList"></div>
+  </div>
+
+  <div id="admin" class="page">
+    <div class="card">
+      <div class="card-title">🛡️ ADMIN PANEL</div>
+      <div class="card-sub">Total Requests: <span id="totalReq">0</span></div>
+      <button class="btn btn-danger" style="margin-top:10px;width:100%" onclick="clearAllReq()">CLEAR ALL REQUESTS</button>
+    </div>
+    <div id="reqList"></div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-item active" onclick="showTab('home')"><span class="nav-icon">🏠</span>Home</button>
+    <button class="nav-item" onclick="showTab('miner')"><span class="nav-icon">⚡</span>Miner</button>
+    <button class="nav-item" onclick="openAdmin()"><span class="nav-icon">🛡️</span>Admin</button>
+  </div>
+</div>
+
+<div class="modal" id="swapModal"><div class="modal-content"><div class="modal-title">SWAP APU → USDT</div><div class="modal-info">Rate: 1 APU = $0.000025<br>Min Swap: 200 APU</div><div class="input-group"><label>APU Amount</label><input type="number" id="swapInput" placeholder="200" oninput="updateSwapPreview()"></div><div class="modal-info" id="swapPreview">You will receive: 0.0000 USDT</div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeSwap()">CANCEL</button><button class="modal-btn btn-confirm" onclick="confirmSwap()">SWAP</button></div></div></div>
+
+<div class="modal" id="depositModal"><div class="modal-content"><div class="modal-title">DEPOSIT USDT</div><div class="modal-info" id="tonRateText">Loading rate...</div><div class="input-group"><label>Enter TON Amount</label><input type="number" id="depositInput" step="0.1" min="0.1" placeholder="0.5"></div><div class="modal-info" id="depositPreview">You will receive: 0.00 USDT</div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeDeposit()">CANCEL</button><button class="modal-btn btn-confirm" id="depositConfirmBtn" onclick="confirmDeposit()">DEPOSIT</button></div></div></div>
+
+<div class="modal" id="withdrawModal"><div class="modal-content"><div class="modal-title">REQUEST WITHDRAW</div><div class="modal-info" id="withdrawInfo">Min: $0.50 USDT | Fee: 5%</div><div class="input-group"><label>Enter USDT Amount</label><input type="number" id="withdrawInput" step="0.01" min="0.50" placeholder="0.50"></div><div class="modal-info" id="withdrawPreview">You will receive: 0.00 USDT</div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeWithdraw()">CANCEL</button><button class="modal-btn btn-confirm" onclick="requestWithdraw()">REQUEST</button></div></div></div>
+
+<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+<script src="config.js"></script>
+<script src="ton.js"></script>
+<script src="miners.js"></script>
+<script src="app.js"></script>
+<script src="https://ad.gigapub.tech/script?id=7204" async></script>
+<script src='//libtl.com/sdk.js' data-zone='11258922' data-sdk='show_11258922' async></script>
+</body>
+</html>
