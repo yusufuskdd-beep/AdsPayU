@@ -73,7 +73,7 @@
 .modal.active { display: flex; }
 .modal-content { background: #0018B3; padding: 20px; border-radius: 20px; width: 90%; max-width: 400px; border: 1px solid rgba(255,255,255,0.2); }
 .modal-title { font-size: 20px; font-weight: 800; margin-bottom: 16px; text-align: center; }
-.modal-info { font-size: 13px; opacity: 0.8; margin-bottom: 12px; text-align: center; }
+.modal-info { font-size: 13px; opacity: 0.8; margin-bottom: 12px; text-align: center; word-break: break-all; }
 .input-group { margin-bottom: 16px; }
 .input-group label { font-size: 12px; opacity: 0.8; }
 .input-group input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: #fff; font-size: 16px; margin-top: 4px; }
@@ -123,6 +123,11 @@
       </div>
 
       <button class="daily-claim" id="dailyClaimBtn" onclick="claimDaily()">🎁 CLAIM DAILY 50 APU</button>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="connectBtn" onclick="connectWallet()">🔗 CONNECT</button>
+        <button class="btn btn-secondary" onclick="openDeposit()">DEPOSIT</button>
+      </div>
 
       <div class="btn-row">
         <button class="btn btn-primary" onclick="withdraw()">WITHDRAW</button>
@@ -179,6 +184,7 @@
     </div>
   </div>
 
+  <!-- SWAP MODAL -->
   <div class="modal" id="swapModal">
     <div class="modal-content">
       <div class="modal-title">SWAP APU → USDT</div>
@@ -195,6 +201,19 @@
     </div>
   </div>
 
+  <!-- DEPOSIT MODAL -->
+  <div class="modal" id="depositModal">
+    <div class="modal-content">
+      <div class="modal-title">DEPOSIT USDT</div>
+      <div class="modal-info">Send USDT to this address:<br><br><b style="color:#FFD600">TXXXXXXX1234YOURWALLETADDRESS</b></div>
+      <div class="modal-info">Min Deposit: 5 USDT<br>Network: TRC20</div>
+      <div class="modal-btns">
+        <button class="modal-btn btn-cancel" onclick="closeDeposit()">CLOSE</button>
+        <button class="modal-btn btn-confirm" onclick="copyWallet()">COPY ADDRESS</button>
+      </div>
+    </div>
+  </div>
+
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
@@ -206,6 +225,7 @@ const MIN_WITHDRAW = 100;
 const MIN_SWAP = 200;
 const MINER_INTERVAL = 60 * 60 * 1000;
 const COOLDOWN_TIME = 5;
+const WALLET_ADDRESS = "TXXXXXXX1234YOURWALLETADDRESS"; // CHANGE THIS
 
 const MINERS = [
   {id: 0, name: "Starter Miner", cost: 0, reward: 28, icon: "🎁", roi: "Free", type: "starter", unlockAds: 200},
@@ -222,6 +242,7 @@ let gigaWatched = parseInt(localStorage.getItem('gigaWatched') || 0);
 let monetagWatched = parseInt(localStorage.getItem('monetagWatched') || 0);
 let totalAdsWatched = parseInt(localStorage.getItem('totalAdsWatched') || 0);
 let lastAdTime = parseInt(localStorage.getItem('lastAdTime') || 0);
+let walletConnected = localStorage.getItem('walletConnected') === 'true';
 let pendingAdType = null;
 let pendingMinerId = null;
 
@@ -241,6 +262,7 @@ function init() {
   checkDaily();
   renderMiners();
   updateTotalIncome();
+  updateConnectBtn();
   setInterval(updateAllMiners, 1000);
   document.getElementById('userId').innerText = tg.initDataUnsafe?.user?.id || 'Guest';
   document.getElementById('username').innerText = tg.initDataUnsafe?.user?.username || '-';
@@ -261,6 +283,42 @@ function showTopTab(id) {
   document.querySelectorAll('.top-tab').forEach(t => t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   document.getElementById('tab' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('active');
+}
+
+// WALLET FUNCTIONS
+function connectWallet() {
+  walletConnected =!walletConnected;
+  localStorage.setItem('walletConnected', walletConnected);
+  if(walletConnected) {
+    showToast("Wallet Connected!", 'success');
+  } else {
+    showToast("Wallet Disconnected", 'warning');
+  }
+  updateConnectBtn();
+}
+
+function updateConnectBtn() {
+  const btn = document.getElementById('connectBtn');
+  if(walletConnected) {
+    btn.innerText = "✅ CONNECTED";
+    btn.style.background = "#00C853";
+  } else {
+    btn.innerText = "🔗 CONNECT";
+    btn.style.background = "#FF8A00";
+  }
+}
+
+function openDeposit() {
+  document.getElementById('depositModal').classList.add('active');
+}
+
+function closeDeposit() {
+  document.getElementById('depositModal').classList.remove('active');
+}
+
+function copyWallet() {
+  navigator.clipboard.writeText(WALLET_ADDRESS);
+  showToast("Address Copied!", 'success');
 }
 
 // AD CONFIRM FUNCTIONS
@@ -559,6 +617,7 @@ function showTab(id){
 }
 
 function withdraw(){
+  if(!walletConnected) return showToast("Connect wallet first", 'warning');
   if(coins < MIN_WITHDRAW) {
     showToast("Minimum withdraw is " + MIN_WITHDRAW + " APU", 'error');
     return;
