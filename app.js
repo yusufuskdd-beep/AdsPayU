@@ -3,6 +3,10 @@ function init(){
     setInterval(updateAllMiners,1e3);
     const uid=document.getElementById('userId');if(uid)uid.innerText=tg.initDataUnsafe?.user?.id||'Guest';
     const un=document.getElementById('username');if(un)un.innerText=tg.initDataUnsafe?.user?.username||'-'
+    
+    // BIND WALLET BUTTONS AFTER PAGE LOADS
+    document.getElementById('depositBtn').onclick=openDeposit;
+    document.getElementById('withdrawBtn').onclick=openWithdraw;
 }
 function giveAdReward(callback){lastAdTime=Date.now();localStorage.setItem('lastAdTime',lastAdTime);callback();updateUI();renderMiners()}
 function updateUI(){const usdtFromCoins=(coins*COIN_VALUE).toFixed(4);document.getElementById('coinsHome').innerText=coins.toLocaleString()+' APU';document.getElementById('usdtHome').innerText=usdtFromCoins+' USDT | Wallet: '+usdt.toFixed(2)+' USDT';document.getElementById('coinsWallet').innerText=coins.toLocaleString()+' APU';document.getElementById('usdtWallet').innerText=usdtFromCoins+' USDT | Wallet: '+usdt.toFixed(2)+' USDT';document.getElementById('gigaCount').innerText=gigaWatched;document.getElementById('monetagCount').innerText=monetagWatched;document.getElementById('totalEarned').innerText=coins.toLocaleString();document.getElementById('totalAds').innerText=totalAdsWatched;checkCooldown()}
