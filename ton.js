@@ -10,4 +10,23 @@ function openWithdraw(){if(!walletConnected)return showToast("Connect TON wallet
 function closeWithdraw(){document.getElementById('withdrawModal').classList.remove('active')}
 document.getElementById('withdrawInput').oninput=updateWithdrawPreview;
 function updateWithdrawPreview(){const amount=parseFloat(document.getElementById('withdrawInput').value)||0;const fee=amount*0.05;const receive=(amount-fee).toFixed(4);document.getElementById('withdrawPreview').innerText=`Fee: ${fee.toFixed(4)} USDT | You will receive: ${receive} USDT`}
-function requestWithdraw(){const amount=parseFloat(document.getElementById('withdrawInput').value)||0;if(amount<0.5)return showToast("Minimum withdraw is $0.50 USDT",'error');if(amount>usdt)return showToast("Not enough USDT balance",'error');const fee=amount*0.05;const receive=amount-fee;const request={id:Date.now(),amount:amount,fee:fee,receive:receive,wallet:userWalletAddress,date:new Date().toLocaleString(),status:"pending"};let requests=JSON.parse(localStorage.getItem('withdrawRequests')||'[]');requests.push(request);localStorage.setItem('withdrawRequests',JSON.stringify(requests));usdt-=amount;localStorage.setItem('usdt',usdt);updateUI();closeWithdraw();showToast(`Withdraw request for ${receive.toFixed(4)} USDT submitted!`,'success')}
+function requestWithdraw(){
+    const amount=parseFloat(document.getElementById('withdrawInput').value)||0;
+    if(amount<0.5)return showToast("Minimum withdraw is $0.50 USDT",'error');
+    if(amount>usdt)return showToast("Not enough USDT balance",'error');
+    if(!userWalletAddress)return showToast("Connect wallet first",'error');
+
+    const fee=amount*0.05;
+    const receive=amount-fee;
+    const request={id:Date.now(),amount:amount,fee:fee,receive:receive,wallet:userWalletAddress,date:new Date().toLocaleString(),status:"pending"};
+
+    let requests=JSON.parse(localStorage.getItem('withdrawRequests')||'[]');
+    requests.push(request);
+    localStorage.setItem('withdrawRequests',JSON.stringify(requests));
+
+    usdt-=amount;
+    localStorage.setItem('usdt',usdt);
+    updateUI();closeWithdraw();
+    showToast(`Request Sent! ID: ${request.id}`,'success');
+    console.log("SAVED REQUEST:", request);
+}
