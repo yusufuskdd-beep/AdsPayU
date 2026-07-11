@@ -12,6 +12,9 @@
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: linear-gradient(180deg, #0A2AFF 0%, #0018B3 50%, #000A4D 100%); color: #fff; padding-bottom: 90px; min-height: 100vh; background-attachment: fixed; }
 .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; position: sticky; top: 0; background: rgba(0,10,77,0.8); backdrop-filter: blur(20px); z-index: 10; }
 .topbar h1 { font-size: 18px; font-weight: 700; }
+.top-tabs { display: flex; gap: 10px; }
+.top-tab { padding: 6px 12px; background: rgba(255,255,255,0.1); border-radius: 10px; font-size: 12px; font-weight: 700; border: none; color: #fff; transition: all 0.2s; }
+.top-tab.active { background: #FF8A00; }
 
 .balance-card { margin: 16px; padding: 24px; background: linear-gradient(135deg, rgba(255,138,0,0.25) 0%, rgba(24,119,255,0.25) 100%); border: 1px solid rgba(255,255,255,0.15); border-radius: 24px; text-align: center; }
 .balance-label { font-size: 12px; opacity: 0.8; }
@@ -103,22 +106,29 @@
   </div>
 
   <div id="app">
-    <div class="topbar"><h1>AdsPayU</h1></div>
-
-    <div class="balance-card">
-      <div class="balance-label">YOUR BALANCE</div>
-      <div class="balance-apu" id="coins">0 APU</div>
-      <div class="balance-usdt" id="usdt">0.0000 USDT</div>
+    <div class="topbar">
+      <h1>AdsPayU</h1>
+      <div class="top-tabs">
+        <button class="top-tab active" id="tabWallet" onclick="showTopTab('wallet')">💰 Wallet</button>
+        <button class="top-tab" id="tabProfile" onclick="showTopTab('profile')">👤 Profile</button>
+      </div>
     </div>
 
-    <button class="daily-claim" id="dailyClaimBtn" onclick="claimDaily()">🎁 CLAIM DAILY 50 APU</button>
+    <!-- WALLET PAGE -->
+    <div id="wallet" class="page active">
+      <div class="balance-card">
+        <div class="balance-label">YOUR BALANCE</div>
+        <div class="balance-apu" id="coins">0 APU</div>
+        <div class="balance-usdt" id="usdt">0.0000 USDT</div>
+      </div>
 
-    <div class="btn-row">
-      <button class="btn btn-primary" onclick="withdraw()">WITHDRAW</button>
-      <button class="btn btn-secondary" onclick="openSwap()">SWAP</button>
-    </div>
+      <button class="daily-claim" id="dailyClaimBtn" onclick="claimDaily()">🎁 CLAIM DAILY 50 APU</button>
 
-    <div id="home" class="page active">
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="withdraw()">WITHDRAW</button>
+        <button class="btn btn-secondary" onclick="openSwap()">SWAP</button>
+      </div>
+
       <div class="card">
         <div class="card-header">
           <div class="card-icon">🎯</div>
@@ -142,6 +152,18 @@
       </div>
     </div>
 
+    <!-- PROFILE PAGE -->
+    <div id="profile" class="page">
+      <div class="card">
+        <div class="card-title">👤 Your Profile</div>
+        <div class="card-sub" style="margin-top:8px">User ID: <span id="userId">Guest</span></div>
+        <div class="card-sub">Username: <span id="username">-</span></div>
+        <div class="card-sub">Total Earned: <span id="totalEarned">0</span> APU</div>
+        <div class="card-sub">Total Ads Watched: <span id="totalAds">0</span></div>
+      </div>
+    </div>
+
+    <!-- MINER PAGE -->
     <div id="miner" class="page">
       <div class="income-card">
         <div class="income-label">TOTAL HOURLY INCOME</div>
@@ -151,7 +173,7 @@
     </div>
 
     <div class="bottom-nav">
-      <button class="nav-item active" onclick="showTab('home')"><span class="nav-icon">🏠</span>Home</button>
+      <button class="nav-item active" onclick="showTab('wallet')"><span class="nav-icon">🏠</span>Home</button>
       <button class="nav-item" onclick="showTab('miner')"><span class="nav-icon">⚡</span>Miner</button>
       <button class="nav-item" onclick="showTab('rank')"><span class="nav-icon">🏆</span>Rank</button>
     </div>
@@ -212,6 +234,18 @@ MINERS.forEach(m => {
   }
 });
 
+init();
+
+function init() {
+  updateUI();
+  checkDaily();
+  renderMiners();
+  updateTotalIncome();
+  setInterval(updateAllMiners, 1000);
+  document.getElementById('userId').innerText = tg.initDataUnsafe?.user?.id || 'Guest';
+  document.getElementById('username').innerText = tg.initDataUnsafe?.user?.username || '-';
+}
+
 // CUSTOM TOAST FUNCTION
 function showToast(msg, type = 'success') {
   const toast = document.getElementById('toast');
@@ -221,7 +255,15 @@ function showToast(msg, type = 'success') {
   setTimeout(() => { toast.classList.remove('show'); }, 2500);
 }
 
-// AD CONFIRM FUNCTIONS - FIXED FOR TELEGRAM
+// TOP TAB FUNCTION
+function showTopTab(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.top-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('tab' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('active');
+}
+
+// AD CONFIRM FUNCTIONS
 function openAdConfirm(type, minerId = null) {
   pendingAdType = type;
   pendingMinerId = minerId;
@@ -285,18 +327,14 @@ function proceedAd() {
   }
 }
 
-updateUI();
-checkDaily();
-renderMiners();
-updateTotalIncome();
-setInterval(updateAllMiners, 1000);
-
 function updateUI() {
   const usdtFromCoins = (coins * COIN_VALUE).toFixed(4);
   document.getElementById('coins').innerText = coins.toLocaleString() + ' APU';
   document.getElementById('usdt').innerText = usdtFromCoins + ' USDT | Wallet: ' + usdt.toFixed(2) + ' USDT';
   document.getElementById('gigaCount').innerText = gigaWatched;
   document.getElementById('monetagCount').innerText = monetagWatched;
+  document.getElementById('totalEarned').innerText = coins.toLocaleString();
+  document.getElementById('totalAds').innerText = totalAdsWatched;
   checkCooldown();
 }
 
