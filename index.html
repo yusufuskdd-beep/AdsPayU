@@ -337,6 +337,7 @@ function giveAdReward(callback) {
   renderMiners();
 }
 
+// UPDATED: USE onRewarded INSTEAD OF.then()
 function watchAdForMiner(id) {
   const now = Date.now();
   if((COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0) return alert("Wait 5 seconds before watching another ad");
@@ -344,17 +345,22 @@ function watchAdForMiner(id) {
   const data = minerData[id];
   if(data.adsWatched >= 2) return;
   if(typeof window.showGiga === 'function'){
-    window.showGiga().then(function(){ // REWARD INSTANT AFTER AD
-      giveAdReward(() => {
-        data.adsWatched += 1;
-        totalAdsWatched += 1;
-        localStorage.setItem(`miner${id}_adsWatched`, data.adsWatched);
-        localStorage.setItem('totalAdsWatched', totalAdsWatched);
-        coins += REWARD_PER_AD;
-        localStorage.setItem('coins', coins);
-        alert(`Ad Completed! +${REWARD_PER_AD} APU. ${2 - data.adsWatched} left to claim miner`);
-      });
-    }).catch(function(e){ alert("No ads available"); });
+    window.showGiga({
+      onRewarded: function() { // ONLY IF FULL WATCH
+        giveAdReward(() => {
+          data.adsWatched += 1;
+          totalAdsWatched += 1;
+          localStorage.setItem(`miner${id}_adsWatched`, data.adsWatched);
+          localStorage.setItem('totalAdsWatched', totalAdsWatched);
+          coins += REWARD_PER_AD;
+          localStorage.setItem('coins', coins);
+          alert(`Ad Completed! +${REWARD_PER_AD} APU. ${2 - data.adsWatched} left to claim miner`);
+        });
+      },
+      onClose: function() { // IF SKIP/CLICK
+        alert("Ad not completed. No reward");
+      }
+    });
   } else { alert("Ad SDK not loaded"); }
 }
 
@@ -448,15 +454,20 @@ document.getElementById('gigaBtn').onclick = function(){
   if((COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0) return alert("Wait 5 seconds before watching another ad");
   if(gigaWatched >= DAILY_LIMIT) return alert("Giga limit reached");
   if(typeof window.showGiga === 'function'){
-    window.showGiga().then(function(){ // REWARD INSTANT
-      giveAdReward(() => {
-        coins += REWARD_PER_AD; gigaWatched += 1;
-        trackTotalAds();
-        localStorage.setItem('coins', coins);
-        localStorage.setItem('gigaWatched', gigaWatched);
-        alert("+2 APU Earned!");
-      });
-    }).catch(function(e){ alert("No ads"); });
+    window.showGiga({
+      onRewarded: function(){ // ONLY IF FULL WATCH
+        giveAdReward(() => {
+          coins += REWARD_PER_AD; gigaWatched += 1;
+          trackTotalAds();
+          localStorage.setItem('coins', coins);
+          localStorage.setItem('gigaWatched', gigaWatched);
+          alert("+2 APU Earned!");
+        });
+      },
+      onClose: function(){
+        alert("Ad not completed. No reward");
+      }
+    });
   } else { alert("Giga not loaded"); }
 }
 
@@ -465,7 +476,7 @@ document.getElementById('monetagBtn').onclick = function(){
   if((COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0) return alert("Wait 5 seconds before watching another ad");
   if(monetagWatched >= DAILY_LIMIT) return alert("Monetag limit reached");
   if(typeof window.show_11258922 === 'function'){
-    window.show_11258922().then(function(){ // REWARD INSTANT
+    window.show_11258922().then(function(){ // Monetag doesn't have onRewarded in web SDK
       giveAdReward(() => {
         coins += REWARD_PER_AD; monetagWatched += 1;
         trackTotalAds();
