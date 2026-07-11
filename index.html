@@ -1,3 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://ad.gigapub.tech/script?id=7204"></script>
+<script src='//libtl.com/sdk.js' data-zone='11258922' data-sdk='show_11258922'></script>
+<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+<title>AdsPayU</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: linear-gradient(180deg, #0A2AFF 0%, #0018B3 50%, #000A4D 100%); color: #fff; padding-bottom: 90px; min-height: 100vh; background-attachment: fixed; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; position: sticky; top: 0; background: rgba(0,10,77,0.8); backdrop-filter: blur(20px); z-index: 10; }
+.topbar h1 { font-size: 18px; font-weight: 700; }
+.top-tabs { display: flex; gap: 10px; }
+.top-tab { padding: 6px 12px; background: rgba(255,255,255,0.1); border-radius: 10px; font-size: 12px; font-weight: 700; border: none; color: #fff; transition: all 0.2s; }
+.top-tab.active { background: #FF8A00; }
+
+.balance-card { margin: 16px; padding: 24px; background: linear-gradient(135deg, rgba(255,138,0,0.25) 0%, rgba(24,119,255,0.25) 100%); border: 1px solid rgba(255,255,255,0.15); border-radius: 24px; text-align: center; }
+.balance-label { font-size: 12px; opacity: 0.8; }
+.balance-apu { font-size: 40px; font-weight: 800; margin: 8px 0; color: #FFD600; }
+.balance-usdt { font-size: 14px; opacity: 0.8; }
+.daily-claim { margin: 0 16px 16px; padding: 14px; background: #00C853; border: none; border-radius: 14px; color: #fff; font-size: 16px; font-weight: 800; width: calc(100% - 32px); transition: all 0.2s; }
+.daily-claim:disabled { background: #333; opacity: 0.6; }
+
+.income-card { margin: 0 16px 16px; padding: 16px; background: linear-gradient(135deg, rgba(0,200,83,0.25) 0%, rgba(24,119,255,0.25) 100%); border: 1px solid rgba(0,200,83,0.4); border-radius: 16px; text-align: center; }
+.income-label { font-size: 12px; opacity: 0.8; }
+.income-value { font-size: 28px; font-weight: 800; color: #00FF88; margin: 4px 0; }
+
+.miner-card { margin: 0 16px 12px; padding: 16px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; }
+.miner-card.active { background: rgba(255,138,0,0.15); border: 1px solid rgba(255,138,0,0.4); }
+.miner-card.starter { background: rgba(0,200,83,0.15); border: 1px solid rgba(0,200,83,0.4); }
+.miner-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.miner-name { font-size: 16px; font-weight: 800; }
+.miner-status { font-size: 11px; padding: 4px 8px; border-radius: 8px; background: #333; }
+.miner-status.active { background: #00C853; }
+.miner-info { font-size: 12px; opacity: 0.8; margin: 6px 0; }
+.miner-roi { font-size: 11px; color: #00FF88; font-weight: 700; }
+.miner-progress { font-size: 20px; font-weight: 800; color: #FFD600; text-align: center; margin: 8px 0; }
+
+.progress-bar { width: 100%; height: 8px; background: rgba(0,0,0,0.3); border-radius: 10px; overflow: hidden; margin: 8px 0; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #00C853 0%, #00FF88 100%); border-radius: 10px; transition: width 0.3s; }
+.progress-text { font-size: 11px; text-align: center; opacity: 0.8; }
+
+.miner-btns { display: flex; gap: 8px; }
+.miner-btn { flex: 1; padding: 12px; border: none; border-radius: 12px; font-size: 14px; font-weight: 800; }
+.btn-buy { background: #FF8A00; color: #fff; width: 100%; }
+.btn-ad { background: #1877FF; color: #fff; }
+.btn-claim { background: #00C853; color: #fff; }
+.miner-btn:disabled { background: #333; opacity: 0.6; }
+
+.btn-row { display: flex; gap: 10px; padding: 0 16px 20px; }
+.btn { flex: 1; padding: 14px; border: none; border-radius: 14px; font-size: 15px; font-weight: 700; }
+.btn-primary { background: #FF8A00; color: #fff; }
+.btn-secondary { background: rgba(255,255,255,0.1); color: #fff; }
+.page { display: none; padding: 0 16px; }
+.page.active { display: block; }
+.card { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+.card-header { display: flex; align-items: center; gap: 12px; }
+.card-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 22px; }
+.card-info { flex: 1; }
+.card-title { font-size: 15px; font-weight: 700; }
+.card-sub { font-size: 12px; opacity: 0.7; color: #FFA500; }
+.btn-get { padding: 10px 18px; background: #1877FF; border: none; border-radius: 10px; color: #fff; font-weight: 700; }
+.btn-get.orange { background: #FF8A00; }
+.btn-get:disabled { background: #333; opacity: 0.5; }
+.bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,10,20,0.85); border-radius: 30px; padding: 8px; display: flex; gap: 8px; }
+.nav-item { text-align: center; font-size: 10px; opacity: 0.6; background: none; border: none; color: #fff; padding: 4px 6px; }
+.nav-item.active { opacity: 1; color: #FF8A00; }
+.nav-icon { font-size: 20px; display: block; }
+
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center; }
+.modal.active { display: flex; }
+.modal-content { background: #0018B3; padding: 20px; border-radius: 20px; width: 90%; max-width: 400px; border: 1px solid rgba(255,255,255,0.2); }
+.modal-title { font-size: 20px; font-weight: 800; margin-bottom: 16px; text-align: center; }
+.modal-info { font-size: 13px; opacity: 0.8; margin-bottom: 12px; text-align: center; word-break: break-all; }
+.input-group { margin-bottom: 16px; }
+.input-group label { font-size: 12px; opacity: 0.8; }
+.input-group input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: #fff; font-size: 16px; margin-top: 4px; }
+.modal-btns { display: flex; gap: 10px; }
+.modal-btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 16px; font-weight: 800; }
+.btn-confirm { background: #00C853; color: #fff; }
+.btn-cancel { background: #333; color: #fff; }
+
+/* CUSTOM TOAST POPUP */
+.toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-100px); background: #00C853; padding: 14px 20px; border-radius: 14px; font-weight: 700; z-index: 999; opacity: 0; transition: all 0.3s; box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast.error { background: #FF3B30; }
+.toast.warning { background: #FF8A00; }
+</style>
+</head>
 <body>
 
   <div id="toast" class="toast"></div>
@@ -23,7 +115,7 @@
       </div>
     </div>
 
-    <!-- HOME PAGE -->
+    <!-- HOME PAGE - BALANCE + ADS -->
     <div id="home" class="page active">
       <div class="balance-card">
         <div class="balance-label">YOUR BALANCE</div>
@@ -56,7 +148,7 @@
       </div>
     </div>
 
-    <!-- WALLET PAGE -->
+    <!-- WALLET PAGE - BALANCE + BUTTONS -->
     <div id="wallet" class="page">
       <div class="balance-card">
         <div class="balance-label">YOUR BALANCE</div>
@@ -120,25 +212,22 @@
     </div>
   </div>
 
-  <!-- NEW DEPOSIT MODAL WITH TON -->
+  <!-- DEPOSIT MODAL -->
   <div class="modal" id="depositModal">
     <div class="modal-content">
       <div class="modal-title">DEPOSIT USDT</div>
-      <div class="modal-info" id="tonRateText">Loading rate...</div>
-      <div class="input-group">
-        <label>Enter TON Amount</label>
-        <input type="number" id="depositInput" step="0.1" min="0.1" placeholder="0.5">
-      </div>
-      <div class="modal-info" id="depositPreview">You will receive: 0.00 USDT</div>
+      <div class="modal-info">Send USDT to this address:<br><br><b style="color:#FFD600">TXXXXXXX1234YOURWALLETADDRESS</b></div>
+      <div class="modal-info">Min Deposit: 5 USDT<br>Network: TRC20</div>
       <div class="modal-btns">
-        <button class="modal-btn btn-cancel" onclick="closeDeposit()">CANCEL</button>
-        <button class="modal-btn btn-confirm" id="depositConfirmBtn" onclick="confirmDeposit()">DEPOSIT</button>
+        <button class="modal-btn btn-cancel" onclick="closeDeposit()">CLOSE</button>
+        <button class="modal-btn btn-confirm" onclick="copyWallet()">COPY ADDRESS</button>
       </div>
     </div>
   </div>
 
-<!-- PART 2 SCRIPT BELOW -->
-<script>const tg = window.Telegram.WebApp;
+<!-- PART 2 COMING NEXT: ALL JAVASCRIPT -->
+<script>
+const tg = window.Telegram.WebApp;
 tg.expand();
 
 const COIN_VALUE = 0.000025;
@@ -148,9 +237,7 @@ const MIN_WITHDRAW = 100;
 const MIN_SWAP = 200;
 const MINER_INTERVAL = 60 * 60 * 1000;
 const COOLDOWN_TIME = 5;
-
-// YOUR TON WALLET - THIS IS WHERE USERS SEND TON
-const YOUR_TON_WALLET = "UQCnRX9PZUv8GAyv4kz4OZ3u8r0vA-CcUu-lzunVsTNIo7sw";
+const WALLET_ADDRESS = "TXXXXXXX1234YOURWALLETADDRESS";
 
 // TON CONNECT VARS
 let tonConnectUI;
@@ -174,7 +261,6 @@ let totalAdsWatched = parseInt(localStorage.getItem('totalAdsWatched') || 0);
 let lastAdTime = parseInt(localStorage.getItem('lastAdTime') || 0);
 let pendingAdType = null;
 let pendingMinerId = null;
-let currentTonPrice = 3.50; // fallback
 
 let minerData = {};
 MINERS.forEach(m => {
@@ -187,84 +273,21 @@ MINERS.forEach(m => {
 
 init();
 
-async function init() {
+function init() {
   updateUI();
   checkDaily();
   renderMiners();
   updateTotalIncome();
-  await loadTonPrice();
-  initTonConnect();
+  initTonConnect(); // INIT TON
   setInterval(updateAllMiners, 1000);
   document.getElementById('userId').innerText = tg.initDataUnsafe?.user?.id || 'Guest';
   document.getElementById('username').innerText = tg.initDataUnsafe?.user?.username || '-';
 }
 
-// ========== TON PRICE + DEPOSIT ==========
-async function loadTonPrice() {
-  try {
-    const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd');
-    const data = await res.json();
-    currentTonPrice = data['the-open-network'].usd;
-  } catch {}
-  document.getElementById('tonRateText').innerText = `Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT\nSend TON to your in-game balance`;
-}
-
-function openDeposit() {
-  loadTonPrice();
-  document.getElementById('depositInput').value = "0.5";
-  updateDepositPreview();
-  document.getElementById('depositModal').classList.add('active');
-}
-function closeDeposit() { document.getElementById('depositModal').classList.remove('active'); }
-
-document.getElementById('depositInput').oninput = updateDepositPreview;
-function updateDepositPreview() {
-  const ton = parseFloat(document.getElementById('depositInput').value) || 0;
-  const usdtValue = (ton * currentTonPrice).toFixed(2);
-  document.getElementById('depositPreview').innerText = `You will receive: ${usdtValue} USDT`;
-}
-
-async function confirmDeposit() {
-  if(!walletConnected) return showToast("Connect TON wallet first", 'error');
-  const amountTON = parseFloat(document.getElementById('depositInput').value);
-  if(!amountTON || amountTON < 0.1) return showToast("Min deposit 0.1 TON", 'error');
-
-  const usdtToReceive = (amountTON * currentTonPrice).toFixed(2);
-  if(!confirm(`Send ${amountTON} TON = ${usdtToReceive} USDT?\n\nTo: ${YOUR_TON_WALLET}`)) return;
-
-  document.getElementById('depositConfirmBtn').disabled = true;
-  const amountNano = (amountTON * 1000000000).toString();
-
-  const transaction = {
-    validUntil: Math.floor(Date.now() / 1000) + 600,
-    messages: [{
-      address: YOUR_TON_WALLET,
-      amount: amountNano,
-      payload: userWalletAddress // we tag it with user address
-    }]
-  };
-
-  try {
-    await tonConnectUI.sendTransaction(transaction);
-    showToast(`Sent ${amountTON} TON! Crediting...`, 'success');
-    // Credit instantly for now. In production verify with TonAPI
-    setTimeout(() => {
-      usdt += parseFloat(usdtToReceive);
-      localStorage.setItem('usdt', usdt);
-      updateUI();
-      closeDeposit();
-      showToast(`+${usdtToReceive} USDT Credited!`, 'success');
-    }, 15000);
-  } catch (e) {
-    showToast("Transaction cancelled", 'error');
-  }
-  document.getElementById('depositConfirmBtn').disabled = false;
-}
-
-// ========== TON CONNECT ==========
+// TON CONNECT FUNCTIONS
 function initTonConnect() {
   tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-      manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json',
+      manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json', // CHANGE THIS TO YOUR REAL URL
       buttonRootId: 'connectBtn'
   });
 
@@ -304,7 +327,6 @@ function updateConnectBtn() {
   }
 }
 
-// ========== REST OF YOUR CODE ==========
 function showToast(msg, type = 'success') {
   const toast = document.getElementById('toast');
   toast.innerText = msg;
@@ -319,6 +341,10 @@ function showTopTab(id) {
   document.getElementById(id).classList.add('active');
   document.getElementById('tab' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('active');
 }
+
+function openDeposit() { document.getElementById('depositModal').classList.add('active'); }
+function closeDeposit() { document.getElementById('depositModal').classList.remove('active'); }
+function copyWallet() { navigator.clipboard.writeText(WALLET_ADDRESS); showToast("Address Copied!", 'success'); }
 
 function openAdConfirm(type, minerId = null) {
   pendingAdType = type; pendingMinerId = minerId;
