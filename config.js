@@ -14,4 +14,4 @@ let lastAdTime=parseInt(localStorage.getItem('lastAdTime')||0);
 
 let tonConnectUI,userWalletAddress=localStorage.getItem('walletAddress')||null,walletConnected=localStorage.getItem('walletConnected')==='true';
 let pendingAdType=null,pendingMinerId=null,currentTonPrice=3.5;let minerData={};
-MINERS.forEach(m=>{minerData[m.id]={owned:localStorage.getItem(`miner${m.id}_owned`)==='true',lastClaim:parseInt(localStorage.getItem(`miner${m.id}_lastClaim`)||0),adsWatched:parseInt(localStorage.getItem(`miner${m.id}_adsWatched`)||0)}});
+MINERS.forEach(m=>{minerData[m.id]={owned:localStorage.getItem(`miner${m.id}_owned`)==='true',lastClaim:parseInt(localStorage.getItem(`miner${m.id}_lastClaim`)||0),adsWatched:parseInt(localStorage.getItem(`miner${m.id}_adsWatched`)||0)}}); 
