@@ -12,6 +12,7 @@
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: linear-gradient(180deg, #0A2AFF 0%, #0018B3 50%, #000A4D 100%); color: #fff; padding-bottom: 90px; min-height: 100vh; background-attachment: fixed; }
 .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; position: sticky; top: 0; background: rgba(0,10,77,0.8); backdrop-filter: blur(20px); z-index: 10; }
 .topbar h1 { font-size: 18px; font-weight: 700; }
+
 .balance-card { margin: 16px; padding: 24px; background: linear-gradient(135deg, rgba(255,138,0,0.25) 0%, rgba(24,119,255,0.25) 100%); border: 1px solid rgba(255,255,255,0.15); border-radius: 24px; text-align: center; }
 .balance-label { font-size: 12px; opacity: 0.8; }
 .balance-apu { font-size: 40px; font-weight: 800; margin: 8px 0; color: #FFD600; }
@@ -56,7 +57,7 @@
 .card-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 22px; }
 .card-info { flex: 1; }
 .card-title { font-size: 15px; font-weight: 700; }
-.card-sub { font-size: 12px; opacity: 0.7; color: #FFA500; } /* Made it orange for warning */
+.card-sub { font-size: 12px; opacity: 0.7; color: #FFA500; }
 .btn-get { padding: 10px 18px; background: #1877FF; border: none; border-radius: 10px; color: #fff; font-weight: 700; }
 .btn-get.orange { background: #FF8A00; }
 .btn-get:disabled { background: #333; opacity: 0.5; }
@@ -77,9 +78,17 @@
 .modal-btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 16px; font-weight: 800; }
 .btn-confirm { background: #00C853; color: #fff; }
 .btn-cancel { background: #333; color: #fff; }
+
+/* CUSTOM TOAST POPUP - STEP 1 */
+.toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-100px); background: #00C853; padding: 14px 20px; border-radius: 14px; font-weight: 700; z-index: 999; opacity: 0; transition: all 0.3s; box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast.error { background: #FF3B30; }
+.toast.warning { background: #FF8A00; }
 </style>
 </head>
 <body>
+
+  <div id="toast" class="toast"></div>
 
   <div id="app">
     <div class="topbar"><h1>AdsPayU</h1></div>
@@ -189,6 +198,15 @@ MINERS.forEach(m => {
   }
 });
 
+// CUSTOM TOAST FUNCTION - STEP 1
+function showToast(msg, type = 'success') {
+  const toast = document.getElementById('toast');
+  toast.innerText = msg;
+  toast.className = 'toast ' + type;
+  toast.classList.add('show');
+  setTimeout(() => { toast.classList.remove('show'); }, 2500);
+}
+
 updateUI();
 checkDaily();
 renderMiners();
@@ -249,10 +267,7 @@ function renderMiners() {
       cardClass += ' starter';
       const progress = Math.min(totalAdsWatched, m.unlockAds);
       const percent = (progress / m.unlockAds) * 100;
-      extraHTML = `
-        <div class="progress-bar"><div class="progress-fill" style="width: ${percent}%"></div></div>
-        <div class="progress-text">${progress}/${m.unlockAds} Ads Watched</div>
-      `;
+      extraHTML = `<div class="progress-bar"><div class="progress-fill" style="width: ${percent}%"></div></div><div class="progress-text">${progress}/${m.unlockAds} Ads Watched</div>`;
       if(!data.owned) {
         if(totalAdsWatched >= m.unlockAds) {
           buttons = `<button class="miner-btn btn-buy" onclick="unlockStarter()">UNLOCK FREE</button>`;
@@ -274,32 +289,10 @@ function renderMiners() {
     }
 
     if(data.owned && isReady) {
-      buttons = `
-        <div class="miner-btns">
-          <button class="miner-btn btn-ad" onclick="watchAdForMiner(${m.id})" ${data.adsWatched >= 2 || onCooldown? 'disabled' : ''}>
-            ${onCooldown? 'WAIT 5s' : `WATCH AD ${data.adsWatched}/2`}
-          </button>
-          <button class="miner-btn btn-claim" onclick="claimMiner(${m.id})" ${!canClaim? 'disabled' : ''}>
-            CLAIM ${m.reward}
-          </button>
-        </div>
-      `;
+      buttons = `<div class="miner-btns"><button class="miner-btn btn-ad" onclick="watchAdForMiner(${m.id})" ${data.adsWatched >= 2 || onCooldown? 'disabled' : ''}>${onCooldown? 'WAIT 5s' : `WATCH AD ${data.adsWatched}/2`}</button><button class="miner-btn btn-claim" onclick="claimMiner(${m.id})" ${!canClaim? 'disabled' : ''}>CLAIM ${m.reward}</button></div>`;
     }
 
-    const card = `
-      <div class="${cardClass} ${data.owned? 'active' : ''}">
-        <div class="miner-header">
-          <div class="miner-name">${m.icon} ${m.name}</div>
-          <div class="miner-status ${data.owned? 'active' : ''}">${data.owned? 'ACTIVE' : 'LOCKED'}</div>
-        </div>
-        <div class="miner-info">Cost: ${m.cost > 0? '$'+m.cost.toFixed(2) : '200 Total Ads'} | Earn: ${m.reward} APU/hour</div>
-        <div class="miner-roi">ROI: ${m.roi} in 30 days ${daysToROI!== 'N/A'? '| Break-even: ~'+daysToROI+' days' : ''}</div>
-        ${extraHTML}
-        <div class="miner-progress">${isReady? m.reward + '/'+m.reward+' APU' : '0/'+m.reward+' APU'}</div>
-        ${buttons}
-      </div>
-    `;
-    container.innerHTML += card;
+    container.innerHTML += `<div class="${cardClass} ${data.owned? 'active' : ''}"><div class="miner-header"><div class="miner-name">${m.icon} ${m.name}</div><div class="miner-status ${data.owned? 'active' : ''}">${data.owned? 'ACTIVE' : 'LOCKED'}</div></div><div class="miner-info">Cost: ${m.cost > 0? '$'+m.cost.toFixed(2) : '200 Total Ads'} | Earn: ${m.reward} APU/hour</div><div class="miner-roi">ROI: ${m.roi} in 30 days ${daysToROI!== 'N/A'? '| Break-even: ~'+daysToROI+' days' : ''}</div>${extraHTML}<div class="miner-progress">${isReady? m.reward + '/'+m.reward+' APU' : '0/'+m.reward+' APU'}</div>${buttons}</div>`;
   });
 }
 
@@ -310,13 +303,13 @@ function unlockStarter() {
   localStorage.setItem(`miner0_lastClaim`, minerData[0].lastClaim);
   renderMiners();
   updateTotalIncome();
-  alert("🎁 Starter Miner Unlocked! Earn $0.50 in 30 days");
+  showToast("🎁 Starter Miner Unlocked!", 'success');
 }
 
 function buyMiner(id) {
   const m = MINERS.find(x => x.id === id);
   const data = minerData[id];
-  if(usdt < m.cost) return alert(`Not enough USDT. Need $${m.cost.toFixed(2)}`);
+  if(usdt < m.cost) return showToast(`Not enough USDT. Need $${m.cost.toFixed(2)}`, 'error');
   usdt -= m.cost;
   data.owned = true;
   data.lastClaim = Date.now();
@@ -326,7 +319,7 @@ function buyMiner(id) {
   updateUI();
   renderMiners();
   updateTotalIncome();
-  alert(`${m.name} Purchased for $${m.cost.toFixed(2)}!`);
+  showToast(`${m.name} Purchased!`, 'success');
 }
 
 function giveAdReward(callback) {
@@ -337,15 +330,13 @@ function giveAdReward(callback) {
   renderMiners();
 }
 
-// NO SAFETY CHECK - JUST TRUST SDK.then()
 function watchAdForMiner(id) {
   const now = Date.now();
-  if((COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0) return alert("Wait 5 seconds before watching another ad");
-
+  if((COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0) return showToast("Wait 5 seconds", 'warning');
   const data = minerData[id];
   if(data.adsWatched >= 2) return;
   if(typeof window.showGiga === 'function'){
-    alert("⚠️ Watch ad for at least 10 seconds to get credit");
+    showToast("⚠️ Watch ad for 10 seconds to get credit", 'warning');
     window.showGiga().then(function(){
       giveAdReward(() => {
         data.adsWatched += 1;
@@ -354,18 +345,18 @@ function watchAdForMiner(id) {
         localStorage.setItem('totalAdsWatched', totalAdsWatched);
         coins += REWARD_PER_AD;
         localStorage.setItem('coins', coins);
-        alert(`+${REWARD_PER_AD} APU! ${2 - data.adsWatched} ads left to claim miner`);
+        showToast(`+${REWARD_PER_AD} APU! ${2 - data.adsWatched} left`, 'success');
       });
-    }).catch(function(e){ alert("No ads available"); });
-  } else { alert("Ad SDK not loaded"); }
+    }).catch(function(e){ showToast("No ads available", 'error'); });
+  }
 }
 
 function claimMiner(id) {
   const m = MINERS.find(x => x.id === id);
   const data = minerData[id];
   const now = Date.now();
-  if(now - data.lastClaim < MINER_INTERVAL) return alert("Not ready yet");
-  if(data.adsWatched < 2) return alert("Watch 2 ads first to claim");
+  if(now - data.lastClaim < MINER_INTERVAL) return showToast("Not ready yet", 'warning');
+  if(data.adsWatched < 2) return showToast("Watch 2 ads first", 'warning');
   coins += m.reward;
   data.lastClaim = now;
   data.adsWatched = 0;
@@ -375,7 +366,7 @@ function claimMiner(id) {
   updateUI();
   renderMiners();
   updateTotalIncome();
-  alert(`+${m.reward} APU Claimed from ${m.name}!`);
+  showToast(`+${m.reward} APU Claimed!`, 'success');
 }
 
 function updateAllMiners() {
@@ -401,8 +392,8 @@ function updateSwapPreview() {
 
 function confirmSwap() {
   const amount = parseInt(document.getElementById('swapInput').value) || 0;
-  if(amount < MIN_SWAP) return alert(`Minimum swap is ${MIN_SWAP} APU`);
-  if(amount > coins) return alert("Not enough APU balance");
+  if(amount < MIN_SWAP) return showToast(`Minimum swap is ${MIN_SWAP} APU`, 'error');
+  if(amount > coins) return showToast("Not enough APU", 'error');
   const usdtReceived = amount * COIN_VALUE;
   coins -= amount;
   usdt += usdtReceived;
@@ -410,7 +401,7 @@ function confirmSwap() {
   localStorage.setItem('usdt', usdt);
   updateUI();
   closeSwap();
-  alert(`Swapped ${amount} APU for ${usdtReceived.toFixed(4)} USDT!`);
+  showToast(`Swapped ${amount} APU for ${usdtReceived.toFixed(4)} USDT!`, 'success');
 }
 
 function checkDaily() {
@@ -421,23 +412,19 @@ function checkDaily() {
     btn.disabled = true;
     btn.innerText = "✅ CLAIMED TODAY";
     btn.style.background = "#333";
-  } else {
-    btn.disabled = false;
-    btn.innerText = "🎁 CLAIM DAILY 50 APU";
-    btn.style.background = "#00C853";
   }
 }
 
 function claimDaily() {
   const today = new Date().toDateString();
   const lastDailyClaim = localStorage.getItem('lastDailyClaim');
-  if(lastDailyClaim === today) return alert("You already claimed today!");
+  if(lastDailyClaim === today) return showToast("Already claimed today", 'warning');
   coins += 50;
   localStorage.setItem('coins', coins);
   localStorage.setItem('lastDailyClaim', today);
   updateUI();
   checkDaily();
-  alert("+50 APU Claimed!");
+  showToast("+50 APU Claimed!", 'success');
 }
 
 function trackTotalAds() {
@@ -447,38 +434,38 @@ function trackTotalAds() {
 
 document.getElementById('gigaBtn').onclick = function(){
   const now = Date.now();
-  if((COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0) return alert("Wait 5 seconds before watching another ad");
-  if(gigaWatched >= DAILY_LIMIT) return alert("Giga limit reached");
+  if((COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0) return showToast("Wait 5 seconds", 'warning');
+  if(gigaWatched >= DAILY_LIMIT) return showToast("Giga limit reached", 'error');
   if(typeof window.showGiga === 'function'){
-    alert("⚠️ Watch ad for at least 10 seconds to get credit");
+    showToast("⚠️ Watch ad for 10 seconds to get credit", 'warning');
     window.showGiga().then(function(){
       giveAdReward(() => {
         coins += REWARD_PER_AD; gigaWatched += 1;
         trackTotalAds();
         localStorage.setItem('coins', coins);
         localStorage.setItem('gigaWatched', gigaWatched);
-        alert("+2 APU Earned!");
+        showToast("+2 APU Earned!", 'success');
       });
-    }).catch(function(e){ alert("No ads"); });
-  } else { alert("Giga not loaded"); }
+    }).catch(function(e){ showToast("No ads", 'error'); });
+  }
 }
 
 document.getElementById('monetagBtn').onclick = function(){
   const now = Date.now();
-  if((COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0) return alert("Wait 5 seconds before watching another ad");
-  if(monetagWatched >= DAILY_LIMIT) return alert("Monetag limit reached");
+  if((COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0) return showToast("Wait 5 seconds", 'warning');
+  if(monetagWatched >= DAILY_LIMIT) return showToast("Monetag limit reached", 'error');
   if(typeof window.show_11258922 === 'function'){
-    alert("⚠️ Watch ad for at least 10 seconds to get credit");
+    showToast("⚠️ Watch ad for 10 seconds to get credit", 'warning');
     window.show_11258922().then(function(){
       giveAdReward(() => {
         coins += REWARD_PER_AD; monetagWatched += 1;
         trackTotalAds();
         localStorage.setItem('coins', coins);
         localStorage.setItem('monetagWatched', monetagWatched);
-        alert("+2 APU Earned!");
+        showToast("+2 APU Earned!", 'success');
       });
-    }).catch(function(e){ alert("No ads"); });
-  } else { alert("Monetag not loaded"); }
+    }).catch(function(e){ showToast("No ads", 'error'); });
+  }
 }
 
 function showTab(id){
@@ -490,10 +477,10 @@ function showTab(id){
 
 function withdraw(){
   if(coins < MIN_WITHDRAW) {
-    alert("Minimum withdraw is " + MIN_WITHDRAW + " APU");
+    showToast("Minimum withdraw is " + MIN_WITHDRAW + " APU", 'error');
     return;
   }
-  alert("Withdraw request sent!");
+  showToast("Withdraw request sent!", 'success');
 }
 </script>
 </body>
