@@ -79,7 +79,7 @@
 .btn-confirm { background: #00C853; color: #fff; }
 .btn-cancel { background: #333; color: #fff; }
 
-/* CUSTOM TOAST POPUP - STEP 1 */
+/* CUSTOM TOAST POPUP */
 .toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-100px); background: #00C853; padding: 14px 20px; border-radius: 14px; font-weight: 700; z-index: 999; opacity: 0; transition: all 0.3s; box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
 .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 .toast.error { background: #FF3B30; }
@@ -198,7 +198,7 @@ MINERS.forEach(m => {
   }
 });
 
-// CUSTOM TOAST FUNCTION - STEP 1
+// CUSTOM TOAST FUNCTION
 function showToast(msg, type = 'success') {
   const toast = document.getElementById('toast');
   toast.innerText = msg;
@@ -336,18 +336,19 @@ function watchAdForMiner(id) {
   const data = minerData[id];
   if(data.adsWatched >= 2) return;
   if(typeof window.showGiga === 'function'){
-    showToast("⚠️ Watch ad for 10 seconds to get credit", 'warning');
-    window.showGiga().then(function(){
-      giveAdReward(() => {
-        data.adsWatched += 1;
-        totalAdsWatched += 1;
-        localStorage.setItem(`miner${id}_adsWatched`, data.adsWatched);
-        localStorage.setItem('totalAdsWatched', totalAdsWatched);
-        coins += REWARD_PER_AD;
-        localStorage.setItem('coins', coins);
-        showToast(`+${REWARD_PER_AD} APU! ${2 - data.adsWatched} left`, 'success');
-      });
-    }).catch(function(e){ showToast("No ads available", 'error'); });
+    if(confirm("⚠️ Watch ad for at least 10 seconds to get credit. Click OK to continue")) {
+      window.showGiga().then(function(){
+        giveAdReward(() => {
+          data.adsWatched += 1;
+          totalAdsWatched += 1;
+          localStorage.setItem(`miner${id}_adsWatched`, data.adsWatched);
+          localStorage.setItem('totalAdsWatched', totalAdsWatched);
+          coins += REWARD_PER_AD;
+          localStorage.setItem('coins', coins);
+          showToast(`+${REWARD_PER_AD} APU! ${2 - data.adsWatched} left`, 'success');
+        });
+      }).catch(function(e){ showToast("No ads available", 'error'); });
+    }
   }
 }
 
@@ -432,39 +433,43 @@ function trackTotalAds() {
   localStorage.setItem('totalAdsWatched', totalAdsWatched);
 }
 
+// GIGAPUB WITH CONFIRM
 document.getElementById('gigaBtn').onclick = function(){
   const now = Date.now();
   if((COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0) return showToast("Wait 5 seconds", 'warning');
   if(gigaWatched >= DAILY_LIMIT) return showToast("Giga limit reached", 'error');
   if(typeof window.showGiga === 'function'){
-    showToast("⚠️ Watch ad for 10 seconds to get credit", 'warning');
-    window.showGiga().then(function(){
-      giveAdReward(() => {
-        coins += REWARD_PER_AD; gigaWatched += 1;
-        trackTotalAds();
-        localStorage.setItem('coins', coins);
-        localStorage.setItem('gigaWatched', gigaWatched);
-        showToast("+2 APU Earned!", 'success');
-      });
-    }).catch(function(e){ showToast("No ads", 'error'); });
+    if(confirm("⚠️ Watch ad for at least 10 seconds to get credit. Click OK to continue")) {
+      window.showGiga().then(function(){
+        giveAdReward(() => {
+          coins += REWARD_PER_AD; gigaWatched += 1;
+          trackTotalAds();
+          localStorage.setItem('coins', coins);
+          localStorage.setItem('gigaWatched', gigaWatched);
+          showToast("+2 APU Earned!", 'success');
+        });
+      }).catch(function(e){ showToast("No ads", 'error'); });
+    }
   }
 }
 
+// MONETAG WITH CONFIRM
 document.getElementById('monetagBtn').onclick = function(){
   const now = Date.now();
   if((COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0) return showToast("Wait 5 seconds", 'warning');
   if(monetagWatched >= DAILY_LIMIT) return showToast("Monetag limit reached", 'error');
   if(typeof window.show_11258922 === 'function'){
-    showToast("⚠️ Watch ad for 10 seconds to get credit", 'warning');
-    window.show_11258922().then(function(){
-      giveAdReward(() => {
-        coins += REWARD_PER_AD; monetagWatched += 1;
-        trackTotalAds();
-        localStorage.setItem('coins', coins);
-        localStorage.setItem('monetagWatched', monetagWatched);
-        showToast("+2 APU Earned!", 'success');
-      });
-    }).catch(function(e){ showToast("No ads", 'error'); });
+    if(confirm("⚠️ Watch ad for at least 10 seconds to get credit. Click OK to continue")) {
+      window.show_11258922().then(function(){
+        giveAdReward(() => {
+          coins += REWARD_PER_AD; monetagWatched += 1;
+          trackTotalAds();
+          localStorage.setItem('coins', coins);
+          localStorage.setItem('monetagWatched', monetagWatched);
+          showToast("+2 APU Earned!", 'success');
+        });
+      }).catch(function(e){ showToast("No ads", 'error'); });
+    }
   }
 }
 
