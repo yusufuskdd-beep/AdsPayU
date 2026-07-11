@@ -12,8 +12,8 @@
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: linear-gradient(180deg, #0A2AFF 0%, #0018B3 50%, #000A4D 100%); color: #fff; padding-bottom: 90px; min-height: 100vh; background-attachment: fixed; }
 .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; position: sticky; top: 0; background: rgba(0,10,77,0.8); backdrop-filter: blur(20px); z-index: 10; }
 .topbar h1 { font-size: 18px; font-weight: 700; }
-.top-tabs { display: flex; gap: 10px; }
-.top-tab { padding: 6px 12px; background: rgba(255,255,255,0.1); border-radius: 10px; font-size: 12px; font-weight: 700; border: none; color: #fff; transition: all 0.2s; }
+.top-tabs { display: flex; gap: 8px; }
+.top-tab { padding: 6px 10px; background: rgba(255,255,255,0.1); border-radius: 10px; font-size: 11px; font-weight: 700; border: none; color: #fff; transition: all 0.2s; }
 .top-tab.active { background: #FF8A00; }
 
 .balance-card { margin: 16px; padding: 24px; background: linear-gradient(135deg, rgba(255,138,0,0.25) 0%, rgba(24,119,255,0.25) 100%); border: 1px solid rgba(255,255,255,0.15); border-radius: 24px; text-align: center; }
@@ -109,30 +109,15 @@
     <div class="topbar">
       <h1>AdsPayU</h1>
       <div class="top-tabs">
-        <button class="top-tab active" id="tabWallet" onclick="showTopTab('wallet')">💰 Wallet</button>
+        <button class="top-tab active" id="tabHome" onclick="showTopTab('home')">🏠 Home</button>
+        <button class="top-tab" id="tabWallet" onclick="showTopTab('wallet')">💰 Wallet</button>
         <button class="top-tab" id="tabProfile" onclick="showTopTab('profile')">👤 Profile</button>
       </div>
     </div>
 
-    <!-- WALLET PAGE -->
-    <div id="wallet" class="page active">
-      <div class="balance-card">
-        <div class="balance-label">YOUR BALANCE</div>
-        <div class="balance-apu" id="coins">0 APU</div>
-        <div class="balance-usdt" id="usdt">0.0000 USDT</div>
-      </div>
-
+    <!-- HOME PAGE -->
+    <div id="home" class="page active">
       <button class="daily-claim" id="dailyClaimBtn" onclick="claimDaily()">🎁 CLAIM DAILY 50 APU</button>
-
-      <div class="btn-row">
-        <button class="btn btn-primary" id="connectBtn" onclick="connectWallet()">🔗 CONNECT</button>
-        <button class="btn btn-secondary" onclick="openDeposit()">DEPOSIT</button>
-      </div>
-
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="withdraw()">WITHDRAW</button>
-        <button class="btn btn-secondary" onclick="openSwap()">SWAP</button>
-      </div>
 
       <div class="card">
         <div class="card-header">
@@ -157,6 +142,25 @@
       </div>
     </div>
 
+    <!-- WALLET PAGE -->
+    <div id="wallet" class="page">
+      <div class="balance-card">
+        <div class="balance-label">YOUR BALANCE</div>
+        <div class="balance-apu" id="coins">0 APU</div>
+        <div class="balance-usdt" id="usdt">0.0000 USDT</div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="connectBtn" onclick="connectWallet()">🔗 CONNECT</button>
+        <button class="btn btn-secondary" onclick="openDeposit()">DEPOSIT</button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="withdraw()">WITHDRAW</button>
+        <button class="btn btn-secondary" onclick="openSwap()">SWAP</button>
+      </div>
+    </div>
+
     <!-- PROFILE PAGE -->
     <div id="profile" class="page">
       <div class="card">
@@ -178,7 +182,7 @@
     </div>
 
     <div class="bottom-nav">
-      <button class="nav-item active" onclick="showTab('wallet')"><span class="nav-icon">🏠</span>Home</button>
+      <button class="nav-item active" onclick="showTab('home')"><span class="nav-icon">🏠</span>Home</button>
       <button class="nav-item" onclick="showTab('miner')"><span class="nav-icon">⚡</span>Miner</button>
       <button class="nav-item" onclick="showTab('rank')"><span class="nav-icon">🏆</span>Rank</button>
     </div>
@@ -225,7 +229,7 @@ const MIN_WITHDRAW = 100;
 const MIN_SWAP = 200;
 const MINER_INTERVAL = 60 * 60 * 1000;
 const COOLDOWN_TIME = 5;
-const WALLET_ADDRESS = "TXXXXXXX1234YOURWALLETADDRESS"; // CHANGE THIS
+const WALLET_ADDRESS = "TXXXXXXX1234YOURWALLETADDRESS";
 
 const MINERS = [
   {id: 0, name: "Starter Miner", cost: 0, reward: 28, icon: "🎁", roi: "Free", type: "starter", unlockAds: 200},
@@ -268,7 +272,6 @@ function init() {
   document.getElementById('username').innerText = tg.initDataUnsafe?.user?.username || '-';
 }
 
-// CUSTOM TOAST FUNCTION
 function showToast(msg, type = 'success') {
   const toast = document.getElementById('toast');
   toast.innerText = msg;
@@ -277,7 +280,6 @@ function showToast(msg, type = 'success') {
   setTimeout(() => { toast.classList.remove('show'); }, 2500);
 }
 
-// TOP TAB FUNCTION
 function showTopTab(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.top-tab').forEach(t => t.classList.remove('active'));
@@ -285,15 +287,11 @@ function showTopTab(id) {
   document.getElementById('tab' + id.charAt(0).toUpperCase() + id.slice(1)).classList.add('active');
 }
 
-// WALLET FUNCTIONS
 function connectWallet() {
   walletConnected =!walletConnected;
   localStorage.setItem('walletConnected', walletConnected);
-  if(walletConnected) {
-    showToast("Wallet Connected!", 'success');
-  } else {
-    showToast("Wallet Disconnected", 'warning');
-  }
+  if(walletConnected) showToast("Wallet Connected!", 'success');
+  else showToast("Wallet Disconnected", 'warning');
   updateConnectBtn();
 }
 
@@ -308,80 +306,36 @@ function updateConnectBtn() {
   }
 }
 
-function openDeposit() {
-  document.getElementById('depositModal').classList.add('active');
-}
+function openDeposit() { document.getElementById('depositModal').classList.add('active'); }
+function closeDeposit() { document.getElementById('depositModal').classList.remove('active'); }
+function copyWallet() { navigator.clipboard.writeText(WALLET_ADDRESS); showToast("Address Copied!", 'success'); }
 
-function closeDeposit() {
-  document.getElementById('depositModal').classList.remove('active');
-}
-
-function copyWallet() {
-  navigator.clipboard.writeText(WALLET_ADDRESS);
-  showToast("Address Copied!", 'success');
-}
-
-// AD CONFIRM FUNCTIONS
 function openAdConfirm(type, minerId = null) {
-  pendingAdType = type;
-  pendingMinerId = minerId;
+  pendingAdType = type; pendingMinerId = minerId;
   document.getElementById('adConfirmModal').classList.add('active');
 }
-
 function closeAdConfirm() {
-  pendingAdType = null;
-  pendingMinerId = null;
+  pendingAdType = null; pendingMinerId = null;
   document.getElementById('adConfirmModal').classList.remove('active');
 }
 
 function proceedAd() {
-  const type = pendingAdType;
-  const minerId = pendingMinerId;
-  closeAdConfirm();
-
+  const type = pendingAdType; const minerId = pendingMinerId; closeAdConfirm();
   if(type === 'giga') {
-    if(typeof window.showGiga === 'function'){
-      window.showGiga().then(function(){
-        giveAdReward(() => {
-          coins += REWARD_PER_AD; gigaWatched += 1;
-          trackTotalAds();
-          localStorage.setItem('coins', coins);
-          localStorage.setItem('gigaWatched', gigaWatched);
-          showToast("+2 APU Earned!", 'success');
-        });
-      }).catch(function(e){ showToast("No ads available", 'error'); });
-    } else { showToast("GigaPub not loaded", 'error'); }
+    window.showGiga().then(() => {
+      giveAdReward(() => { coins += REWARD_PER_AD; gigaWatched += 1; trackTotalAds(); localStorage.setItem('coins', coins); localStorage.setItem('gigaWatched', gigaWatched); showToast("+2 APU Earned!", 'success'); });
+    }).catch(() => showToast("No ads available", 'error'));
   }
-
   if(type === 'monetag') {
-    if(typeof window.show_11258922 === 'function'){
-      window.show_11258922().then(function(){
-        giveAdReward(() => {
-          coins += REWARD_PER_AD; monetagWatched += 1;
-          trackTotalAds();
-          localStorage.setItem('coins', coins);
-          localStorage.setItem('monetagWatched', monetagWatched);
-          showToast("+2 APU Earned!", 'success');
-        });
-      }).catch(function(e){ showToast("No ads available", 'error'); });
-    } else { showToast("Monetag not loaded", 'error'); }
+    window.show_11258922().then(() => {
+      giveAdReward(() => { coins += REWARD_PER_AD; monetagWatched += 1; trackTotalAds(); localStorage.setItem('coins', coins); localStorage.setItem('monetagWatched', monetagWatched); showToast("+2 APU Earned!", 'success'); });
+    }).catch(() => showToast("No ads available", 'error'));
   }
-
   if(type === 'miner') {
     const data = minerData[minerId];
-    if(typeof window.showGiga === 'function'){
-      window.showGiga().then(function(){
-        giveAdReward(() => {
-          data.adsWatched += 1;
-          totalAdsWatched += 1;
-          localStorage.setItem(`miner${minerId}_adsWatched`, data.adsWatched);
-          localStorage.setItem('totalAdsWatched', totalAdsWatched);
-          coins += REWARD_PER_AD;
-          localStorage.setItem('coins', coins);
-          showToast(`+${REWARD_PER_AD} APU! ${2 - data.adsWatched} left`, 'success');
-        });
-      }).catch(function(e){ showToast("No ads available", 'error'); });
-    } else { showToast("GigaPub not loaded", 'error'); }
+    window.showGiga().then(() => {
+      giveAdReward(() => { data.adsWatched += 1; totalAdsWatched += 1; localStorage.setItem(`miner${minerId}_adsWatched`, data.adsWatched); localStorage.setItem('totalAdsWatched', totalAdsWatched); coins += REWARD_PER_AD; localStorage.setItem('coins', coins); showToast(`+${REWARD_PER_AD} APU! ${2 - data.adsWatched} left`, 'success'); });
+    }).catch(() => showToast("No ads available", 'error'));
   }
 }
 
@@ -397,13 +351,9 @@ function updateUI() {
 }
 
 function checkCooldown() {
-  const now = Date.now();
-  const timeLeft = COOLDOWN_TIME * 1000 - (now - lastAdTime);
-  const onCooldown = timeLeft > 0;
-
+  const now = Date.now(); const timeLeft = COOLDOWN_TIME * 1000 - (now - lastAdTime); const onCooldown = timeLeft > 0;
   document.getElementById('gigaBtn').disabled = onCooldown || gigaWatched >= DAILY_LIMIT;
   document.getElementById('monetagBtn').disabled = onCooldown || monetagWatched >= DAILY_LIMIT;
-
   if(onCooldown) {
     const secs = Math.ceil(timeLeft / 1000);
     document.getElementById('gigaBtn').innerText = `Wait ${secs}s`;
@@ -415,215 +365,52 @@ function checkCooldown() {
 }
 
 function updateTotalIncome() {
-  let total = 0;
-  MINERS.forEach(m => {
-    if(minerData[m.id].owned) total += m.reward;
-  });
+  let total = 0; MINERS.forEach(m => { if(minerData[m.id].owned) total += m.reward; });
   document.getElementById('totalIncome').innerText = total.toLocaleString() + ' APU/h';
 }
 
 function renderMiners() {
-  const container = document.getElementById('minerList');
-  container.innerHTML = '';
+  const container = document.getElementById('minerList'); container.innerHTML = '';
   MINERS.forEach(m => {
-    const data = minerData[m.id];
-    const now = Date.now();
+    const data = minerData[m.id]; const now = Date.now();
     const isReady = data.owned && (now - data.lastClaim >= MINER_INTERVAL);
     const canClaim = isReady && data.adsWatched >= 2;
     const daysToROI = m.cost > 0? (m.cost / (m.reward * 24 * COIN_VALUE)).toFixed(1) : 'N/A';
     const onCooldown = (COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0;
-
-    let buttons = '';
-    let extraHTML = '';
-    let cardClass = 'miner-card';
-
+    let buttons = ''; let extraHTML = ''; let cardClass = 'miner-card';
     if(m.type === 'starter') {
-      cardClass += ' starter';
-      const progress = Math.min(totalAdsWatched, m.unlockAds);
-      const percent = (progress / m.unlockAds) * 100;
+      cardClass += ' starter'; const progress = Math.min(totalAdsWatched, m.unlockAds); const percent = (progress / m.unlockAds) * 100;
       extraHTML = `<div class="progress-bar"><div class="progress-fill" style="width: ${percent}%"></div></div><div class="progress-text">${progress}/${m.unlockAds} Ads Watched</div>`;
-      if(!data.owned) {
-        if(totalAdsWatched >= m.unlockAds) {
-          buttons = `<button class="miner-btn btn-buy" onclick="unlockStarter()">UNLOCK FREE</button>`;
-        } else {
-          buttons = `<button class="miner-btn btn-buy" disabled>WATCH ${m.unlockAds - totalAdsWatched} MORE ADS</button>`;
-        }
-      }
-    } else {
-      if(!data.owned) {
-        buttons = `<button class="miner-btn btn-buy" onclick="buyMiner(${m.id})">BUY - $${m.cost.toFixed(2)}</button>`;
-      }
-    }
-
-    if(data.owned &&!isReady) {
-      const timeLeft = MINER_INTERVAL - (now - data.lastClaim);
-      const mins = Math.floor(timeLeft / 60000);
-      const secs = Math.floor((timeLeft % 60000) / 1000);
-      buttons = `<button class="miner-btn btn-buy" disabled>MINING... ${mins}m ${secs}s</button>`;
-    }
-
-    if(data.owned && isReady) {
-      buttons = `<div class="miner-btns"><button class="miner-btn btn-ad" onclick="watchAdForMiner(${m.id})" ${data.adsWatched >= 2 || onCooldown? 'disabled' : ''}>${onCooldown? 'WAIT 5s' : `WATCH AD ${data.adsWatched}/2`}</button><button class="miner-btn btn-claim" onclick="claimMiner(${m.id})" ${!canClaim? 'disabled' : ''}>CLAIM ${m.reward}</button></div>`;
-    }
-
+      if(!data.owned) { buttons = totalAdsWatched >= m.unlockAds? `<button class="miner-btn btn-buy" onclick="unlockStarter()">UNLOCK FREE</button>` : `<button class="miner-btn btn-buy" disabled>WATCH ${m.unlockAds - totalAdsWatched} MORE ADS</button>`; }
+    } else { if(!data.owned) buttons = `<button class="miner-btn btn-buy" onclick="buyMiner(${m.id})">BUY - $${m.cost.toFixed(2)}</button>`; }
+    if(data.owned &&!isReady) { const timeLeft = MINER_INTERVAL - (now - data.lastClaim); const mins = Math.floor(timeLeft / 60000); const secs = Math.floor((timeLeft % 60000) / 1000); buttons = `<button class="miner-btn btn-buy" disabled>MINING... ${mins}m ${secs}s</button>`; }
+    if(data.owned && isReady) { buttons = `<div class="miner-btns"><button class="miner-btn btn-ad" onclick="watchAdForMiner(${m.id})" ${data.adsWatched >= 2 || onCooldown? 'disabled' : ''}>${onCooldown? 'WAIT 5s' : `WATCH AD ${data.adsWatched}/2`}</button><button class="miner-btn btn-claim" onclick="claimMiner(${m.id})" ${!canClaim? 'disabled' : ''}>CLAIM ${m.reward}</button></div>`; }
     container.innerHTML += `<div class="${cardClass} ${data.owned? 'active' : ''}"><div class="miner-header"><div class="miner-name">${m.icon} ${m.name}</div><div class="miner-status ${data.owned? 'active' : ''}">${data.owned? 'ACTIVE' : 'LOCKED'}</div></div><div class="miner-info">Cost: ${m.cost > 0? '$'+m.cost.toFixed(2) : '200 Total Ads'} | Earn: ${m.reward} APU/hour</div><div class="miner-roi">ROI: ${m.roi} in 30 days ${daysToROI!== 'N/A'? '| Break-even: ~'+daysToROI+' days' : ''}</div>${extraHTML}<div class="miner-progress">${isReady? m.reward + '/'+m.reward+' APU' : '0/'+m.reward+' APU'}</div>${buttons}</div>`;
   });
 }
 
-function unlockStarter() {
-  minerData[0].owned = true;
-  minerData[0].lastClaim = Date.now();
-  localStorage.setItem(`miner0_owned`, 'true');
-  localStorage.setItem(`miner0_lastClaim`, minerData[0].lastClaim);
-  renderMiners();
-  updateTotalIncome();
-  showToast("🎁 Starter Miner Unlocked!", 'success');
-}
+function unlockStarter() { minerData[0].owned = true; minerData[0].lastClaim = Date.now(); localStorage.setItem(`miner0_owned`, 'true'); localStorage.setItem(`miner0_lastClaim`, minerData[0].lastClaim); renderMiners(); updateTotalIncome(); showToast("🎁 Starter Miner Unlocked!", 'success'); }
+function buyMiner(id) { const m = MINERS.find(x => x.id === id); const data = minerData[id]; if(usdt < m.cost) return showToast(`Not enough USDT. Need $${m.cost.toFixed(2)}`, 'error'); usdt -= m.cost; data.owned = true; data.lastClaim = Date.now(); localStorage.setItem('usdt', usdt); localStorage.setItem(`miner${id}_owned`, 'true'); localStorage.setItem(`miner${id}_lastClaim`, data.lastClaim); updateUI(); renderMiners(); updateTotalIncome(); showToast(`${m.name} Purchased!`, 'success'); }
+function giveAdReward(callback) { lastAdTime = Date.now(); localStorage.setItem('lastAdTime', lastAdTime); callback(); updateUI(); renderMiners(); }
+function watchAdForMiner(id) { const now = Date.now(); if((COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0) return showToast("Wait 5 seconds", 'warning'); const data = minerData[id]; if(data.adsWatched >= 2) return; openAdConfirm('miner', id); }
+function claimMiner(id) { const m = MINERS.find(x => x.id === id); const data = minerData[id]; const now = Date.now(); if(now - data.lastClaim < MINER_INTERVAL) return showToast("Not ready yet", 'warning'); if(data.adsWatched < 2) return showToast("Watch 2 ads first", 'warning'); coins += m.reward; data.lastClaim = now; data.adsWatched = 0; localStorage.setItem('coins', coins); localStorage.setItem(`miner${id}_lastClaim`, data.lastClaim); localStorage.setItem(`miner${id}_adsWatched`, 0); updateUI(); renderMiners(); updateTotalIncome(); showToast(`+${m.reward} APU Claimed!`, 'success'); }
+function updateAllMiners() { renderMiners(); checkCooldown(); }
 
-function buyMiner(id) {
-  const m = MINERS.find(x => x.id === id);
-  const data = minerData[id];
-  if(usdt < m.cost) return showToast(`Not enough USDT. Need $${m.cost.toFixed(2)}`, 'error');
-  usdt -= m.cost;
-  data.owned = true;
-  data.lastClaim = Date.now();
-  localStorage.setItem('usdt', usdt);
-  localStorage.setItem(`miner${id}_owned`, 'true');
-  localStorage.setItem(`miner${id}_lastClaim`, data.lastClaim);
-  updateUI();
-  renderMiners();
-  updateTotalIncome();
-  showToast(`${m.name} Purchased!`, 'success');
-}
+function openSwap() { document.getElementById('swapModal').classList.add('active'); document.getElementById('swapInput').value = MIN_SWAP; updateSwapPreview(); }
+function closeSwap() { document.getElementById('swapModal').classList.remove('active'); }
+function updateSwapPreview() { const amount = parseInt(document.getElementById('swapInput').value) || 0; const usdtValue = (amount * COIN_VALUE).toFixed(4); document.getElementById('swapPreview').innerText = `You will receive: ${usdtValue} USDT`; }
+function confirmSwap() { const amount = parseInt(document.getElementById('swapInput').value) || 0; if(amount < MIN_SWAP) return showToast(`Minimum swap is ${MIN_SWAP} APU`, 'error'); if(amount > coins) return showToast("Not enough APU", 'error'); const usdtReceived = amount * COIN_VALUE; coins -= amount; usdt += usdtReceived; localStorage.setItem('coins', coins); localStorage.setItem('usdt', usdt); updateUI(); closeSwap(); showToast(`Swapped ${amount} APU for ${usdtReceived.toFixed(4)} USDT!`, 'success'); }
 
-function giveAdReward(callback) {
-  lastAdTime = Date.now();
-  localStorage.setItem('lastAdTime', lastAdTime);
-  callback();
-  updateUI();
-  renderMiners();
-}
+function checkDaily() { const btn = document.getElementById('dailyClaimBtn'); const today = new Date().toDateString(); const lastDailyClaim = localStorage.getItem('lastDailyClaim'); if(lastDailyClaim === today) { btn.disabled = true; btn.innerText = "✅ CLAIMED TODAY"; btn.style.background = "#333"; } }
+function claimDaily() { const today = new Date().toDateString(); const lastDailyClaim = localStorage.getItem('lastDailyClaim'); if(lastDailyClaim === today) return showToast("Already claimed today", 'warning'); coins += 50; localStorage.setItem('coins', coins); localStorage.setItem('lastDailyClaim', today); updateUI(); checkDaily(); showToast("+50 APU Claimed!", 'success'); }
+function trackTotalAds() { totalAdsWatched += 1; localStorage.setItem('totalAdsWatched', totalAdsWatched); }
 
-function watchAdForMiner(id) {
-  const now = Date.now();
-  if((COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0) return showToast("Wait 5 seconds", 'warning');
-  const data = minerData[id];
-  if(data.adsWatched >= 2) return;
-  openAdConfirm('miner', id);
-}
+document.getElementById('gigaBtn').onclick = function(){ const now = Date.now(); if((COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0) return showToast("Wait 5 seconds", 'warning'); if(gigaWatched >= DAILY_LIMIT) return showToast("Giga limit reached", 'error'); openAdConfirm('giga'); }
+document.getElementById('monetagBtn').onclick = function(){ const now = Date.now(); if((COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0) return showToast("Wait 5 seconds", 'warning'); if(monetagWatched >= DAILY_LIMIT) return showToast("Monetag limit reached", 'error'); openAdConfirm('monetag'); }
 
-function claimMiner(id) {
-  const m = MINERS.find(x => x.id === id);
-  const data = minerData[id];
-  const now = Date.now();
-  if(now - data.lastClaim < MINER_INTERVAL) return showToast("Not ready yet", 'warning');
-  if(data.adsWatched < 2) return showToast("Watch 2 ads first", 'warning');
-  coins += m.reward;
-  data.lastClaim = now;
-  data.adsWatched = 0;
-  localStorage.setItem('coins', coins);
-  localStorage.setItem(`miner${id}_lastClaim`, data.lastClaim);
-  localStorage.setItem(`miner${id}_adsWatched`, 0);
-  updateUI();
-  renderMiners();
-  updateTotalIncome();
-  showToast(`+${m.reward} APU Claimed!`, 'success');
-}
+function showTab(id){ document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); document.getElementById(id).classList.add('active'); event.target.closest('.nav-item').classList.add('active'); }
 
-function updateAllMiners() {
-  renderMiners();
-  checkCooldown();
-}
-
-function openSwap() {
-  document.getElementById('swapModal').classList.add('active');
-  document.getElementById('swapInput').value = MIN_SWAP;
-  updateSwapPreview();
-}
-
-function closeSwap() {
-  document.getElementById('swapModal').classList.remove('active');
-}
-
-function updateSwapPreview() {
-  const amount = parseInt(document.getElementById('swapInput').value) || 0;
-  const usdtValue = (amount * COIN_VALUE).toFixed(4);
-  document.getElementById('swapPreview').innerText = `You will receive: ${usdtValue} USDT`;
-}
-
-function confirmSwap() {
-  const amount = parseInt(document.getElementById('swapInput').value) || 0;
-  if(amount < MIN_SWAP) return showToast(`Minimum swap is ${MIN_SWAP} APU`, 'error');
-  if(amount > coins) return showToast("Not enough APU", 'error');
-  const usdtReceived = amount * COIN_VALUE;
-  coins -= amount;
-  usdt += usdtReceived;
-  localStorage.setItem('coins', coins);
-  localStorage.setItem('usdt', usdt);
-  updateUI();
-  closeSwap();
-  showToast(`Swapped ${amount} APU for ${usdtReceived.toFixed(4)} USDT!`, 'success');
-}
-
-function checkDaily() {
-  const btn = document.getElementById('dailyClaimBtn');
-  const today = new Date().toDateString();
-  const lastDailyClaim = localStorage.getItem('lastDailyClaim');
-  if(lastDailyClaim === today) {
-    btn.disabled = true;
-    btn.innerText = "✅ CLAIMED TODAY";
-    btn.style.background = "#333";
-  }
-}
-
-function claimDaily() {
-  const today = new Date().toDateString();
-  const lastDailyClaim = localStorage.getItem('lastDailyClaim');
-  if(lastDailyClaim === today) return showToast("Already claimed today", 'warning');
-  coins += 50;
-  localStorage.setItem('coins', coins);
-  localStorage.setItem('lastDailyClaim', today);
-  updateUI();
-  checkDaily();
-  showToast("+50 APU Claimed!", 'success');
-}
-
-function trackTotalAds() {
-  totalAdsWatched += 1;
-  localStorage.setItem('totalAdsWatched', totalAdsWatched);
-}
-
-// GIGAPUB WITH CUSTOM CONFIRM
-document.getElementById('gigaBtn').onclick = function(){
-  const now = Date.now();
-  if((COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0) return showToast("Wait 5 seconds", 'warning');
-  if(gigaWatched >= DAILY_LIMIT) return showToast("Giga limit reached", 'error');
-  openAdConfirm('giga');
-}
-
-// MONETAG WITH CUSTOM CONFIRM
-document.getElementById('monetagBtn').onclick = function(){
-  const now = Date.now();
-  if((COOLDOWN_TIME * 1000 - (now - lastAdTime)) > 0) return showToast("Wait 5 seconds", 'warning');
-  if(monetagWatched >= DAILY_LIMIT) return showToast("Monetag limit reached", 'error');
-  openAdConfirm('monetag');
-}
-
-function showTab(id){
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  event.target.closest('.nav-item').classList.add('active');
-}
-
-function withdraw(){
-  if(!walletConnected) return showToast("Connect wallet first", 'warning');
-  if(coins < MIN_WITHDRAW) {
-    showToast("Minimum withdraw is " + MIN_WITHDRAW + " APU", 'error');
-    return;
-  }
-  showToast("Withdraw request sent!", 'success');
-}
+function withdraw(){ if(!walletConnected) return showToast("Connect wallet first", 'warning'); if(coins < MIN_WITHDRAW) { showToast("Minimum withdraw is " + MIN_WITHDRAW + " APU", 'error'); return; } showToast("Withdraw request sent!", 'success'); }
 </script>
 </body>
 </html>
