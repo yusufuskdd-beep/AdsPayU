@@ -62,17 +62,17 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 .btn-cancel{background:#333;color:#fff}
 .btn-confirm{background:#00c851;color:#fff}
 .ref-link{background:#0a0e27;padding:10px;border-radius:8px;word-break:break-all;font-size:12px}
-
-/* NEW: Wallet buttons container */
 .wallet-btns{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:20px}
 #tonConnectBtnContainer{width:100%;max-width:400px;display:flex;justify-content:center}
 #tonConnectBtnContainer button{width:100%!important}
 #tonWalletAddress{font-size:11px;color:#aaa;margin-top:5px;text-align:center}
+#tonRateText{text-align:center;font-size:12px;color:#aaa;margin-bottom:10px}
+#toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:12px 20px;border-radius:10px;display:none;z-index:9999;font-weight:700}
 </style>
 </head>
 <body>
 
-<div id="toast" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#00c851;padding:12px 20px;border-radius:10px;display:none;z-index:9999">Toast</div>
+<div id="toast">Toast</div>
 
 <div class="modal" id="adConfirmModal"><div class="modal-content"><div class="modal-title">⚠️ Important</div><div class="modal-info">Watch the ad for at least <b>20 seconds</b> to get credit.</div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeAdConfirm()">CANCEL</button><button class="modal-btn btn-confirm" onclick="proceedAd()">WATCH AD</button></div></div></div>
 
@@ -89,12 +89,12 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 <div id="wallet" class="page">
 <div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsWallet">2653 APU</div><div class="balance-usdt" id="usdtWallet">0.2300 USDT</div></div>
 
-<!-- CENTERED BUTTONS -->
 <div class="wallet-btns">
     <div id="tonConnectBtnContainer"></div>
     <div id="tonWalletAddress"></div>
+    <div id="tonRateText">Loading rate...</div>
     <button class="btn-get orange" onclick="openSwap()">SWAP APU → USDT</button>
-    <button class="btn-get" onclick="openDeposit()">DEPOSIT USDT</button>
+    <button class="btn-get" onclick="openDeposit()">DEPOSIT TON → USDT</button>
     <button class="btn-get red" onclick="openWithdraw()">WITHDRAW USDT</button>
 </div>
 
@@ -132,8 +132,12 @@ let minerData = {};
 let currentAdType = 'home';
 let currentAdMinerId = null;
 let tonAddress = localStorage.getItem('tonAddress') || '';
+let walletConnected = localStorage.getItem('walletConnected') === 'true';
 let currentTab = 'home';
 let currentTopTab = 'wallet';
+let currentTonPrice = 3.50;
+
+const YOUR_TON_WALLET = "UQCnRX9PZUv8GAyv4kz4OZ3u8r0vA-CcUu-lzunVsTNIo7sw";
 const MINER_INTERVAL = 3600000;
 const COOLDOWN_TIME = 5000;
 const COIN_VALUE = 0.000025;
@@ -149,11 +153,30 @@ const MINERS = [
 
 let tonConnectUI;
 
-function showToast(msg){const t=document.getElementById('toast');t.innerText=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2000)}
+function showToast(msg, type='success'){
+    const t=document.getElementById('toast');
+    t.innerText=msg;
+    t.style.background = type==='error'? '#ff3b30' : type==='warning'? '#ff9500' : '#00c851';
+    t.style.display='block';
+    setTimeout(()=>t.style.display='none',3000)
+}
+
+async function loadTonPrice(){
+    try{
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd');
+        const data = await res.json();
+        currentTonPrice = data['the-open-network'].usd;
+        document.getElementById('tonRateText').innerText = `Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT`;
+    }catch(e){
+        document.getElementById('tonRateText').innerText = `Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT`;
+    }
+}
 
 function init(){
     if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}
-    loadAdCounts();loadMinerData();updateUI();renderMiners();updateTotalIncome();checkDaily();initTonConnect();setInterval(updateMiners, 1000)
+    loadAdCounts();loadMinerData();updateUI();renderMiners();updateTotalIncome();checkDaily();initTonConnect();loadTonPrice();
+    setInterval(updateMiners, 1000);
+    setInterval(loadTonPrice, 60000);
 }
 
 function initTonConnect(){
@@ -165,12 +188,16 @@ function initTonConnect(){
     tonConnectUI.onStatusChange(wallet => {
         if (wallet) {
             tonAddress = wallet.account.address;
+            walletConnected = true;
+            localStorage.setItem('walletConnected', 'true');
             localStorage.setItem('tonAddress', tonAddress);
-            document.getElementById('tonWalletAddress').innerText = tonAddress.slice(0,8) + '...' + tonAddress.slice(-8);
+            document.getElementById('tonWalletAddress').innerText = tonAddress.slice(0,6) + '...' + tonAddress.slice(-4);
             showToast("Wallet Connected!");
         } else {
             tonAddress = '';
-            localStorage.removeItem('tonAddress');
+            walletConnected = false;
+            localStorage.setItem('walletConnected', 'false');
+            localStorage.setItem('tonAddress', '');
             document.getElementById('tonWalletAddress').innerText = '';
         }
     });
@@ -204,7 +231,7 @@ function updateUI(){
     document.getElementById('refLink').innerText = `https://t.me/AdsPayUBot?start=ref${userId}`;
 
     if(tonAddress){
-        document.getElementById('tonWalletAddress').innerText = tonAddress.slice(0,8) + '...' + tonAddress.slice(-8);
+        document.getElementById('tonWalletAddress').innerText = tonAddress.slice(0,6) + '...' + tonAddress.slice(-4);
     }
 
     if(gigaCount >= MAX_DAILY_ADS) document.getElementById('gigaBtn').disabled = true;
@@ -228,7 +255,7 @@ function showTopTab(tab){
     document.getElementById(tab+'Tab').classList.add('active');
 }
 
-function claimDaily(){if(localStorage.getItem('lastDailyClaim')===new Date().toDateString())return showToast("Already claimed");coins+=50;localStorage.setItem('coins',coins);localStorage.setItem('lastDailyClaim',new Date().toDateString());updateUI();checkDaily();showToast("+50 APU!")}
+function claimDaily(){if(localStorage.getItem('lastDailyClaim')===new Date().toDateString())return showToast("Already claimed",'error');coins+=50;localStorage.setItem('coins',coins);localStorage.setItem('lastDailyClaim',new Date().toDateString());updateUI();checkDaily();showToast("+50 APU!")}
 function checkDaily(){if(localStorage.getItem('lastDailyClaim')===new Date().toDateString()){document.getElementById('dailyClaimBtn').disabled=true;document.getElementById('dailyClaimBtn').innerText="✅ CLAIMED TODAY"}}
 
 function openAdConfirm(type, minerId = null) {currentAdType = type;currentAdMinerId = minerId;document.getElementById('adConfirmModal').classList.add('active')}
@@ -236,17 +263,15 @@ function closeAdConfirm() {document.getElementById('adConfirmModal').classList.r
 function proceedAd() {closeAdConfirm();if (currentAdType === 'home') {watchHomeAd();} else if (currentAdType === 'miner') {watchAdForMiner(currentAdMinerId)}}
 
 function watchHomeAd() {
-    if(Date.now()-lastAdTime<COOLDOWN_TIME)return showToast("Wait 5 seconds");
-    if(gigaCount >= MAX_DAILY_ADS && monetagCount >= MAX_DAILY_ADS) return showToast("Daily limit reached");
-    if(adRunning) return showToast("Ad already running");
+    if(Date.now()-lastAdTime<COOLDOWN_TIME)return showToast("Wait 5 seconds",'error');
+    if(gigaCount >= MAX_DAILY_ADS && monetagCount >= MAX_DAILY_ADS) return showToast("Daily limit reached",'error');
+    if(adRunning) return showToast("Ad already running",'error');
 
     lastAdTime=Date.now();
     adRunning = true;
-    showToast("Watching ad... 20s");
+    showToast("Watching ad... 20s",'warning');
 
-    try {
-        if (typeof show_11258922 === 'function') { show_11258922(); }
-    } catch(e) { console.log(e) }
+    try {if (typeof show_11258922 === 'function') { show_11258922(); }} catch(e) {}
 
     setTimeout(()=>{
         adRunning = false;
@@ -262,12 +287,57 @@ function updateTotalIncome(){let total=0;MINERS.forEach(m=>{if(minerData[m.id].o
 function renderMiners(){const c=document.getElementById('minerList');c.innerHTML='';MINERS.forEach(m=>{const d=minerData[m.id];const now=Date.now();const isReady=d.owned&&(now-d.lastClaim>=MINER_INTERVAL);const canClaim=isReady&&d.adsWatched>=2;let buttons='';let extra='';if(m.type==='starter'){const progress=Math.min(totalAdsWatched,m.unlockAds);const percent=(progress/m.unlockAds)*100;extra=`<div class="progress-bar"><div class="progress-fill" style="width:${percent}%"></div></div><div class="progress-text">${progress}/${m.unlockAds} Ads Watched</div>`;if(!d.owned)buttons=progress>=m.unlockAds?`<button class="miner-btn btn-buy" onclick="unlockStarter()">UNLOCK FREE</button>`:`<button class="miner-btn btn-buy" disabled>NEED ${m.unlockAds-progress} MORE ADS</button>`}else{if(!d.owned)buttons=`<button class="miner-btn btn-buy" onclick="buyMiner(${m.id})">BUY - $${m.cost}</button>`}if(d.owned&&!isReady){const timeLeft=MINER_INTERVAL-(now-d.lastClaim);const mins=Math.floor(timeLeft/60000);const secs=Math.floor((timeLeft%60000)/1000);buttons=`<button class="miner-btn btn-buy" disabled>MINING... ${mins}m ${secs}s</button>`}if(d.owned&&isReady){buttons=`<div class="miner-btns"><button class="miner-btn btn-ad" onclick="openAdConfirm('miner',${m.id})" ${d.adsWatched>=2?'disabled':''}>WATCH AD ${d.adsWatched}/2</button><button class="miner-btn btn-claim" onclick="claimMiner(${m.id})" ${!canClaim?'disabled':''}>CLAIM ${m.reward}</button></div>`}c.innerHTML+=`<div class="miner-card ${d.owned?'active':''}"><div class="miner-header"><div class="miner-name">${m.name}</div><div class="miner-status ${d.owned?'active':''}">${d.owned?'ACTIVE':'LOCKED'}</div></div><div class="miner-info">Earn: ${m.reward} APU/hour | Cost: $${m.cost}</div>${extra}<div class="miner-progress">${isReady?m.reward+'/'+m.reward+' APU':'0/'+m.reward+' APU'}</div>${buttons}</div>`})}
 function updateMiners(){renderMiners()}
 function unlockStarter(){minerData[0].owned=true;minerData[0].lastClaim=Date.now();localStorage.setItem(`miner0_owned`,'true');localStorage.setItem(`miner0_lastClaim`,minerData[0].lastClaim);renderMiners();updateTotalIncome();showToast("🎁 Starter Unlocked!")}
-function buyMiner(id){const m=MINERS.find(x=>x.id===id);if(usdt<m.cost)return showToast(`Need $${m.cost} USDT`);usdt-=m.cost;minerData[id].owned=true;minerData[id].lastClaim=Date.now();localStorage.setItem('usdt',usdt);localStorage.setItem(`miner${id}_owned`,'true');localStorage.setItem(`miner${id}_lastClaim`,minerData[id].lastClaim);updateUI();renderMiners();updateTotalIncome();showToast(`${m.name} Purchased!`)}
-function watchAdForMiner(id){if(Date.now()-lastAdTime<COOLDOWN_TIME)return showToast("Wait 5s");lastAdTime=Date.now();openAdConfirm('miner', id)}
-function claimMiner(id){const m=MINERS.find(x=>x.id===id);const d=minerData[id];if(Date.now()-d.lastClaim<MINER_INTERVAL)return showToast("Not ready");if(d.adsWatched<2)return showToast("Watch 2 ads first");coins+=m.reward;d.lastClaim=Date.now();d.adsWatched=0;localStorage.setItem('coins',coins);localStorage.setItem(`miner${id}_lastClaim`,d.lastClaim);localStorage.setItem(`miner${id}_adsWatched`,0);updateUI();renderMiners();updateTotalIncome();showToast(`+${m.reward} APU Claimed!`)}
+function buyMiner(id){const m=MINERS.find(x=>x.id===id);if(usdt<m.cost)return showToast(`Need $${m.cost} USDT`,'error');usdt-=m.cost;minerData[id].owned=true;minerData[id].lastClaim=Date.now();localStorage.setItem('usdt',usdt);localStorage.setItem(`miner${id}_owned`,'true');localStorage.setItem(`miner${id}_lastClaim`,minerData[id].lastClaim);updateUI();renderMiners();updateTotalIncome();showToast(`${m.name} Purchased!`)}
+function watchAdForMiner(id){if(Date.now()-lastAdTime<COOLDOWN_TIME)return showToast("Wait 5s",'error');minerData[id].adsWatched++;localStorage.setItem(`miner${id}_adsWatched`, minerData[id].adsWatched);lastAdTime=Date.now();renderMiners();showToast("Ad watched! Claim now")}
+
+function claimMiner(id){const m=MINERS.find(x=>x.id===id);const d=minerData[id];if(Date.now()-d.lastClaim<MINER_INTERVAL)return showToast("Not ready",'error');if(d.adsWatched<2)return showToast("Watch 2 ads first",'error');coins+=m.reward;d.lastClaim=Date.now();d.adsWatched=0;localStorage.setItem('coins',coins);localStorage.setItem(`miner${id}_lastClaim`,d.lastClaim);localStorage.setItem(`miner${id}_adsWatched`,0);updateUI();renderMiners();updateTotalIncome();showToast(`+${m.reward} APU Claimed!`)}
+
 function openSwap(){let amount=prompt("Enter APU to swap. Min 200. Rate: 1 APU = 0.000025 USDT");amount=parseInt(amount);if(amount>=200&&amount<=coins){coins-=amount;usdt+=amount*COIN_VALUE;localStorage.setItem('coins',coins);localStorage.setItem('usdt',usdt);updateUI();showToast(`Swapped ${amount} APU!`)}}
-function openDeposit(){let amount=prompt("Enter USDT to Deposit. Min 1 USDT");amount=parseFloat(amount);if(amount>=1){usdt+=amount;localStorage.setItem('usdt',usdt);updateUI();showToast(`+${amount} USDT Deposited!`)}}
-function openWithdraw(){if(!tonAddress)return showToast("Connect TON Wallet first");let amount=prompt("Enter USDT to Withdraw. Min 5 USDT");amount=parseFloat(amount);if(amount>=5&&amount<=usdt){usdt-=amount;localStorage.setItem('usdt',usdt);updateUI();showToast(`Withdrawal request: ${amount} USDT to ${tonAddress.slice(0,8)}...`)}}
+
+function openDeposit(){
+    if(!walletConnected) return showToast("Connect TON Wallet first", 'error');
+    const usdtPreview = (0.5 * currentTonPrice).toFixed(2);
+    let amountTON = prompt(`Enter TON to Deposit. Min 0.1 TON\nRate: 1 TON = $${currentTonPrice.toFixed(2)}\nEx: 0.5 TON = ${usdtPreview} USDT`);
+    amountTON = parseFloat(amountTON);
+    if(amountTON >= 0.1){
+        const usdtToReceive = (amountTON * currentTonPrice).toFixed(2);
+        if(!confirm(`Send ${amountTON} TON = ${usdtToReceive} USDT?\n\nTo: ${YOUR_TON_WALLET.slice(0,8)}...`)) return;
+        sendDepositTransaction(amountTON, usdtToReceive);
+    }
+}
+
+async function sendDepositTransaction(amountTON, usdtToReceive){
+    showToast("Opening TON Wallet...", 'warning');
+    const amountNano = (amountTON * 1000000).toString();
+    const transaction = {
+        validUntil: Math.floor(Date.now()/1000) + 600,
+        messages: [{address: YOUR_TON_WALLET, amount: amountNano, payload: tonAddress}]
+    };
+    try{
+        await tonConnectUI.sendTransaction(transaction);
+        showToast(`Sent ${amountTON} TON! Crediting...`, 'success');
+        setTimeout(() => {
+            usdt += parseFloat(usdtToReceive);
+            localStorage.setItem('usdt', usdt);
+            updateUI();
+            showToast(`+${usdtToReceive} USDT Credited!`, 'success');
+        }, 15000);
+    }catch(e){
+        showToast("Transaction cancelled", 'error');
+    }
+}
+
+function openWithdraw(){
+    if(!tonAddress) return showToast("Connect TON Wallet first",'error');
+    let amount=prompt("Enter USDT to Withdraw. Min 5 USDT");
+    amount=parseFloat(amount);
+    if(amount>=5&&amount<=usdt){
+        usdt-=amount;
+        localStorage.setItem('usdt',usdt);
+        updateUI();
+        showToast(`Withdrawal request: ${amount} USDT`, 'warning')
+    }
+}
 
 window.onload = init;
 </script>
