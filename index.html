@@ -20,7 +20,7 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 .balance-apu{font-size:40px;color:#ffd700;font-weight:900;margin:10px 0}
 .balance-usdt{font-size:16px;color:#00c851}
 .daily-claim{background:linear-gradient(135deg,#00c851,#00a043);width:100%;padding:18px;border-radius:15px;border:none;color:#fff;font-size:18px;font-weight:800;margin-bottom:20px;cursor:pointer}
-.daily-claim:disabled{background:#333}
+.daily-claim:disabled{background:#333;opacity:0.6}
 .card{background:#1a1f3a;padding:15px;border-radius:15px;margin-bottom:15px}
 .card-header{display:flex;align-items:center;gap:15px}
 .card-icon{font-size:30px}
@@ -29,7 +29,7 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 .btn-get{background:#0084ff;color:#fff;border:none;padding:10px 20px;border-radius:10px;font-weight:700;width:100%;margin-top:10px;cursor:pointer}
 .btn-get.orange{background:#ff9500}
 .btn-get.red{background:#ff3b30}
-.btn-get:disabled{background:#333}
+.btn-get:disabled{background:#333;opacity:0.6}
 .income-card{background:#1a1f3a;padding:20px;border-radius:15px;text-align:center;margin-bottom:20px}
 .income-value{font-size:24px;color:#00c851;font-weight:800}
 .miner-card{background:#1a1f3a;padding:15px;border-radius:15px;margin-bottom:15px;border:1px solid #2a2f4a}
@@ -45,7 +45,7 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 .btn-buy{background:#0084ff;color:#fff}
 .btn-claim{background:#00c851;color:#fff}
 .btn-ad{background:#ff9500;color:#fff}
-.btn-buy:disabled,.btn-claim:disabled,.btn-ad:disabled{background:#333}
+.btn-buy:disabled,.btn-claim:disabled,.btn-ad:disabled{background:#333;opacity:0.6}
 .progress-bar{height:6px;background:#0a0e27;border-radius:3px;margin:8px 0;overflow:hidden}
 .progress-fill{height:100%;background:#00c851}
 .progress-text{font-size:11px;color:#aaa;text-align:center}
@@ -136,18 +136,17 @@ const MINERS = [
     {id: 4, name: "💎 Diamond Miner", cost: 50.00, reward: 1000}
 ];
 
-// KEY FIX: Added actionsConfiguration for Telegram
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
     manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json',
     actionsConfiguration: {
-        twaReturnUrl: 'https://t.me/AdsPayUBot' // CHANGE TO YOUR BOT USERNAME
+        twaReturnUrl: 'https://t.me/AdsPayUBot'
     }
 });
 
 function showToast(msg){const t=document.getElementById('toast');t.innerText=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2000)}
 
 function init(){
-    if(window.Telegram?.WebApp){Telegram.WebApp.ready();}
+    if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}
     loadAdCounts();loadMinerData();updateUI();renderMiners();updateTotalIncome();checkDaily();initTon();setInterval(updateMiners, 1000)
 }
 
@@ -236,7 +235,9 @@ function watchHomeAd() {
     adRunning = true;
     showToast("Watching ad... 20s");
 
-    try { if (typeof show_11258922 === 'function') { show_11258922(); } catch(e) {}
+    try { 
+        if (typeof show_11258922 === 'function') { show_11258922(); } 
+    } catch(e) { console.log(e) }
 
     setTimeout(()=>{
         adRunning = false;
