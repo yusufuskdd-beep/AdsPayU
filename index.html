@@ -3,63 +3,151 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU TEST</title>
+<title>AdsPayU</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
-body{background:#0a0e27;color:#fff}
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 .page{display:none;padding:20px}.page.active{display:block}
-.balance-card{background:#1a1f3a;padding:30px;border-radius:20px;text-align:center;margin:20px}
-.balance-apu{font-size:40px;color:#ffd700;font-weight:bold}
-.daily-claim{background:#00c851;width:90%;margin:20px auto;padding:15px;border-radius:15px;border:none;color:#fff;font-size:18px;font-weight:bold}
-.btn-get{background:#0084ff;color:#fff;border:none;padding:10px 20px;border-radius:10px}
-.bottom-nav{position:fixed;bottom:0;width:100%;display:flex;background:#1a1f3a}
-.nav-item{flex:1;padding:15px;background:none;border:none;color:#aaa}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:15px 20px}
+.topbar h1{font-size:24px;font-weight:800}
+.top-tabs{display:flex;gap:10px}
+.top-tab{padding:8px 15px;background:#1a1f3a;border:none;border-radius:10px;color:#aaa}
+.top-tab.active{background:#0084ff;color:#fff}
+.balance-card{background:linear-gradient(135deg,#1a1f3a,#0f1429);padding:30px;border-radius:20px;text-align:center;margin:20px 0}
+.balance-label{color:#aaa;font-size:12px;letter-spacing:1px}
+.balance-apu{font-size:40px;color:#ffd700;font-weight:900;margin:10px 0}
+.balance-usdt{font-size:16px;color:#00c851}
+.daily-claim{background:linear-gradient(135deg,#00c851,#00a043);width:100%;padding:18px;border-radius:15px;border:none;color:#fff;font-size:18px;font-weight:800;margin-bottom:20px}
+.card{background:#1a1f3a;padding:15px;border-radius:15px;margin-bottom:15px}
+.card-header{display:flex;align-items:center;gap:15px}
+.card-icon{font-size:30px}
+.card-title{font-weight:700}
+.card-sub{color:#aaa;font-size:12px}
+.btn-get{background:#0084ff;color:#fff;border:none;padding:10px 20px;border-radius:10px;font-weight:700}
+.btn-get.orange{background:#ff9500}
+.income-card{background:#1a1f3a;padding:20px;border-radius:15px;text-align:center;margin-bottom:20px}
+.income-value{font-size:24px;color:#00c851;font-weight:800}
+.miner-card{background:#1a1f3a;padding:15px;border-radius:15px;margin-bottom:15px}
+.miner-header{display:flex;justify-content:space-between}
+.miner-name{font-weight:700}
+.miner-info{color:#aaa;font-size:12px;margin:5px 0}
+.miner-btn{width:100%;padding:12px;border:none;border-radius:10px;font-weight:700;margin-top:10px}
+.btn-buy{background:#0084ff;color:#fff}
+.btn-claim{background:#00c851;color:#fff}
+.btn-ad{background:#ff9500;color:#fff}
+.bottom-nav{position:fixed;bottom:0;left:0;width:100%;display:flex;background:#1a1f3a;border-top:1px solid #2a2f4a}
+.nav-item{flex:1;padding:15px;background:none;border:none;color:#aaa;font-weight:600}
 .nav-item.active{color:#0084ff}
 </style>
 </head>
 <body>
 
+<div id="app">
+<div class="topbar"><h1>AdsPayU</h1><div class="top-tabs"><button class="top-tab active" onclick="showTopTab('wallet')">💰 Wallet</button><button class="top-tab" onclick="showTopTab('profile')">👤 Profile</button></div></div>
+
 <div id="home" class="page active">
-<div class="balance-card">
-<div>YOUR BALANCE</div>
-<div class="balance-apu" id="coinsHome">500 APU</div>
+<div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsHome">500 APU</div><div class="balance-usdt" id="usdtHome">5.0000 USDT</div></div>
+<button class="daily-claim" id="dailyClaimBtn" onclick="claimDaily()">🎁 CLAIM DAILY 50 APU</button>
+<div class="card"><div class="card-header"><div class="card-icon">🎯</div><div><div class="card-title">GigaPub Ads</div><div class="card-sub"><span id="gigaCount">0</span>/100 today = 10 APU each</div></div><button class="btn-get" onclick="watchHomeAd()">Watch</button></div></div>
+<div class="card"><div class="card-header"><div class="card-icon">💰</div><div><div class="card-title">Monetag Ads</div><div class="card-sub"><span id="monetagCount">0</span>/100 today = 10 APU each</div></div><button class="btn-get orange" onclick="watchHomeAd()">Watch</button></div></div>
 </div>
-<button class="daily-claim" onclick="claimDaily()">🎁 CLAIM DAILY 50 APU</button>
-<button class="btn-get" onclick="watchAd()">Watch Ad +10</button>
+
+<div id="wallet" class="page">
+<div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsWallet">500 APU</div><div class="balance-usdt" id="usdtWallet">5.0000 USDT</div></div>
+<button class="btn-get" style="width:100%;margin-bottom:10px" onclick="alert('TON Connect Coming')">🔗 CONNECT TON</button>
+<button class="btn-get" style="width:100%;margin-bottom:10px" onclick="alert('Deposit Coming')">DEPOSIT</button>
+<button class="btn-get" style="width:100%;margin-bottom:10px" onclick="alert('Withdraw Coming')">WITHDRAW</button>
+<button class="btn-get orange" style="width:100%" onclick="openSwap()">SWAP APU → USDT</button>
+</div>
+
+<div id="profile" class="page">
+<div class="card"><div class="card-title">👤 Your Profile</div><div class="card-sub">User ID: <span id="userId">Guest</span></div><div class="card-sub">Total Earned: <span id="totalEarned">500</span> APU</div></div>
 </div>
 
 <div id="miner" class="page">
-<h1>MINER PAGE WORKS</h1>
+<div class="income-card"><div class="income-label">TOTAL HOURLY INCOME</div><div class="income-value" id="totalIncome">0 APU/h</div></div>
+<div id="minerList"></div>
 </div>
 
 <div class="bottom-nav">
-<button class="nav-item active" onclick="showTab('home')">Home</button>
-<button class="nav-item" onclick="showTab('miner')">Miner</button>
+<button class="nav-item active" onclick="showTab('home')">🏠 Home</button>
+<button class="nav-item" onclick="showTab('miner')">⚡ Miner</button>
+</div>
 </div>
 
 <script>
-let coins = 500;
+let coins = parseFloat(localStorage.getItem('coins')) || 500;
+let usdt = parseFloat(localStorage.getItem('usdt')) || 5.00;
+let totalAdsWatched = parseInt(localStorage.getItem('totalAdsWatched')) || 0;
+let lastAdTime = 0;
+let minerData = {};
 
+const MINERS = [
+    {id: 0, name: "🎁 Starter Miner", cost: 0, reward: 10, unlockAds: 50},
+    {id: 1, name: "🥉 Bronze Miner", cost: 2.00, reward: 25},
+    {id: 2, name: "🥈 Silver Miner", cost: 5.00, reward: 75},
+    {id: 3, name: "🥇 Gold Miner", cost: 15.00, reward: 250},
+    {id: 4, name: "💎 Diamond Miner", cost: 50.00, reward: 1000}
+];
+
+function init(){
+    updateUI();
+    renderMiners();
+    checkDaily();
+}
+function updateUI(){
+    document.getElementById('coinsHome').innerText = coins.toLocaleString() + ' APU';
+    document.getElementById('usdtHome').innerText = usdt.toFixed(4) + ' USDT';
+    document.getElementById('coinsWallet').innerText = coins.toLocaleString() + ' APU';
+    document.getElementById('usdtWallet').innerText = usdt.toFixed(4) + ' USDT';
+    document.getElementById('totalEarned').innerText = coins.toLocaleString();
+    document.getElementById('totalAds').innerText = totalAdsWatched;
+}
 function showTab(tab){
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
     document.getElementById(tab).classList.add('active');
     event.target.classList.add('active');
 }
-
+function showTopTab(tab){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.top-tab').forEach(n=>n.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
+    event.target.classList.add('active');
+}
 function claimDaily(){
-    coins += 50;
-    document.getElementById('coinsHome').innerText = coins + ' APU';
-    alert('+50 APU! New Balance: ' + coins);
+    if(localStorage.getItem('lastDailyClaim')===new Date().toDateString())return alert("Already claimed");
+    coins+=50;localStorage.setItem('coins',coins);localStorage.setItem('lastDailyClaim',new Date().toDateString());
+    updateUI();checkDaily();alert("+50 APU Claimed!");
+}
+function checkDaily(){
+    if(localStorage.getItem('lastDailyClaim')===new Date().toDateString()){
+        document.getElementById('dailyClaimBtn').disabled=true;
+        document.getElementById('dailyClaimBtn').innerText="✅ CLAIMED TODAY";
+    }
+}
+function watchHomeAd(){
+    if(Date.now()-lastAdTime<5000)return alert("Wait 5s");
+    lastAdTime=Date.now();coins+=10;totalAdsWatched+=1;localStorage.setItem('coins',coins);localStorage.setItem('totalAdsWatched',totalAdsWatched);
+    updateUI();alert("+10 APU Earned!");
+}
+function renderMiners(){
+    const c=document.getElementById('minerList');c.innerHTML='';
+    MINERS.forEach(m=>{
+        c.innerHTML+=`<div class="miner-card"><div class="miner-header"><div class="miner-name">${m.name}</div></div><div class="miner-info">Earn: ${m.reward} APU/hour | Cost: $${m.cost}</div><button class="miner-btn btn-buy" onclick="alert('Buy coming')">BUY / CLAIM</button></div>`
+    });
+    document.getElementById('totalIncome').innerText = '0 APU/h';
+}
+function openSwap(){
+    let amount = prompt("Enter APU to swap. Min 200. Rate: 1 APU = 0.000025 USDT");
+    if(amount>=200 && amount<=coins){
+        coins-=parseInt(amount);usdt+=amount*0.000025;
+        localStorage.setItem('coins',coins);localStorage.setItem('usdt',usdt);
+        updateUI();alert("Swapped!");
+    }
 }
 
-function watchAd(){
-    coins += 10;
-    document.getElementById('coinsHome').innerText = coins + ' APU';
-    alert('+10 APU! New Balance: ' + coins);
-}
-
-alert("1-FILE VERSION LOADED");
+window.onload = init;
 </script>
 </body>
 </html>
