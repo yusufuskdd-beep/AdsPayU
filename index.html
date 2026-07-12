@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v7.6.8</title>
+<title>AdsPayU v7.6.9</title>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
@@ -27,10 +27,9 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 .card-title{font-weight:700}
 .card-sub{color:#aaa;font-size:12px}
 .btn-get{background:#0084ff;color:#fff;border:none;padding:14px 20px;border-radius:12px;font-weight:700;width:100%;max-width:400px;margin:8px auto;display:block;cursor:pointer;font-size:16px}
-.btn-get.connected{background:#00c851} /* GREEN WHEN CONNECTED */
+.btn-get.connected{background:#00c851}
 .btn-get.orange{background:#ff9500}
 .btn-get.red{background:#ff3b30}
-.btn-get.gray{background:#555}
 .btn-get:disabled{background:#333;opacity:0.6}
 .income-card{background:#1a1f3a;padding:20px;border-radius:15px;text-align:center;margin-bottom:20px}
 .income-value{font-size:24px;color:#00c851;font-weight:800}
@@ -119,13 +118,11 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 <script src='//libtl.com/sdk.js' data-zone='11258922' data-sdk='show_11258922'></script>
 
 <script>
-// ===== CONFIG =====
 const YOUR_TON_WALLET = "UQCnRX9PZUv8GAyv4kz4OZ3u8r0vA-CcUu-lzunVsTNIo7sw";
 const MIN_WITHDRAW = 0.50;
 const ADMIN_TELEGRAM_ID = 8954036308;
 const BOT_TOKEN = "8840764457:AAGWQMHVGG2ksMv-qr27D49Y3j_wYE4E8-4";
 const FIXED_TON_RATE = 3.50;
-// ==================
 
 let coins = parseFloat(localStorage.getItem('coins')) || 2653;
 let usdt = parseFloat(localStorage.getItem('usdt')) || 0.23;
@@ -138,8 +135,7 @@ let adRunning = false;
 let minerData = {};
 let currentAdType = 'home';
 let currentAdMinerId = null;
-let userWalletAddress = localStorage.getItem('walletAddress') || null; // UQ ADDRESS
-let userRawAddress = localStorage.getItem('rawAddress') || null; // 0: ADDRESS
+let userWalletAddress = localStorage.getItem('walletAddress') || null;
 let walletConnected = localStorage.getItem('walletConnected') === 'true';
 let currentTab = 'home';
 let currentTopTab = 'wallet';
@@ -167,25 +163,6 @@ function showToast(msg, type='success'){
     setTimeout(()=>t.style.display='none',3000)
 }
 
-// CONVERT 0:... TO UQ...
-function toBounceable(rawAddress){
-    if(!rawAddress ||!rawAddress.includes(':')) return rawAddress;
-    const [wc, hex] = rawAddress.split(':');
-    const workchain = parseInt(wc);
-    const addressBytes = new Uint8Array(34);
-    addressBytes[0] = workchain & 0xFF;
-    for(let i = 0; i < 32; i++) addressBytes[i + 1] = parseInt(hex.substr(i * 2, 2), 16);
-    let crc = 0;
-    for(let i = 0; i < 34; i++) {
-        crc ^= addressBytes[i] << 8;
-        for(let j = 0; j < 8; j++) crc = (crc & 0x8000)? (crc << 1) ^ 0x1021 : crc << 1;
-    }
-    crc &= 0xFFFF;
-    addressBytes[32] = crc >> 8; addressBytes[33] = crc & 0xFF;
-    const base64 = btoa(String.fromCharCode(...addressBytes));
-    return 'UQ' + base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-}
-
 function init(){
     if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}
     loadAdCounts();loadMinerData();updateUI();renderMiners();updateTotalIncome();checkDaily();initTonConnect();
@@ -193,6 +170,7 @@ function init(){
     setInterval(updateMiners, 1000);
 }
 
+// FIXED TONCONNECT - USE ADDRESS DIRECTLY
 function initTonConnect(){
     tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json',
@@ -200,20 +178,17 @@ function initTonConnect(){
     });
     tonConnectUI.onStatusChange(wallet => {
         if (wallet && wallet.account) {
-            userRawAddress = wallet.account.address; // 0:...
-            userWalletAddress = toBounceable(userRawAddress); // UQ...
+            userWalletAddress = wallet.account.address; // USE DIRECT FROM TONCONNECT
             walletConnected = true;
             localStorage.setItem('walletConnected', 'true');
             localStorage.setItem('walletAddress', userWalletAddress);
-            localStorage.setItem('rawAddress', userRawAddress);
             showToast("TON Wallet Connected!", 'success');
+            console.log("Connected Address:", userWalletAddress); // FOR DEBUG
         } else {
             userWalletAddress = null;
-            userRawAddress = null;
             walletConnected = false;
             localStorage.setItem('walletConnected', 'false');
             localStorage.setItem('walletAddress', '');
-            localStorage.setItem('rawAddress', '');
             showToast("TON Wallet Disconnected", 'warning');
         }
         updateConnectBtn();
