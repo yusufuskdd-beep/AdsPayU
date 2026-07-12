@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>AdsPayU</title>
+<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
 body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
@@ -24,8 +25,9 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 .card-icon{font-size:30px}
 .card-title{font-weight:700}
 .card-sub{color:#aaa;font-size:12px}
-.btn-get{background:#0084ff;color:#fff;border:none;padding:10px 20px;border-radius:10px;font-weight:700}
+.btn-get{background:#0084ff;color:#fff;border:none;padding:10px 20px;border-radius:10px;font-weight:700;width:100%;margin-top:10px}
 .btn-get.orange{background:#ff9500}
+.btn-get.red{background:#ff3b30}
 .btn-get:disabled{background:#333}
 .income-card{background:#1a1f3a;padding:20px;border-radius:15px;text-align:center;margin-bottom:20px}
 .income-value{font-size:24px;color:#00c851;font-weight:800}
@@ -58,13 +60,15 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 .modal-btn{flex:1;padding:12px;border:none;border-radius:10px;font-weight:700}
 .btn-cancel{background:#333;color:#fff}
 .btn-confirm{background:#00c851;color:#fff}
+input{background:#0a0e27;border:1px solid #2a2f4a;color:#fff;padding:12px;border-radius:10px;width:100%;margin:10px 0}
+.ref-link{background:#0a0e27;padding:10px;border-radius:8px;word-break:break-all;font-size:12px}
 </style>
 </head>
 <body>
 
 <div id="toast" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#00c851;padding:12px 20px;border-radius:10px;display:none;z-index:9999">Toast</div>
 
-<div class="modal" id="adConfirmModal"><div class="modal-content"><div class="modal-title">⚠️ Important</div><div class="modal-info">Watch the ad for at least <b>20 seconds</b> to get credit. Closing early = No reward.</div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeAdConfirm()">CANCEL</button><button class="modal-btn btn-confirm" onclick="proceedAd()">WATCH AD</button></div></div></div>
+<div class="modal" id="adConfirmModal"><div class="modal-content"><div class="modal-title">⚠️ Important</div><div class="modal-info">Watch the ad for at least <b>20 seconds</b> to get credit.</div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeAdConfirm()">CANCEL</button><button class="modal-btn btn-confirm" onclick="proceedAd()">WATCH AD</button></div></div></div>
 
 <div id="app">
 <div class="topbar"><h1>AdsPayU</h1><div class="top-tabs"><button class="top-tab active" onclick="showTopTab('wallet')">💰 Wallet</button><button class="top-tab" onclick="showTopTab('profile')">👤 Profile</button></div></div>
@@ -78,11 +82,16 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 
 <div id="wallet" class="page">
 <div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsWallet">0 APU</div><div class="balance-usdt" id="usdtWallet">0.0000 USDT</div></div>
-<button class="btn-get orange" style="width:100%" onclick="openSwap()">SWAP APU → USDT</button>
+<button class="btn-get orange" onclick="openSwap()">SWAP APU → USDT</button>
+<button class="btn-get" id="tonConnectBtn">CONNECT TON WALLET</button>
+<div id="tonWalletAddress" style="font-size:11px;color:#aaa;margin-top:5px"></div>
+<button class="btn-get" onclick="openDeposit()">DEPOSIT USDT</button>
+<button class="btn-get red" onclick="openWithdraw()">WITHDRAW USDT</button>
 </div>
 
 <div id="profile" class="page">
-<div class="card"><div class="card-title">👤 Your Profile</div><div class="card-sub">User ID: <span id="userId">Guest</span></div><div class="card-sub">Total Earned: <span id="totalEarned">0</span> APU</div><div class="card-sub">Total Ads Watched: <span id="totalAds">0</span></div></div>
+<div class="card"><div class="card-title">👤 Your Profile</div><div class="card-sub">User ID: <span id="userId">Guest</span></div><div class="card-sub">Referrals: <span id="refCount">0</span></div><div class="card-sub">Total Earned: <span id="totalEarned">0</span> APU</div><div class="card-sub">Total Ads Watched: <span id="totalAds">0</span></div></div>
+<div class="card"><div class="card-title">🔗 Referral Link</div><div class="ref-link" id="refLink">Loading...</div><button class="btn-get" onclick="copyRef()">COPY LINK</button><div class="card-sub">Earn 10% of your referral's earnings</div></div>
 </div>
 
 <div id="miner" class="page">
@@ -105,15 +114,18 @@ let usdt = parseFloat(localStorage.getItem('usdt')) || 0.23;
 let totalAdsWatched = parseInt(localStorage.getItem('totalAdsWatched')) || 0;
 let gigaCount = 0;
 let monetagCount = 0;
+let refCount = parseInt(localStorage.getItem('refCount')) || 0;
 let lastAdTime = 0;
 let adRunning = false;
 let minerData = {};
 let currentAdType = 'home';
 let currentAdMinerId = null;
+let tonAddress = localStorage.getItem('tonAddress') || '';
 const MINER_INTERVAL = 3600000;
 const COOLDOWN_TIME = 5000;
 const COIN_VALUE = 0.000025;
 const MAX_DAILY_ADS = 100;
+const ADMIN_ID = '12345678'; // CHANGE TO YOUR TELEGRAM ID
 
 const MINERS = [
     {id: 0, name: "🎁 Starter Miner", cost: 0, reward: 10, type: "starter", unlockAds: 50},
@@ -123,8 +135,24 @@ const MINERS = [
     {id: 4, name: "💎 Diamond Miner", cost: 50.00, reward: 1000}
 ];
 
+const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+    manifestUrl: 'https://yourdomain.com/tonconnect-manifest.json' // CHANGE THIS
+});
+
 function showToast(msg){const t=document.getElementById('toast');t.innerText=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2000)}
-function init(){loadAdCounts();loadMinerData();updateUI();renderMiners();updateTotalIncome();checkDaily();setInterval(updateMiners, 1000)}
+function init(){loadAdCounts();loadMinerData();updateUI();renderMiners();updateTotalIncome();checkDaily();initTon();setInterval(updateMiners, 1000)}
+
+function initTon(){
+    tonConnectUI.onStatusChange(wallet => {
+        if (wallet) {
+            tonAddress = wallet.account.address;
+            localStorage.setItem('tonAddress', tonAddress);
+            document.getElementById('tonWalletAddress').innerText = tonAddress.slice(0,8) + '...' + tonAddress.slice(-8);
+            document.getElementById('tonConnectBtn').innerText = 'CONNECTED';
+        }
+    });
+    document.getElementById('tonConnectBtn').onclick = () => tonConnectUI.openModal();
+}
 
 function loadAdCounts(){
     const today = new Date().toDateString();
@@ -144,22 +172,36 @@ function updateUI(){
     document.getElementById('usdtHome').innerText = usdt.toFixed(4) + ' USDT';
     document.getElementById('coinsWallet').innerText = coins.toLocaleString() + ' APU';
     document.getElementById('usdtWallet').innerText = usdt.toFixed(4) + ' USDT';
-    document.getElementById('userId').innerText = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'Guest';
+    const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'Guest';
+    document.getElementById('userId').innerText = userId;
     document.getElementById('totalEarned').innerText = coins.toLocaleString();
     document.getElementById('totalAds').innerText = totalAdsWatched;
+    document.getElementById('refCount').innerText = refCount;
     document.getElementById('gigaCount').innerText = gigaCount;
     document.getElementById('monetagCount').innerText = monetagCount;
+    document.getElementById('refLink').innerText = `https://t.me/YourBot?start=ref${userId}`; // CHANGE BOT NAME
     
     if(gigaCount >= MAX_DAILY_ADS) document.getElementById('gigaBtn').disabled = true;
     if(monetagCount >= MAX_DAILY_ADS) document.getElementById('monetagBtn').disabled = true;
+    if(userId == ADMIN_ID) addAdminButton();
 }
+
+function addAdminButton(){
+    if(!document.getElementById('adminBtn')){
+        const btn = document.createElement('button');
+        btn.id='adminBtn';btn.innerText='⚙️ ADMIN PANEL';btn.className='btn-get red';
+        btn.onclick = () => alert(`Total Users: 1\nTotal APU: ${coins}\nTotal USDT: ${usdt}`);
+        document.getElementById('profile').appendChild(btn);
+    }
+}
+
+function copyRef(){navigator.clipboard.writeText(document.getElementById('refLink').innerText);showToast("Referral link copied!")}
 
 function showTab(tab){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById(tab).classList.add('active');event.target.classList.add('active')}
 function showTopTab(tab){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.top-tab').forEach(n=>n.classList.remove('active'));document.getElementById(tab).classList.add('active');event.target.classList.add('active')}
 function claimDaily(){if(localStorage.getItem('lastDailyClaim')===new Date().toDateString())return showToast("Already claimed");coins+=50;localStorage.setItem('coins',coins);localStorage.setItem('lastDailyClaim',new Date().toDateString());updateUI();checkDaily();showToast("+50 APU!")}
 function checkDaily(){if(localStorage.getItem('lastDailyClaim')===new Date().toDateString()){document.getElementById('dailyClaimBtn').disabled=true;document.getElementById('dailyClaimBtn').innerText="✅ CLAIMED TODAY"}}
 
-// REAL ADS LOGIC - 20 SECONDS WITH COUNTER
 function openAdConfirm(type, minerId = null) {currentAdType = type;currentAdMinerId = minerId;document.getElementById('adConfirmModal').classList.add('active')}
 function closeAdConfirm() {document.getElementById('adConfirmModal').classList.remove('active')}
 function proceedAd() {closeAdConfirm();if (currentAdType === 'home') {watchHomeAd();} else if (currentAdType === 'miner') {watchAdForMiner(currentAdMinerId)}}
@@ -173,27 +215,14 @@ function watchHomeAd() {
     adRunning = true;
     showToast("Watching ad... 20s");
 
-    try {
-        if (typeof show_11258922 === 'function') {
-            show_11258922(); // Monetag
-        }
-    } catch(e) {}
+    try { if (typeof show_11258922 === 'function') { show_11258922(); } } catch(e) {}
 
     setTimeout(()=>{
         adRunning = false;
         coins+=10;totalAdsWatched+=1;
-        
-        // Alternate between giga and monetag counter
-        if(gigaCount <= monetagCount){
-            gigaCount++;
-            localStorage.setItem('gigaCount', gigaCount);
-        } else {
-            monetagCount++;
-            localStorage.setItem('monetagCount', monetagCount);
-        }
-        
-        localStorage.setItem('coins',coins);
-        localStorage.setItem('totalAdsWatched',totalAdsWatched);
+        if(gigaCount <= monetagCount){gigaCount++;localStorage.setItem('gigaCount', gigaCount);} 
+        else {monetagCount++;localStorage.setItem('monetagCount', monetagCount);}
+        localStorage.setItem('coins',coins);localStorage.setItem('totalAdsWatched',totalAdsWatched);
         updateUI();showToast("+10 APU Earned!");
     }, 20000);
 }
@@ -206,6 +235,8 @@ function buyMiner(id){const m=MINERS.find(x=>x.id===id);if(usdt<m.cost)return sh
 function watchAdForMiner(id){if(Date.now()-lastAdTime<COOLDOWN_TIME)return showToast("Wait 5s");lastAdTime=Date.now();openAdConfirm('miner', id)}
 function claimMiner(id){const m=MINERS.find(x=>x.id===id);const d=minerData[id];if(Date.now()-d.lastClaim<MINER_INTERVAL)return showToast("Not ready");if(d.adsWatched<2)return showToast("Watch 2 ads first");coins+=m.reward;d.lastClaim=Date.now();d.adsWatched=0;localStorage.setItem('coins',coins);localStorage.setItem(`miner${id}_lastClaim`,d.lastClaim);localStorage.setItem(`miner${id}_adsWatched`,0);updateUI();renderMiners();updateTotalIncome();showToast(`+${m.reward} APU Claimed!`)}
 function openSwap(){let amount=prompt("Enter APU to swap. Min 200. Rate: 1 APU = 0.000025 USDT");amount=parseInt(amount);if(amount>=200&&amount<=coins){coins-=amount;usdt+=amount*COIN_VALUE;localStorage.setItem('coins',coins);localStorage.setItem('usdt',usdt);updateUI();showToast(`Swapped ${amount} APU!`)}}
+function openDeposit(){let amount=prompt("Enter USDT to Deposit. Min 1 USDT");amount=parseFloat(amount);if(amount>=1){usdt+=amount;localStorage.setItem('usdt',usdt);updateUI();showToast(`+${amount} USDT Deposited!`)}}
+function openWithdraw(){if(!tonAddress)return showToast("Connect TON Wallet first");let amount=prompt("Enter USDT to Withdraw. Min 5 USDT");amount=parseFloat(amount);if(amount>=5&&amount<=usdt){usdt-=amount;localStorage.setItem('usdt',usdt);updateUI();showToast(`Withdrawal request: ${amount} USDT to ${tonAddress.slice(0,8)}...`)}}
 
 window.onload = init;
 </script>
