@@ -173,7 +173,24 @@ function initTon(){
             return;
         }
 
-        tonConnectUI.openModal();
+        const wallets = await tonConnectUI.getWallets();
+        if(wallets.length === 0) return showToast("No wallets found");
+
+        let walletList = "Choose Wallet:\n\n";
+        wallets.forEach((w, i) => {
+            walletList += `${i+1}. ${w.name}\n`;
+        });
+
+        let choice = prompt(walletList + "\nEnter number:");
+        choice = parseInt(choice) - 1;
+
+        if(wallets[choice]){
+            if(window.Telegram?.WebApp){
+                Telegram.WebApp.openLink(wallets[choice].universalLink);
+            } else {
+                window.open(wallets[choice].universalLink);
+            }
+        }
     };
 }
 
