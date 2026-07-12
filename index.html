@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v7.5.8</title>
+<title>AdsPayU v7.6.0</title>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
@@ -160,18 +160,16 @@ const MINERS = [
 
 let tonConnectUI;
 
-// CONVERT TO NON-BOUNCEABLE EQ...
-function rawToNonBounceable(rawAddress) {
+// CONVERT RAW TO UQ NON-BOUNCEABLE - FOR EXCHANGES
+function rawToUQ(rawAddress) {
     if(!rawAddress ||!rawAddress.includes(':')) return rawAddress;
     const [wc, hex] = rawAddress.split(':');
-    let workchain = parseInt(wc);
-    if(workchain === 0) workchain = -1; // -1 = non-bounceable flag
+    const workchain = parseInt(wc);
     
-    const hash = hex;
     const address = new Uint8Array(34);
     address[0] = workchain & 0xFF;
     for(let i = 0; i < 32; i++) {
-        address[i + 1] = parseInt(hash.substr(i * 2, 2), 16);
+        address[i + 1] = parseInt(hex.substr(i * 2, 2), 16);
     }
     
     let crc = 0;
@@ -187,7 +185,7 @@ function rawToNonBounceable(rawAddress) {
     
     const base64 = btoa(String.fromCharCode(...address));
     const urlSafe = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-    return 'EQ' + urlSafe;
+    return 'UQ' + urlSafe;
 }
 
 function showToast(msg, type='success'){
@@ -223,7 +221,7 @@ function initTonConnect(){
     tonConnectUI.onStatusChange(wallet => {
         if (wallet && wallet.account) {
             const raw = wallet.account.address;
-            tonAddress = rawToNonBounceable(raw); // CONVERT TO EQ...
+            tonAddress = rawToUQ(raw); // UQ format for exchanges
             walletConnected = true;
             localStorage.setItem('walletConnected', 'true');
             localStorage.setItem('tonAddress', tonAddress);
