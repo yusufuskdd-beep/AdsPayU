@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v7.6.4</title>
+<title>AdsPayU v7.6.7</title>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
@@ -30,7 +30,6 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 .btn-get.orange{background:#ff9500}
 .btn-get.red{background:#ff3b30}
 .btn-get.gray{background:#555}
-.btn-get.green{background:#00c851}
 .btn-get:disabled{background:#333;opacity:0.6}
 .income-card{background:#1a1f3a;padding:20px;border-radius:15px;text-align:center;margin-bottom:20px}
 .income-value{font-size:24px;color:#00c851;font-weight:800}
@@ -92,11 +91,9 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 <div id="wallet" class="page">
 <div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsWallet">2653 APU</div><div class="balance-usdt" id="usdtWallet">0.2300 USDT</div></div>
 <div class="wallet-btns">
-    <button class="btn-get" id="connectWalletBtn" onclick="connectWallet()">CONNECT TON WALLET</button>
-    <button class="btn-get gray" id="disconnectBtn" onclick="disconnectWallet()" style="display:none">DISCONNECT WALLET</button>
+    <button class="btn-get" id="connectBtn">🔗 CONNECT TON</button>
     <div id="tonWalletAddress"></div>
     <div id="tonRateText">Rate: 1 TON = $3.50 USDT</div>
-    <button class="btn-get green" onclick="loadTonPrice()">🔄 REFRESH RATE</button>
     <button class="btn-get orange" onclick="openSwap()">SWAP APU → USDT</button>
     <button class="btn-get" onclick="openDeposit()">DEPOSIT TON → USDT</button>
     <button class="btn-get red" onclick="openWithdraw()">WITHDRAW USDT</button>
@@ -104,7 +101,7 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 </div>
 
 <div id="profile" class="page">
-<div class="card"><div class="card-title">👤 Your Profile</div><div class="card-sub">User ID: <span id="userId">Guest</span></div><div class="card-sub">Referrals: <span id="refCount">0</span></div><div class="card-sub">Total Earned: <span id="totalEarned">0</span> APU</div><div class="card-sub">Total Ads Watched: <span id="totalAds">0</span></div></div>
+<div class="card"><div class="card-title">👤 Your Profile</div><div class="card-sub">User ID: <span id="userId">Guest</span></div><div class="card-sub">Username: <span id="username">-</span></div><div class="card-sub">TON Wallet: <span id="tonAddress">Not Connected</span></div><div class="card-sub">Referrals: <span id="refCount">0</span></div><div class="card-sub">Total Earned: <span id="totalEarned">0</span> APU</div><div class="card-sub">Total Ads Watched: <span id="totalAds">0</span></div></div>
 <div class="card"><div class="card-title">🔗 Referral Link</div><div class="ref-link" id="refLink">Loading...</div><button class="btn-get" onclick="copyRef()">COPY LINK</button><div class="card-sub">Earn 10% of your referral's earnings</div></div>
 </div>
 
@@ -128,6 +125,7 @@ const YOUR_TON_WALLET = "UQCnRX9PZUv8GAyv4kz4OZ3u8r0vA-CcUu-lzunVsTNIo7sw";
 const MIN_WITHDRAW = 0.50;
 const ADMIN_TELEGRAM_ID = 8954036308;
 const BOT_TOKEN = "8840764457:AAGWQMHVGG2ksMv-qr27D49Y3j_wYE4E8-4";
+const FIXED_TON_RATE = 3.50; // FIXED RATE
 // ==================
 
 let coins = parseFloat(localStorage.getItem('coins')) || 2653;
@@ -141,11 +139,10 @@ let adRunning = false;
 let minerData = {};
 let currentAdType = 'home';
 let currentAdMinerId = null;
-let tonAddress = localStorage.getItem('tonAddress') || '';
+let userWalletAddress = localStorage.getItem('walletAddress') || null;
 let walletConnected = localStorage.getItem('walletConnected') === 'true';
 let currentTab = 'home';
 let currentTopTab = 'wallet';
-let currentTonPrice = parseFloat(localStorage.getItem('tonPrice')) || 3.50;
 
 const MINER_INTERVAL = 3600000;
 const COOLDOWN_TIME = 5000;
@@ -170,66 +167,56 @@ function showToast(msg, type='success'){
     setTimeout(()=>t.style.display='none',3000)
 }
 
-// TONCENTER API - WORKS IN TELEGRAM
-async function loadTonPrice(){
-    showToast("Fetching rate...", 'warning');
-    try{
-        const res = await fetch('https://toncenter.com/api/v2/getRate?token=ton');
-        const data = await res.json();
-        if(data.ok && data.result){
-            currentTonPrice = parseFloat(data.result);
-            localStorage.setItem('tonPrice', currentTonPrice);
-            document.getElementById('tonRateText').innerText = `Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT`;
-            showToast("Rate Updated!", 'success');
-        }
-    }catch(e){
-        showToast("Failed to fetch rate", 'error');
-    }
-}
-
 function init(){
     if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}
     loadAdCounts();loadMinerData();updateUI();renderMiners();updateTotalIncome();checkDaily();initTonConnect();
-    document.getElementById('tonRateText').innerText = `Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT`;
+    document.getElementById('tonRateText').innerText = `Rate: 1 TON = $${FIXED_TON_RATE.toFixed(2)} USDT`;
     setInterval(updateMiners, 1000);
-    setInterval(loadTonPrice, 120000); // Auto refresh every 2 min
 }
 
+// TONCONNECT SETUP FROM YOUR OLD FILE
 function initTonConnect(){
     tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-        manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json'
+        manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json',
+        buttonRootId: 'connectBtn' // USE BUTTON ID LIKE OLD FILE
     });
     tonConnectUI.onStatusChange(wallet => {
         if (wallet && wallet.account) {
-            tonAddress = wallet.account.address; // RAW 0:...
+            userWalletAddress = wallet.account.address; // REAL UQ ADDRESS
             walletConnected = true;
             localStorage.setItem('walletConnected', 'true');
-            localStorage.setItem('tonAddress', tonAddress);
-            document.getElementById('tonWalletAddress').innerText = tonAddress;
-            document.getElementById('connectWalletBtn').style.display = 'none';
-            document.getElementById('disconnectBtn').style.display = 'block';
-            showToast("Wallet Connected!");
+            localStorage.setItem('walletAddress', userWalletAddress);
+            showToast("TON Wallet Connected!", 'success');
         } else {
-            tonAddress = localStorage.getItem('tonAddress') || '';
+            userWalletAddress = null;
             walletConnected = false;
             localStorage.setItem('walletConnected', 'false');
-            document.getElementById('tonWalletAddress').innerText = tonAddress;
-            document.getElementById('connectWalletBtn').style.display = 'block';
-            document.getElementById('disconnectBtn').style.display = 'none';
+            localStorage.setItem('walletAddress', '');
+            showToast("TON Wallet Disconnected", 'warning');
         }
+        updateConnectBtn();
+        updateUI();
     });
     if(walletConnected){ tonConnectUI.restoreConnection(); }
 }
 
-async function connectWallet(){
-    try{ await tonConnectUI.connectWallet(); }
-    catch(e){ showToast("Failed to connect wallet", 'error'); }
-}
-
-async function disconnectWallet(){
-    await tonConnectUI.disconnect();
-    localStorage.setItem('walletConnected', 'false');
-    showToast("Wallet Disconnected");
+function updateConnectBtn(){
+    const btn = document.getElementById('connectBtn');
+    const addrEl = document.getElementById('tonAddress');
+    if(walletConnected && userWalletAddress){
+        const shortAddr = userWalletAddress.slice(0,4)+'...'+userWalletAddress.slice(-4);
+        btn.innerText = `✅ ${shortAddr}`;
+        btn.style.background = "#00C853";
+        btn.onclick = () => tonConnectUI.disconnect();
+        document.getElementById('tonWalletAddress').innerText = userWalletAddress;
+        addrEl.innerText = shortAddr;
+    } else {
+        btn.innerText = "🔗 CONNECT TON";
+        btn.style.background = "#0084ff";
+        btn.onclick = () => tonConnectUI.openModal();
+        document.getElementById('tonWalletAddress').innerText = '';
+        addrEl.innerText = "Not Connected";
+    }
 }
 
 function loadAdCounts(){
@@ -251,14 +238,15 @@ function updateUI(){
     document.getElementById('coinsWallet').innerText = coins.toLocaleString() + ' APU';
     document.getElementById('usdtWallet').innerText = usdt.toFixed(2) + ' USDT';
     const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'Guest';
+    const username = window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '-';
     document.getElementById('userId').innerText = userId;
+    document.getElementById('username').innerText = username;
     document.getElementById('totalEarned').innerText = coins.toLocaleString();
     document.getElementById('totalAds').innerText = totalAdsWatched;
     document.getElementById('refCount').innerText = refCount;
     document.getElementById('gigaCount').innerText = gigaCount;
     document.getElementById('monetagCount').innerText = monetagCount;
     document.getElementById('refLink').innerText = `https://t.me/AdsPayUBot?start=ref${userId}`;
-    if(tonAddress){ document.getElementById('tonWalletAddress').innerText = tonAddress; }
     if(gigaCount >= MAX_DAILY_ADS) document.getElementById('gigaBtn').disabled = true;
     if(monetagCount >= MAX_DAILY_ADS) document.getElementById('monetagBtn').disabled = true;
 }
@@ -307,7 +295,7 @@ function openDeposit(){
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">💰 Deposit TON</div>
-            <div class="modal-info">Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT</div>
+            <div class="modal-info">Fixed Rate: 1 TON = $${FIXED_TON_RATE.toFixed(2)} USDT</div>
             <div class="input-group">
                 <label>Enter TON Amount. Min 0.1</label>
                 <input type="number" id="depositAmount" placeholder="0.5" step="0.1" min="0.1">
@@ -325,10 +313,10 @@ async function confirmDeposit(){
     const amountTON = parseFloat(document.getElementById('depositAmount').value);
     document.querySelector('.modal.active').remove();
     if(!amountTON || amountTON < 0.1) return showToast("Min 0.1 TON", 'error');
-    const usdtToReceive = (amountTON * currentTonPrice).toFixed(2);
+    const usdtToReceive = (amountTON * FIXED_TON_RATE).toFixed(2);
     showToast("Opening Tonkeeper...", 'warning');
     const amountNano = (amountTON * 1000000).toFixed(0);
-    const transaction = {validUntil: Math.floor(Date.now()/1000) + 360,messages: [{address: YOUR_TON_WALLET, amount: amountNano}]};
+    const transaction = {validUntil: Math.floor(Date.now()/1000) + 360, messages: [{address: YOUR_TON_WALLET, amount: amountNano, payload: userWalletAddress}]};
     try{
         await tonConnectUI.sendTransaction(transaction);
         showToast(`Transaction sent! Crediting ${usdtToReceive} USDT in 20s...`, 'success');
@@ -346,8 +334,8 @@ function openWithdraw(){
         updateUI();
 
         const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
-        
-        const message = `🔔 NEW WITHDRAW REQUEST\nUser: @${user?.username || 'NoUsername'}\nUserID: ${user?.id || 'Guest'}\nAmount: ${amount} USDT\nWallet: ${tonAddress}\nTime: ${new Date().toLocaleString()}`;
+
+        const message = `🔔 NEW WITHDRAW REQUEST\nUser: @${user?.username || 'NoUsername'}\nUserID: ${user?.id || 'Guest'}\nAmount: ${amount} USDT\nWallet: ${userWalletAddress}\nTime: ${new Date().toLocaleString()}`;
 
         fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: 'POST',
