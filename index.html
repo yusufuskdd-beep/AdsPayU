@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v7.6.3</title>
+<title>AdsPayU v7.6.4</title>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
@@ -30,6 +30,7 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 .btn-get.orange{background:#ff9500}
 .btn-get.red{background:#ff3b30}
 .btn-get.gray{background:#555}
+.btn-get.green{background:#00c851}
 .btn-get:disabled{background:#333;opacity:0.6}
 .income-card{background:#1a1f3a;padding:20px;border-radius:15px;text-align:center;margin-bottom:20px}
 .income-value{font-size:24px;color:#00c851;font-weight:800}
@@ -94,7 +95,8 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
     <button class="btn-get" id="connectWalletBtn" onclick="connectWallet()">CONNECT TON WALLET</button>
     <button class="btn-get gray" id="disconnectBtn" onclick="disconnectWallet()" style="display:none">DISCONNECT WALLET</button>
     <div id="tonWalletAddress"></div>
-    <div id="tonRateText">Loading rate...</div>
+    <div id="tonRateText">Rate: 1 TON = $3.50 USDT</div>
+    <button class="btn-get green" onclick="loadTonPrice()">🔄 REFRESH RATE</button>
     <button class="btn-get orange" onclick="openSwap()">SWAP APU → USDT</button>
     <button class="btn-get" onclick="openDeposit()">DEPOSIT TON → USDT</button>
     <button class="btn-get red" onclick="openWithdraw()">WITHDRAW USDT</button>
@@ -143,7 +145,7 @@ let tonAddress = localStorage.getItem('tonAddress') || '';
 let walletConnected = localStorage.getItem('walletConnected') === 'true';
 let currentTab = 'home';
 let currentTopTab = 'wallet';
-let currentTonPrice = 3.50;
+let currentTonPrice = parseFloat(localStorage.getItem('tonPrice')) || 3.50;
 
 const MINER_INTERVAL = 3600000;
 const COOLDOWN_TIME = 5000;
@@ -168,36 +170,29 @@ function showToast(msg, type='success'){
     setTimeout(()=>t.style.display='none',3000)
 }
 
-// 3 API FALLBACK FOR TON PRICE
+// TONCENTER API - WORKS IN TELEGRAM
 async function loadTonPrice(){
-    const apis = [
-        'https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd',
-        'https://tonapi.io/v2/rates?tokens=TON&currencies=USD',
-        'https://api.binance.com/api/v3/ticker/price?symbol=TONUSDT'
-    ];
-    
-    for(let api of apis){
-        try{
-            const res = await fetch(api);
-            const data = await res.json();
-            
-            if(api.includes('coingecko')) currentTonPrice = data['the-open-network'].usd;
-            if(api.includes('tonapi')) currentTonPrice = data.rates.TON.prices.USD;
-            if(api.includes('binance')) currentTonPrice = parseFloat(data.price);
-            
+    showToast("Fetching rate...", 'warning');
+    try{
+        const res = await fetch('https://toncenter.com/api/v2/getRate?token=ton');
+        const data = await res.json();
+        if(data.ok && data.result){
+            currentTonPrice = parseFloat(data.result);
+            localStorage.setItem('tonPrice', currentTonPrice);
             document.getElementById('tonRateText').innerText = `Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT`;
-            return;
-        }catch(e){}
+            showToast("Rate Updated!", 'success');
+        }
+    }catch(e){
+        showToast("Failed to fetch rate", 'error');
     }
-    // If all fail
-    document.getElementById('tonRateText').innerText = `Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT`;
 }
 
 function init(){
     if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}
-    loadAdCounts();loadMinerData();updateUI();renderMiners();updateTotalIncome();checkDaily();initTonConnect();loadTonPrice();
+    loadAdCounts();loadMinerData();updateUI();renderMiners();updateTotalIncome();checkDaily();initTonConnect();
+    document.getElementById('tonRateText').innerText = `Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT`;
     setInterval(updateMiners, 1000);
-    setInterval(loadTonPrice, 30000); // Update every 30s
+    setInterval(loadTonPrice, 120000); // Auto refresh every 2 min
 }
 
 function initTonConnect(){
@@ -206,8 +201,7 @@ function initTonConnect(){
     });
     tonConnectUI.onStatusChange(wallet => {
         if (wallet && wallet.account) {
-            // USE RAW ADDRESS DIRECTLY 0:...
-            tonAddress = wallet.account.address; 
+            tonAddress = wallet.account.address; // RAW 0:...
             walletConnected = true;
             localStorage.setItem('walletConnected', 'true');
             localStorage.setItem('tonAddress', tonAddress);
