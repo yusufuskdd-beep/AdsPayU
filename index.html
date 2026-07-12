@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v7.5.6</title>
+<title>AdsPayU v7.5.8</title>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
@@ -160,6 +160,36 @@ const MINERS = [
 
 let tonConnectUI;
 
+// CONVERT TO NON-BOUNCEABLE EQ...
+function rawToNonBounceable(rawAddress) {
+    if(!rawAddress ||!rawAddress.includes(':')) return rawAddress;
+    const [wc, hex] = rawAddress.split(':');
+    let workchain = parseInt(wc);
+    if(workchain === 0) workchain = -1; // -1 = non-bounceable flag
+    
+    const hash = hex;
+    const address = new Uint8Array(34);
+    address[0] = workchain & 0xFF;
+    for(let i = 0; i < 32; i++) {
+        address[i + 1] = parseInt(hash.substr(i * 2, 2), 16);
+    }
+    
+    let crc = 0;
+    for(let i = 0; i < 34; i++) {
+        crc ^= address[i] << 8;
+        for(let j = 0; j < 8; j++) {
+            crc = (crc & 0x8000)? (crc << 1) ^ 0x1021 : crc << 1;
+        }
+    }
+    crc &= 0xFFFF;
+    address[32] = crc >> 8;
+    address[33] = crc & 0xFF;
+    
+    const base64 = btoa(String.fromCharCode(...address));
+    const urlSafe = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    return 'EQ' + urlSafe;
+}
+
 function showToast(msg, type='success'){
     const t=document.getElementById('toast');
     t.innerText=msg;
@@ -188,15 +218,12 @@ function init(){
 
 function initTonConnect(){
     tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-        manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json',
-        uiPreferences: {
-            theme: TON_CONNECT_UI.THEME.DARK
-        }
+        manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json'
     });
     tonConnectUI.onStatusChange(wallet => {
         if (wallet && wallet.account) {
-            // THIS IS THE KEY: Use friendlyAddress from tonconnect
-            tonAddress = wallet.account.address; 
+            const raw = wallet.account.address;
+            tonAddress = rawToNonBounceable(raw); // CONVERT TO EQ...
             walletConnected = true;
             localStorage.setItem('walletConnected', 'true');
             localStorage.setItem('tonAddress', tonAddress);
@@ -322,7 +349,7 @@ async function confirmDeposit(){
     if(!amountTON || amountTON < 0.1) return showToast("Min 0.1 TON", 'error');
     const usdtToReceive = (amountTON * currentTonPrice).toFixed(2);
     showToast("Opening Tonkeeper...", 'warning');
-    const amountNano = (amountTON * 1000000).toFixed(0);
+    const amountNano = (amountTON * 1000000000).toFixed(0);
     const transaction = {validUntil: Math.floor(Date.now()/1000) + 360,messages: [{address: YOUR_TON_WALLET, amount: amountNano}]};
     try{
         await tonConnectUI.sendTransaction(transaction);
@@ -349,12 +376,12 @@ function openWithdraw(){
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({chat_id: ADMIN_TELEGRAM_ID, text: message})
         })
-   .then(res => res.json())
-   .then(data => {
+.then(res => res.json())
+.then(data => {
             if(data.ok) showToast(`Request Sent! Paid in 24h`, 'success')
             else showToast(`Error: ${data.description}`, 'error')
         })
-   .catch(e => showToast(`Network error`, 'error'))
+.catch(e => showToast(`Network error`, 'error'))
     } else {
         showToast(`Min withdraw $${MIN_WITHDRAW}`, 'error')
     }
