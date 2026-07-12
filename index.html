@@ -3,57 +3,63 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-<title>AdsPayU</title>
-<link rel="stylesheet" href="style.css?v=6">
-
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-
+<title>AdsPayU TEST</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
+body{background:#0a0e27;color:#fff}
+.page{display:none;padding:20px}.page.active{display:block}
+.balance-card{background:#1a1f3a;padding:30px;border-radius:20px;text-align:center;margin:20px}
+.balance-apu{font-size:40px;color:#ffd700;font-weight:bold}
+.daily-claim{background:#00c851;width:90%;margin:20px auto;padding:15px;border-radius:15px;border:none;color:#fff;font-size:18px;font-weight:bold}
+.btn-get{background:#0084ff;color:#fff;border:none;padding:10px 20px;border-radius:10px}
+.bottom-nav{position:fixed;bottom:0;width:100%;display:flex;background:#1a1f3a}
+.nav-item{flex:1;padding:15px;background:none;border:none;color:#aaa}
+.nav-item.active{color:#0084ff}
+</style>
 </head>
 <body>
-<div id="toast" class="toast"></div>
 
-<!-- MODALS -->
-<div class="modal" id="adminPassModal"><div class="modal-content"><div class="modal-title">🔒 ADMIN LOGIN</div><div class="input-group"><label>Enter Password</label><input type="password" id="adminPassInput" placeholder="admin123"></div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeAdminPass()">CANCEL</button><button class="modal-btn btn-confirm" onclick="checkAdminPass()">LOGIN</button></div></div></div>
+<div id="home" class="page active">
+<div class="balance-card">
+<div>YOUR BALANCE</div>
+<div class="balance-apu" id="coinsHome">500 APU</div>
+</div>
+<button class="daily-claim" onclick="claimDaily()">🎁 CLAIM DAILY 50 APU</button>
+<button class="btn-get" onclick="watchAd()">Watch Ad +10</button>
+</div>
 
-<div class="modal" id="adConfirmModal"><div class="modal-content"><div class="modal-title">⚠️ Important</div><div class="modal-info">Watch the ad for at least <b>30 seconds</b> to get credit. Skipping will give no reward.</div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeAdConfirm()">CANCEL</button><button class="modal-btn btn-confirm" onclick="proceedAd()">WATCH AD</button></div></div></div>
-
-<div id="app">
-<div class="topbar"><h1>AdsPayU</h1><div class="top-tabs"><button class="top-tab active" id="tabWallet" onclick="showTopTab('wallet')">💰 Wallet</button><button class="top-tab" id="tabProfile" onclick="showTopTab('profile')">👤 Profile</button></div></div>
-
-<div id="home" class="page active"><div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsHome">0 APU</div><div class="balance-usdt" id="usdtHome">0.0000 USDT</div></div><button class="daily-claim" id="dailyClaimBtn" onclick="claimDaily()">🎁 CLAIM DAILY 50 APU</button><div class="card"><div class="card-header"><div class="card-icon">🎯</div><div class="card-info"><div class="card-title">GigaPub Ads</div><div class="card-sub">⚠️ Watch 30s to get credit | <span id="gigaCount">0</span>/100 today = 10 APU each</div></div><button class="btn-get" id="gigaBtn">Watch</button></div></div><div class="card"><div class="card-header"><div class="card-icon">💰</div><div class="card-info"><div class="card-title">Monetag Ads</div><div class="card-sub">⚠️ Watch 30s to get credit | <span id="monetagCount">0</span>/100 today = 10 APU each</div></div><button class="btn-get orange" id="monetagBtn">Watch</button></div></div></div>
-
-<div id="wallet" class="page"><div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsWallet">0 APU</div><div class="balance-usdt" id="usdtWallet">0.0000 USDT</div></div><div class="btn-row"><button class="btn btn-primary" id="connectBtn">🔗 CONNECT TON</button><button class="btn btn-secondary" onclick="openDeposit()">DEPOSIT</button></div><div class="btn-row"><button class="btn btn-primary" onclick="openWithdraw()">WITHDRAW</button><button class="btn btn-secondary" onclick="openSwap()">SWAP</button></div></div>
-
-<div id="profile" class="page"><div class="card"><div class="card-title">👤 Your Profile</div><div class="card-sub" style="margin-top:8px">User ID: <span id="userId">Guest</span></div><div class="card-sub">Username: <span id="username">-</span></div><div class="card-sub">TON Wallet: <span id="tonAddress">Not Connected</span></div><div class="card-sub">Total Earned: <span id="totalEarned">0</span> APU</div><div class="card-sub">Total Ads Watched: <span id="totalAds">0</span></div></div></div>
-
-<div id="miner" class="page"><div class="income-card"><div class="income-label">TOTAL HOURLY INCOME</div><div class="income-value" id="totalIncome">0 APU/h</div></div><div id="minerList"></div></div>
-
-<div id="admin" class="page"><div class="card"><div class="card-title">🛡️ ADMIN PANEL</div><div class="card-sub">Total Requests: <span id="totalReq">0</span></div><button class="btn btn-danger" style="margin-top:10px;width:100%" onclick="clearAllReq()">CLEAR ALL REQUESTS</button></div><div id="reqList"></div></div>
+<div id="miner" class="page">
+<h1>MINER PAGE WORKS</h1>
+</div>
 
 <div class="bottom-nav">
-    <button class="nav-item active" onclick="showTab('home')"><span class="nav-icon">🏠</span>Home</button>
-    <button class="nav-item" onclick="showTab('miner')"><span class="nav-icon">⚡</span>Miner</button>
-    <button class="nav-item" onclick="openAdmin()"><span class="nav-icon">🛡️</span>Admin</button>
-</div>
+<button class="nav-item active" onclick="showTab('home')">Home</button>
+<button class="nav-item" onclick="showTab('miner')">Miner</button>
 </div>
 
-<div class="modal" id="swapModal"><div class="modal-content"><div class="modal-title">SWAP APU → USDT</div><div class="modal-info">Rate: 1 APU = $0.000025<br>Min Swap: 200 APU</div><div class="input-group"><label>APU Amount</label><input type="number" id="swapInput" placeholder="200" oninput="updateSwapPreview()"></div><div class="modal-info" id="swapPreview">You will receive: 0.0000 USDT</div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeSwap()">CANCEL</button><button class="modal-btn btn-confirm" onclick="confirmSwap()">SWAP</button></div></div></div>
-<div class="modal" id="depositModal"><div class="modal-content"><div class="modal-title">DEPOSIT USDT</div><div class="modal-info" id="tonRateText">Loading rate...</div><div class="input-group"><label>Enter TON Amount</label><input type="number" id="depositInput" step="0.1" min="0.1" placeholder="0.5"></div><div class="modal-info" id="depositPreview">You will receive: 0.00 USDT</div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeDeposit()">CANCEL</button><button class="modal-btn btn-confirm" id="depositConfirmBtn" onclick="confirmDeposit()">DEPOSIT</button></div></div></div>
-<div class="modal" id="withdrawModal"><div class="modal-content"><div class="modal-title">REQUEST WITHDRAW</div><div class="modal-info" id="withdrawInfo">Min: $0.50 USDT | Fee: 5%</div><div class="input-group"><label>Enter USDT Amount</label><input type="number" id="withdrawInput" step="0.01" min="0.50" placeholder="0.50"></div><div class="modal-info" id="withdrawPreview">You will receive: 0.00 USDT</div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeWithdraw()">CANCEL</button><button class="modal-btn btn-confirm" onclick="requestWithdraw()">REQUEST</button></div></div></div>
+<script>
+let coins = 500;
 
-<!-- LOAD JS FILES AT THE END - WITH CACHE BUST -->
-<script src="config.js?v=6"></script>
-<script src="ton.js?v=6"></script>
-<script src="ads.js?v=6"></script>
-<script src="miners.js?v=6"></script>
-<script src="app.js?v=6"></script>
+function showTab(tab){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
+    event.target.classList.add('active');
+}
 
-<script src="https://ad.gigapub.tech/script?id=7204"></script>
-<script src='//libtl.com/sdk.js' data-zone='11258922' data-sdk='show_11258922'></script>
+function claimDaily(){
+    coins += 50;
+    document.getElementById('coinsHome').innerText = coins + ' APU';
+    alert('+50 APU! New Balance: ' + coins);
+}
 
+function watchAd(){
+    coins += 10;
+    document.getElementById('coinsHome').innerText = coins + ' APU';
+    alert('+10 APU! New Balance: ' + coins);
+}
+
+alert("1-FILE VERSION LOADED");
+</script>
 </body>
 </html>
