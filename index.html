@@ -136,8 +136,12 @@ const MINERS = [
     {id: 4, name: "💎 Diamond Miner", cost: 50.00, reward: 1000}
 ];
 
+// KEY FIX: Added actionsConfiguration for Telegram
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-    manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json'
+    manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json',
+    actionsConfiguration: {
+        twaReturnUrl: 'https://t.me/AdsPayUBot' // CHANGE TO YOUR BOT USERNAME
+    }
 });
 
 function showToast(msg){const t=document.getElementById('toast');t.innerText=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2000)}
@@ -154,6 +158,10 @@ function initTon(){
             localStorage.setItem('tonAddress', tonAddress);
             document.getElementById('tonWalletAddress').innerText = tonAddress.slice(0,8) + '...' + tonAddress.slice(-8);
             document.getElementById('tonConnectBtn').innerText = 'CONNECTED';
+            showToast("Wallet Connected!");
+        } else {
+            document.getElementById('tonConnectBtn').innerText = 'CONNECT TON WALLET';
+            document.getElementById('tonWalletAddress').innerText = '';
         }
     });
     document.getElementById('tonConnectBtn').onclick = () => tonConnectUI.openModal();
@@ -186,13 +194,17 @@ function updateUI(){
     document.getElementById('monetagCount').innerText = monetagCount;
     document.getElementById('refLink').innerText = `https://t.me/AdsPayUBot?start=ref${userId}`;
     
+    if(tonAddress){
+        document.getElementById('tonWalletAddress').innerText = tonAddress.slice(0,8) + '...' + tonAddress.slice(-8);
+        document.getElementById('tonConnectBtn').innerText = 'CONNECTED';
+    }
+    
     if(gigaCount >= MAX_DAILY_ADS) document.getElementById('gigaBtn').disabled = true;
     if(monetagCount >= MAX_DAILY_ADS) document.getElementById('monetagBtn').disabled = true;
 }
 
 function copyRef(){navigator.clipboard.writeText(document.getElementById('refLink').innerText);showToast("Referral link copied!")}
 
-// FIXED TAB FUNCTIONS - NO event.target
 function showTab(tab){
     currentTab = tab;
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -224,7 +236,7 @@ function watchHomeAd() {
     adRunning = true;
     showToast("Watching ad... 20s");
 
-    try { if (typeof show_11258922 === 'function') { show_11258922(); } } catch(e) {}
+    try { if (typeof show_11258922 === 'function') { show_11258922(); } catch(e) {}
 
     setTimeout(()=>{
         adRunning = false;
