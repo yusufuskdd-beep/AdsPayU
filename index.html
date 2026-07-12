@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v7.6.2</title>
+<title>AdsPayU v7.6.3</title>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
@@ -168,34 +168,36 @@ function showToast(msg, type='success'){
     setTimeout(()=>t.style.display='none',3000)
 }
 
+// 3 API FALLBACK FOR TON PRICE
 async function loadTonPrice(){
-    let loaded = false;
-    // Timeout after 2 seconds
-    setTimeout(()=>{
-        if(!loaded){
-            currentTonPrice = 3.50;
+    const apis = [
+        'https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd',
+        'https://tonapi.io/v2/rates?tokens=TON&currencies=USD',
+        'https://api.binance.com/api/v3/ticker/price?symbol=TONUSDT'
+    ];
+    
+    for(let api of apis){
+        try{
+            const res = await fetch(api);
+            const data = await res.json();
+            
+            if(api.includes('coingecko')) currentTonPrice = data['the-open-network'].usd;
+            if(api.includes('tonapi')) currentTonPrice = data.rates.TON.prices.USD;
+            if(api.includes('binance')) currentTonPrice = parseFloat(data.price);
+            
             document.getElementById('tonRateText').innerText = `Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT`;
-        }
-    }, 2000);
-
-    try{
-        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd');
-        const data = await res.json();
-        currentTonPrice = data['the-open-network'].usd;
-        loaded = true;
-        document.getElementById('tonRateText').innerText = `Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT`;
-    }catch(e){
-        loaded = true;
-        currentTonPrice = 3.50;
-        document.getElementById('tonRateText').innerText = `Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT`;
+            return;
+        }catch(e){}
     }
+    // If all fail
+    document.getElementById('tonRateText').innerText = `Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT`;
 }
 
 function init(){
     if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}
     loadAdCounts();loadMinerData();updateUI();renderMiners();updateTotalIncome();checkDaily();initTonConnect();loadTonPrice();
     setInterval(updateMiners, 1000);
-    setInterval(loadTonPrice, 60000);
+    setInterval(loadTonPrice, 30000); // Update every 30s
 }
 
 function initTonConnect(){
@@ -204,7 +206,7 @@ function initTonConnect(){
     });
     tonConnectUI.onStatusChange(wallet => {
         if (wallet && wallet.account) {
-            // USE DIRECT ADDRESS FROM WALLET. NO CONVERSION
+            // USE RAW ADDRESS DIRECTLY 0:...
             tonAddress = wallet.account.address; 
             walletConnected = true;
             localStorage.setItem('walletConnected', 'true');
