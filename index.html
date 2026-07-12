@@ -314,7 +314,7 @@ async function confirmDeposit(){
     const usdtToReceive = (amountTON * currentTonPrice).toFixed(2);
     showToast("Opening Tonkeeper...", 'warning');
 
-    const amountNano = Math.floor(amountTON * 1000000).toString(); // FIXED: 9 decimals
+    const amountNano = Math.floor(amountTON * 1000000000).toString(); // FIXED: 9 decimals
 
     const transaction = {
         validUntil: Math.floor(Date.now()/1000) + 360,
