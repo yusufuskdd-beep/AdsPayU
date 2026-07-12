@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v7.5.4</title>
+<title>AdsPayU v7.5.5</title>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
@@ -63,7 +63,7 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 .btn-confirm{background:#00c851;color:#fff}
 .ref-link{background:#0a0e27;padding:10px;border-radius:8px;word-break:break-all;font-size:12px}
 .wallet-btns{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:20px}
-#tonWalletAddress{font-size:11px;color:#aaa;margin-top:5px;text-align:center}
+#tonWalletAddress{font-size:11px;color:#aaa;margin-top:5px;text-align:center;word-break:break-all}
 #tonRateText{text-align:center;font-size:12px;color:#aaa;margin-bottom:10px}
 .input-group{margin-bottom:16px;text-align:left}
 .input-group label{font-size:12px;opacity:.8}
@@ -158,11 +158,48 @@ const MINERS = [
 
 let tonConnectUI;
 
-// CONVERT RAW TO BOUNCEABLE ADDRESS
-function toUserFriendly(address) {
-    if(!address) return '';
-    if(address.startsWith('UQ') || address.startsWith('EQ')) return address; // Already good
-    return address; // TonConnect now returns bounceable by default
+// REAL CONVERTER: 0:a745... to UQDx...
+function toUserFriendly(raw) {
+    if(!raw) return '';
+    if(raw.startsWith('UQ') || raw.startsWith('EQ')) return raw;
+    
+    try {
+        const parts = raw.split(':');
+        if(parts.length!== 2) return raw;
+        const workchain = parseInt(parts[0]);
+        const hex = parts[1];
+        
+        // Convert hex to bytes
+        const bytes = new Uint8Array(36);
+        bytes[0] = workchain === -1? 0xFF : workchain;
+        for(let i = 0; i < 32; i++) {
+            bytes[i+1] = parseInt(hex.substr(i*2, 2), 16);
+        }
+        
+        // Add CRC16
+        const crc = crc16(bytes);
+        const final = new Uint8Array(38);
+        final.set(bytes);
+        final[36] = crc >> 8;
+        final[37] = crc & 0xFF;
+        
+        // Base64url encode
+        const b64 = btoa(String.fromCharCode(...final)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+        return (workchain === -1? 'EQ' : 'UQ') + b64;
+    } catch(e) {
+        return raw;
+    }
+}
+
+function crc16(bytes) {
+    let crc = 0;
+    for(let i = 0; i < bytes.length; i++) {
+        crc ^= bytes[i] << 8;
+        for(let j = 0; j < 8; j++) {
+            crc = (crc & 0x8000)? (crc << 1) ^ 0x1021 : crc << 1;
+        }
+    }
+    return crc & 0xFFFF;
 }
 
 function showToast(msg, type='success'){
@@ -197,11 +234,12 @@ function initTonConnect(){
     });
     tonConnectUI.onStatusChange(wallet => {
         if (wallet) {
-            tonAddress = wallet.account.address; // This is bounceable UQ... now
+            tonAddress = wallet.account.address; // raw 0:a745...
             walletConnected = true;
             localStorage.setItem('walletConnected', 'true');
             localStorage.setItem('tonAddress', tonAddress);
-            document.getElementById('tonWalletAddress').innerText = tonAddress.slice(0,6) + '...' + tonAddress.slice(-4);
+            const friendly = toUserFriendly(tonAddress);
+            document.getElementById('tonWalletAddress').innerText = friendly;
             document.getElementById('connectWalletBtn').innerText = "✅ WALLET CONNECTED";
             document.getElementById('connectWalletBtn').disabled = true;
             showToast("Wallet Connected!");
@@ -249,7 +287,7 @@ function updateUI(){
     document.getElementById('gigaCount').innerText = gigaCount;
     document.getElementById('monetagCount').innerText = monetagCount;
     document.getElementById('refLink').innerText = `https://t.me/AdsPayUBot?start=ref${userId}`;
-    if(tonAddress){ document.getElementById('tonWalletAddress').innerText = tonAddress; }
+    if(tonAddress){ document.getElementById('tonWalletAddress').innerText = toUserFriendly(tonAddress); }
     if(gigaCount >= MAX_DAILY_ADS) document.getElementById('gigaBtn').disabled = true;
     if(monetagCount >= MAX_DAILY_ADS) document.getElementById('monetagBtn').disabled = true;
 }
@@ -337,7 +375,7 @@ function openWithdraw(){
         updateUI();
 
         const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
-        const friendlyWallet = toUserFriendly(tonAddress);
+        const friendlyWallet = toUserFriendly(tonAddress); // CONVERTED NOW
         
         const message = `🔔 NEW WITHDRAW REQUEST\nUser: @${user?.username || 'NoUsername'}\nUserID: ${user?.id || 'Guest'}\nAmount: ${amount} USDT\nWallet: ${friendlyWallet}\nTime: ${new Date().toLocaleString()}`;
 
@@ -346,12 +384,12 @@ function openWithdraw(){
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({chat_id: ADMIN_TELEGRAM_ID, text: message})
         })
-      .then(res => res.json())
-      .then(data => {
+     .then(res => res.json())
+     .then(data => {
             if(data.ok) showToast(`Request Sent! Paid in 24h`, 'success')
             else showToast(`Error: ${data.description}`, 'error')
         })
-      .catch(e => showToast(`Network error`, 'error'))
+     .catch(e => showToast(`Network error`, 'error'))
     } else {
         showToast(`Min withdraw $${MIN_WITHDRAW}`, 'error')
     }
