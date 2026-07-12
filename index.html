@@ -188,6 +188,7 @@ async function showWalletPicker(){
             buttons: [
                 {id: 'tonkeeper', type: 'default', text: 'Tonkeeper'},
                 {id: 'wallet', type: 'default', text: 'Telegram Wallet'},
+                {id: 'copy', type: 'default', text: 'Copy Link'},
                 {id: 'cancel', type: 'cancel', text: 'Cancel'}
             ]
         }, async (btnId) => {
@@ -195,12 +196,18 @@ async function showWalletPicker(){
             
             if(btnId === 'tonkeeper'){
                 const tgLink = `tg://tonconnect?connect=${encodedRequest}&manifestUrl=https://adspayu.vercel.app/tonconnect-manifest.json`;
-                Telegram.WebApp.openTelegramLink(tgLink);
+                setTimeout(() => {
+                    Telegram.WebApp.openTelegramLink(tgLink);
+                }, 100);
                 
             } else if(btnId === 'wallet'){
                 const wallet = wallets.find(w => w.name === 'Wallet');
                 const finalLink = wallet.universalLink + '?connect=' + encodedRequest;
                 Telegram.WebApp.openLink(finalLink);
+            } else if(btnId === 'copy'){
+                const tgLink = `tg://tonconnect?connect=${encodedRequest}&manifestUrl=https://adspayu.vercel.app/tonconnect-manifest.json`;
+                navigator.clipboard.writeText(tgLink);
+                showToast("Link copied! Open in Tonkeeper manually");
             }
         });
     }
