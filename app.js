@@ -1,5 +1,5 @@
-let coins = 100; // START WITH 100 SO YOU SEE IT
-let usdt = 1.50;
+let coins = 500;
+let usdt = 5.00;
 let totalAdsWatched = 0;
 let lastAdTime = 0;
 let minerData = {};
@@ -20,32 +20,23 @@ const MINERS = [
     {id: 4, name: "Diamond Miner", icon: "💎", cost: 50.00, reward: 1000, roi: "480%"}
 ];
 
-function showToast(message, type = 'success') {
-    alert(message); // USE ALERT FOR NOW SO WE SEE IT
-}
+function showToast(msg){alert(msg)}
 
 function init() {
     try {
-        const tg = window.Telegram?.WebApp;
-        tg?.ready();
-        tg?.expand();
-        USER_ID = tg?.initDataUnsafe?.user?.id?.toString() || 'guest_' + Date.now();
-        username = tg?.initDataUnsafe?.user?.username || 'Guest';
+        window.Telegram?.WebApp?.ready();
+        window.Telegram?.WebApp?.expand();
+        USER_ID = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || 'guest';
+        username = window.Telegram?.WebApp?.initDataUnsafe?.user?.username || 'Guest';
     } catch(e){}
     
-    loadMinerData();
-    coins = parseFloat(localStorage.getItem('coins')) || 100;
-    usdt = parseFloat(localStorage.getItem('usdt')) || 1.50;
+    coins = parseFloat(localStorage.getItem('coins')) || 500;
+    usdt = parseFloat(localStorage.getItem('usdt')) || 5.00;
     
+    loadMinerData();
     updateUI();
     renderMiners();
-    updateTotalIncome();
     checkDaily();
-    
-    // ADD BUTTON LISTENERS HERE SAFELY
-    document.getElementById('gigaBtn').onclick = () => watchHomeAd();
-    document.getElementById('monetagBtn').onclick = () => watchHomeAd();
-    document.getElementById('connectBtn').onclick = () => showToast("TON Coming Soon");
 }
 
 function loadMinerData() {
@@ -74,7 +65,7 @@ function showTab(tabName) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById(tabName).classList.add('active');
-    document.querySelector(`.nav-item[onclick*="${tabName}"]`).classList.add('active');
+    event?.target?.classList?.add('active');
 }
 
 function showTopTab(tabName) {
@@ -85,21 +76,11 @@ function showTopTab(tabName) {
 }
 
 function updateTotalIncome(){let total=0;MINERS.forEach(m=>{if(minerData[m.id].owned)total+=m.reward});document.getElementById('totalIncome').innerText=total.toLocaleString()+' APU/h'}
-function renderMiners(){const container=document.getElementById('minerList');container.innerHTML='';MINERS.forEach(m=>{const data=minerData[m.id];const now=Date.now();const isReady=data.owned&&(now-data.lastClaim>=MINER_INTERVAL);const canClaim=isReady&&data.adsWatched>=2;const daysToROI=m.cost>0?(m.cost/(m.reward*24*COIN_VALUE)).toFixed(1):'N/A';const onCooldown=(COOLDOWN_TIME-(now-lastAdTime))>0;let buttons='';let extraHTML='';let cardClass='miner-card';if(m.type==='starter'){cardClass+=' starter';const progress=Math.min(totalAdsWatched,m.unlockAds);const percent=(progress/m.unlockAds)*100;extraHTML=`<div class="progress-bar"><div class="progress-fill" style="width: ${percent}%"></div></div><div class="progress-text">${progress}/${m.unlockAds} Ads Watched</div>`;if(!data.owned){buttons=totalAdsWatched>=m.unlockAds?`<button class="miner-btn btn-buy" onclick="unlockStarter()">UNLOCK FREE</button>`:`<button class="miner-btn btn-buy" disabled>WATCH ${m.unlockAds-totalAdsWatched} MORE ADS</button>`}}else{if(!data.owned)buttons=`<button class="miner-btn btn-buy" onclick="buyMiner(${m.id})">BUY - $${m.cost.toFixed(2)}</button>`}if(data.owned&&!isReady){const timeLeft=MINER_INTERVAL-(now-data.lastClaim);const mins=Math.floor(timeLeft/6e4);const secs=Math.floor((timeLeft%6e4)/1e3);buttons=`<button class="miner-btn btn-buy" disabled>MINING... ${mins}m ${secs}s</button>`}if(data.owned&&isReady){buttons=`<div class="miner-btns"><button class="miner-btn btn-ad" onclick="watchAdForMiner(${m.id})" ${data.adsWatched>=2||onCooldown?'disabled':''}>${onCooldown?'WAIT 5s':`WATCH AD ${data.adsWatched}/2`}</button><button class="miner-btn btn-claim" onclick="claimMiner(${m.id})" ${!canClaim?'disabled':''}>CLAIM ${m.reward}</button></div>`}container.innerHTML+=`<div class="${cardClass} ${data.owned?'active':''}"><div class="miner-header"><div class="miner-name">${m.icon} ${m.name}</div><div class="miner-status ${data.owned?'active':''}">${data.owned?'ACTIVE':'LOCKED'}</div></div><div class="miner-info">Cost: ${m.cost>0?'$'+m.cost.toFixed(2):'200 Total Ads'} | Earn: ${m.reward} APU/hour</div><div class="miner-roi">ROI: ${m.roi} in 30 days ${daysToROI!=='N/A'?'| Break-even: ~'+daysToROI+' days':''}</div>${extraHTML}<div class="miner-progress">${isReady?m.reward+'/'+m.reward+' APU':'0/'+m.reward+' APU'}</div>${buttons}</div>`})}
-function unlockStarter(){minerData[0].owned=true;minerData[0].lastClaim=Date.now();localStorage.setItem(`miner0_owned`,'true');localStorage.setItem(`miner0_lastClaim`,minerData[0].lastClaim);renderMiners();updateTotalIncome();showToast("🎁 Starter Miner Unlocked!")}
-function buyMiner(id){showToast("Buy disabled for now")}
-function watchAdForMiner(id){showToast("Miner Ads Coming Soon")}
-function claimMiner(id){showToast("Claim Coming Soon")}
-function openSwap(){showToast("Swap Coming Soon")}
-function closeSwap(){}
-function updateSwapPreview(){}
-function confirmSwap(){}
-function checkDaily(){const btn=document.getElementById('dailyClaimBtn');const today=new Date().toDateString();const lastDailyClaim=localStorage.getItem('lastDailyClaim');if(lastDailyClaim===today){btn.disabled=true;btn.innerText="✅ CLAIMED TODAY";btn.style.background="#333"}}
-function claimDaily(){const today=new Date().toDateString();const lastDailyClaim=localStorage.getItem('lastDailyClaim');if(lastDailyClaim===today)return showToast("Already claimed today");coins+=50;localStorage.setItem('coins',coins);localStorage.setItem('lastDailyClaim',today);updateUI();checkDaily();showToast("+50 APU Claimed!")}
+function renderMiners(){const c=document.getElementById('minerList');c.innerHTML='';MINERS.forEach(m=>{const d=minerData[m.id];c.innerHTML+=`<div class="miner-card"><div class="miner-header"><div class="miner-name">${m.icon} ${m.name}</div></div><div class="miner-info">Earn: ${m.reward} APU/hour</div><button class="miner-btn btn-buy" onclick="showToast('Buy Disabled')">TEST</button></div>`})}
+function checkDaily(){const b=document.getElementById('dailyClaimBtn');if(localStorage.getItem('lastDailyClaim')===new Date().toDateString()){b.disabled=true;b.innerText="✅ CLAIMED TODAY"}}
+function claimDaily(){if(localStorage.getItem('lastDailyClaim')===new Date().toDateString())return showToast("Already claimed");coins+=50;localStorage.setItem('coins',coins);localStorage.setItem('lastDailyClaim',new Date().toDateString());updateUI();checkDaily();showToast("+50 APU!")}
+function watchHomeAd(){const n=Date.now();if((COOLDOWN_TIME-(n-lastAdTime))>0)return showToast("Wait 5s");lastAdTime=n;coins+=10;trackTotalAds();updateUI();showToast("+10 APU!")}
 function trackTotalAds(){totalAdsWatched+=1;localStorage.setItem('totalAdsWatched',totalAdsWatched)}
-function openAdmin(){document.getElementById('adminPassModal').classList.add('active')}
-function closeAdminPass(){document.getElementById('adminPassModal').classList.remove('active')}
-function checkAdminPass(){const pass=document.getElementById('adminPassInput').value;if(pass!==ADMIN_PASS)return showToast("Wrong Password");closeAdminPass();showTab('admin')}
-function watchHomeAd() {const now = Date.now();if ((COOLDOWN_TIME - (now - lastAdTime)) > 0) return showToast("Wait 5 seconds");lastAdTime = now;showToast("Watching ad... +10 APU");coins+=10;trackTotalAds();updateUI();}
+function openAdmin(){showToast("Admin")}
 
 window.onload = init;
