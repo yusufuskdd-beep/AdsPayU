@@ -139,7 +139,7 @@ const MINERS = [
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
     manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json',
     actionsConfiguration: {
-        twaReturnUrl: 'https://t.me/AdsPayUBot'
+        twaReturnUrl: 'https://t.me/AdsPayUBot' // CHANGE TO YOUR BOT USERNAME
     }
 });
 
@@ -156,14 +156,37 @@ function initTon(){
             tonAddress = wallet.account.address;
             localStorage.setItem('tonAddress', tonAddress);
             document.getElementById('tonWalletAddress').innerText = tonAddress.slice(0,8) + '...' + tonAddress.slice(-8);
-            document.getElementById('tonConnectBtn').innerText = 'CONNECTED';
+            document.getElementById('tonConnectBtn').innerText = 'DISCONNECT WALLET';
             showToast("Wallet Connected!");
         } else {
             document.getElementById('tonConnectBtn').innerText = 'CONNECT TON WALLET';
             document.getElementById('tonWalletAddress').innerText = '';
         }
     });
-    document.getElementById('tonConnectBtn').onclick = () => tonConnectUI.openModal();
+    
+    document.getElementById('tonConnectBtn').onclick = async () => {
+        if(tonAddress){
+            tonConnectUI.disconnect();
+            showToast("Wallet Disconnected");
+            return;
+        }
+        
+        if(window.Telegram?.WebApp){
+            const wallets = await tonConnectUI.getWallets();
+            const tgWallet = wallets.find(w => w.name === 'Wallet');
+            const tkWallet = wallets.find(w => w.name === 'Tonkeeper');
+            
+            if(tgWallet){
+                Telegram.WebApp.openLink(tgWallet.universalLink);
+            } else if(tkWallet){
+                Telegram.WebApp.openLink(tkWallet.universalLink);
+            } else {
+                tonConnectUI.openModal();
+            }
+        } else {
+            tonConnectUI.openModal();
+        }
+    };
 }
 
 function loadAdCounts(){
@@ -195,7 +218,7 @@ function updateUI(){
     
     if(tonAddress){
         document.getElementById('tonWalletAddress').innerText = tonAddress.slice(0,8) + '...' + tonAddress.slice(-8);
-        document.getElementById('tonConnectBtn').innerText = 'CONNECTED';
+        document.getElementById('tonConnectBtn').innerText = 'DISCONNECT WALLET';
     }
     
     if(gigaCount >= MAX_DAILY_ADS) document.getElementById('gigaBtn').disabled = true;
