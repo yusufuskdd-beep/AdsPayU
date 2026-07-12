@@ -139,7 +139,7 @@ const MINERS = [
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
     manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json',
     actionsConfiguration: {
-        twaReturnUrl: 'https://t.me/AdsPayUBot' // <-- CHANGE TO YOUR BOT USERNAME
+        twaReturnUrl: 'https://t.me/AdsPayUBot'
     }
 });
 
@@ -179,33 +179,28 @@ function initTon(){
 async function showWalletPicker(){
     const wallets = await tonConnectUI.getWallets();
     const connectRequest = await tonConnectUI.connectWallet();
+    const encodedRequest = encodeURIComponent(connectRequest);
     
-    const topWallets = wallets.filter(w => 
-        w.name.toLowerCase().includes('tonkeeper') || 
-        w.name === 'Wallet' ||
-        w.name.toLowerCase().includes('mytonwallet') ||
-        w.name.toLowerCase().includes('bitget')
-    ).slice(0,4);
-
     if(window.Telegram?.WebApp){
         Telegram.WebApp.showPopup({
             title: 'Connect Wallet',
             message: 'Choose your TON wallet',
             buttons: [
-             ...topWallets.map(w => ({id: w.name, type: 'default', text: w.name})),
+                {id: 'tonkeeper', type: 'default', text: 'Tonkeeper'},
+                {id: 'wallet', type: 'default', text: 'Telegram Wallet'},
                 {id: 'cancel', type: 'cancel', text: 'Cancel'}
             ]
         }, async (btnId) => {
             if(btnId === 'cancel') return;
-            const selected = topWallets.find(w => w.name === btnId);
-            if(selected){
-                const finalLink = selected.universalLink + '?connect=' + encodeURIComponent(connectRequest);
+            
+            if(btnId === 'tonkeeper'){
+                const tgLink = `tg://tonconnect?connect=${encodedRequest}&manifestUrl=https://adspayu.vercel.app/tonconnect-manifest.json`;
+                Telegram.WebApp.openTelegramLink(tgLink);
                 
-                if(selected.name.toLowerCase().includes('tonkeeper')){
-                    Telegram.WebApp.openTelegramLink(finalLink); // Forces app to open
-                } else {
-                    Telegram.WebApp.openLink(finalLink);
-                }
+            } else if(btnId === 'wallet'){
+                const wallet = wallets.find(w => w.name === 'Wallet');
+                const finalLink = wallet.universalLink + '?connect=' + encodedRequest;
+                Telegram.WebApp.openLink(finalLink);
             }
         });
     }
