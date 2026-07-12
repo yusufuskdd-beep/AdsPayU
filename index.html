@@ -172,39 +172,37 @@ function initTon(){
             showToast("Wallet Disconnected");
             return;
         }
-
-        const wallets = await tonConnectUI.getWallets();
-
-        let modal = document.createElement('div');
-        modal.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center";
-        modal.innerHTML = `
-        <div style="background:#1a1f3a;padding:20px;border-radius:15px;width:90%;max-width:350px">
-            <div style="font-size:18px;font-weight:800;margin-bottom:15px;text-align:center">Connect Wallet</div>
-            ${wallets.map(w => `
-                <button onclick="connectWallet('${w.universalLink}')"
-                style="width:100%;padding:15px;margin-bottom:10px;background:#0084ff;border:none;border-radius:10px;color:#fff;font-weight:700;font-size:16px">
-                ${w.name}
-                </button>
-            `).join('')}
-            <button onclick="this.parentElement.parentElement.remove()"
-            style="width:100%;padding:12px;background:#333;border:none;border-radius:10px;color:#fff;font-weight:700">
-            CANCEL
-            </button>
-        </div>`;
-        document.body.appendChild(modal);
+        showWalletPicker();
     };
 }
 
-async function connectWallet(universalLink){
-    document.querySelectorAll('div[style*="position:fixed"]').forEach(el => el.remove());
-
+async function showWalletPicker(){
+    const wallets = await tonConnectUI.getWallets();
     const connectRequest = await tonConnectUI.connectWallet();
-    const finalLink = universalLink + '?connect=' + encodeURIComponent(connectRequest);
+    
+    const topWallets = wallets.filter(w => 
+        w.name.toLowerCase().includes('tonkeeper') || 
+        w.name === 'Wallet' ||
+        w.name.toLowerCase().includes('mytonwallet') ||
+        w.name.toLowerCase().includes('bitget')
+    ).slice(0,4);
 
     if(window.Telegram?.WebApp){
-        Telegram.WebApp.openLink(finalLink);
-    } else {
-        window.open(finalLink);
+        Telegram.WebApp.showPopup({
+            title: 'Connect Wallet',
+            message: 'Choose your TON wallet',
+            buttons: [
+               ...topWallets.map(w => ({id: w.name, type: 'default', text: w.name})),
+                {id: 'cancel', type: 'cancel', text: 'Cancel'}
+            ]
+        }, async (btnId) => {
+            if(btnId === 'cancel') return;
+            const selected = topWallets.find(w => w.name === btnId);
+            if(selected){
+                const finalLink = selected.universalLink + '?connect=' + encodeURIComponent(connectRequest);
+                Telegram.WebApp.openLink(finalLink);
+            }
+        });
     }
 }
 
