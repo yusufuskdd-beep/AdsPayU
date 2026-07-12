@@ -64,7 +64,7 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 
 <div id="toast" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#00c851;padding:12px 20px;border-radius:10px;display:none;z-index:9999">Toast</div>
 
-<div class="modal" id="adConfirmModal"><div class="modal-content"><div class="modal-title">⚠️ Important</div><div class="modal-info">Watch the ad for at least <b>30 seconds</b> to get credit. Closing early = No reward.</div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeAdConfirm()">CANCEL</button><button class="modal-btn btn-confirm" onclick="proceedAd()">WATCH AD</button></div></div></div>
+<div class="modal" id="adConfirmModal"><div class="modal-content"><div class="modal-title">⚠️ Important</div><div class="modal-info">Watch the ad for at least <b>20 seconds</b> to get credit. Closing early = No reward.</div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeAdConfirm()">CANCEL</button><button class="modal-btn btn-confirm" onclick="proceedAd()">WATCH AD</button></div></div></div>
 
 <div id="app">
 <div class="topbar"><h1>AdsPayU</h1><div class="top-tabs"><button class="top-tab active" onclick="showTopTab('wallet')">💰 Wallet</button><button class="top-tab" onclick="showTopTab('profile')">👤 Profile</button></div></div>
@@ -128,7 +128,7 @@ function showTopTab(tab){document.querySelectorAll('.page').forEach(p=>p.classLi
 function claimDaily(){if(localStorage.getItem('lastDailyClaim')===new Date().toDateString())return showToast("Already claimed");coins+=50;localStorage.setItem('coins',coins);localStorage.setItem('lastDailyClaim',new Date().toDateString());updateUI();checkDaily();showToast("+50 APU!")}
 function checkDaily(){if(localStorage.getItem('lastDailyClaim')===new Date().toDateString()){document.getElementById('dailyClaimBtn').disabled=true;document.getElementById('dailyClaimBtn').innerText="✅ CLAIMED TODAY"}}
 
-// REAL ADS LOGIC
+// REAL ADS LOGIC - 20 SECONDS
 function openAdConfirm(type, minerId = null) {currentAdType = type;currentAdMinerId = minerId;document.getElementById('adConfirmModal').classList.add('active')}
 function closeAdConfirm() {document.getElementById('adConfirmModal').classList.remove('active')}
 function proceedAd() {closeAdConfirm();if (currentAdType === 'home') {watchHomeAd();} else if (currentAdType === 'miner') {watchAdForMiner(currentAdMinerId)}}
@@ -136,20 +136,19 @@ function proceedAd() {closeAdConfirm();if (currentAdType === 'home') {watchHomeA
 function watchHomeAd() {
     if(Date.now()-lastAdTime<COOLDOWN_TIME)return showToast("Wait 5 seconds");
     lastAdTime=Date.now();
-    showToast("Watching ad... 30s");
-    
-    // TRY GIGAPUB FIRST, THEN MONETAG
+    showToast("Watching ad... 20s");
+
     try {
         if (typeof show_11258922 === 'function') {
             show_11258922(); // Monetag
         }
     } catch(e) {}
-    
+
     setTimeout(()=>{
         coins+=10;totalAdsWatched+=1;
         localStorage.setItem('coins',coins);localStorage.setItem('totalAdsWatched',totalAdsWatched);
         updateUI();showToast("+10 APU Earned!");
-    }, 30000); // 30 second wait
+    }, 20000); // 20 SECONDS
 }
 
 function updateTotalIncome(){let total=0;MINERS.forEach(m=>{if(minerData[m.id].owned)total+=m.reward});document.getElementById('totalIncome').innerText=total.toLocaleString()+' APU/h'}
