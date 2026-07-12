@@ -18,6 +18,7 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 .balance-apu{font-size:40px;color:#ffd700;font-weight:900;margin:10px 0}
 .balance-usdt{font-size:16px;color:#00c851}
 .daily-claim{background:linear-gradient(135deg,#00c851,#00a043);width:100%;padding:18px;border-radius:15px;border:none;color:#fff;font-size:18px;font-weight:800;margin-bottom:20px}
+.daily-claim:disabled{background:#333}
 .card{background:#1a1f3a;padding:15px;border-radius:15px;margin-bottom:15px}
 .card-header{display:flex;align-items:center;gap:15px}
 .card-icon{font-size:30px}
@@ -25,16 +26,27 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 .card-sub{color:#aaa;font-size:12px}
 .btn-get{background:#0084ff;color:#fff;border:none;padding:10px 20px;border-radius:10px;font-weight:700}
 .btn-get.orange{background:#ff9500}
+.btn-get:disabled{background:#333}
 .income-card{background:#1a1f3a;padding:20px;border-radius:15px;text-align:center;margin-bottom:20px}
 .income-value{font-size:24px;color:#00c851;font-weight:800}
-.miner-card{background:#1a1f3a;padding:15px;border-radius:15px;margin-bottom:15px}
-.miner-header{display:flex;justify-content:space-between}
-.miner-name{font-weight:700}
-.miner-info{color:#aaa;font-size:12px;margin:5px 0}
-.miner-btn{width:100%;padding:12px;border:none;border-radius:10px;font-weight:700;margin-top:10px}
+.miner-card{background:#1a1f3a;padding:15px;border-radius:15px;margin-bottom:15px;border:1px solid #2a2f4a}
+.miner-card.active{border-color:#00c851}
+.miner-header{display:flex;justify-content:space-between;margin-bottom:8px}
+.miner-name{font-weight:700;font-size:16px}
+.miner-status{font-size:10px;padding:4px 8px;border-radius:5px;background:#333}
+.miner-status.active{background:#00c851}
+.miner-info{color:#aaa;font-size:12px}
+.miner-roi{color:#00c851;font-size:11px;margin:5px 0}
+.miner-progress{font-size:12px;margin:8px 0}
+.miner-btns{display:flex;gap:8px}
+.miner-btn{flex:1;padding:12px;border:none;border-radius:10px;font-weight:700;font-size:12px}
 .btn-buy{background:#0084ff;color:#fff}
 .btn-claim{background:#00c851;color:#fff}
 .btn-ad{background:#ff9500;color:#fff}
+.btn-buy:disabled,.btn-claim:disabled,.btn-ad:disabled{background:#333}
+.progress-bar{height:6px;background:#0a0e27;border-radius:3px;margin:8px 0;overflow:hidden}
+.progress-fill{height:100%;background:#00c851}
+.progress-text{font-size:11px;color:#aaa;text-align:center}
 .bottom-nav{position:fixed;bottom:0;left:0;width:100%;display:flex;background:#1a1f3a;border-top:1px solid #2a2f4a}
 .nav-item{flex:1;padding:15px;background:none;border:none;color:#aaa;font-weight:600}
 .nav-item.active{color:#0084ff}
@@ -46,22 +58,20 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 <div class="topbar"><h1>AdsPayU</h1><div class="top-tabs"><button class="top-tab active" onclick="showTopTab('wallet')">💰 Wallet</button><button class="top-tab" onclick="showTopTab('profile')">👤 Profile</button></div></div>
 
 <div id="home" class="page active">
-<div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsHome">500 APU</div><div class="balance-usdt" id="usdtHome">5.0000 USDT</div></div>
+<div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsHome">0 APU</div><div class="balance-usdt" id="usdtHome">0.0000 USDT</div></div>
 <button class="daily-claim" id="dailyClaimBtn" onclick="claimDaily()">🎁 CLAIM DAILY 50 APU</button>
-<div class="card"><div class="card-header"><div class="card-icon">🎯</div><div><div class="card-title">GigaPub Ads</div><div class="card-sub"><span id="gigaCount">0</span>/100 today = 10 APU each</div></div><button class="btn-get" onclick="watchHomeAd()">Watch</button></div></div>
-<div class="card"><div class="card-header"><div class="card-icon">💰</div><div><div class="card-title">Monetag Ads</div><div class="card-sub"><span id="monetagCount">0</span>/100 today = 10 APU each</div></div><button class="btn-get orange" onclick="watchHomeAd()">Watch</button></div></div>
+<div class="card"><div class="card-header"><div class="card-icon">🎯</div><div><div class="card-title">GigaPub Ads</div><div class="card-sub"><span id="gigaCount">0</span>/100 today = 10 APU each</div></div><button class="btn-get" id="gigaBtn" onclick="watchHomeAd()">Watch</button></div></div>
+<div class="card"><div class="card-header"><div class="card-icon">💰</div><div><div class="card-title">Monetag Ads</div><div class="card-sub"><span id="monetagCount">0</span>/100 today = 10 APU each</div></div><button class="btn-get orange" id="monetagBtn" onclick="watchHomeAd()">Watch</button></div></div>
 </div>
 
 <div id="wallet" class="page">
-<div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsWallet">500 APU</div><div class="balance-usdt" id="usdtWallet">5.0000 USDT</div></div>
-<button class="btn-get" style="width:100%;margin-bottom:10px" onclick="alert('TON Connect Coming')">🔗 CONNECT TON</button>
-<button class="btn-get" style="width:100%;margin-bottom:10px" onclick="alert('Deposit Coming')">DEPOSIT</button>
-<button class="btn-get" style="width:100%;margin-bottom:10px" onclick="alert('Withdraw Coming')">WITHDRAW</button>
+<div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsWallet">0 APU</div><div class="balance-usdt" id="usdtWallet">0.0000 USDT</div></div>
+<button class="btn-get" style="width:100%;margin-bottom:10px" onclick="alert('TON Connect Coming Soon')">🔗 CONNECT TON</button>
 <button class="btn-get orange" style="width:100%" onclick="openSwap()">SWAP APU → USDT</button>
 </div>
 
 <div id="profile" class="page">
-<div class="card"><div class="card-title">👤 Your Profile</div><div class="card-sub">User ID: <span id="userId">Guest</span></div><div class="card-sub">Total Earned: <span id="totalEarned">500</span> APU</div></div>
+<div class="card"><div class="card-title">👤 Your Profile</div><div class="card-sub">User ID: <span id="userId">Guest</span></div><div class="card-sub">Total Earned: <span id="totalEarned">0</span> APU</div><div class="card-sub">Total Ads Watched: <span id="totalAds">0</span></div></div>
 </div>
 
 <div id="miner" class="page">
@@ -76,14 +86,17 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 </div>
 
 <script>
-let coins = parseFloat(localStorage.getItem('coins')) || 500;
-let usdt = parseFloat(localStorage.getItem('usdt')) || 5.00;
+let coins = parseFloat(localStorage.getItem('coins')) || 2653;
+let usdt = parseFloat(localStorage.getItem('usdt')) || 0.23;
 let totalAdsWatched = parseInt(localStorage.getItem('totalAdsWatched')) || 0;
 let lastAdTime = 0;
 let minerData = {};
+const MINER_INTERVAL = 3600000; // 1 hour
+const COOLDOWN_TIME = 5000;
+const COIN_VALUE = 0.000025;
 
 const MINERS = [
-    {id: 0, name: "🎁 Starter Miner", cost: 0, reward: 10, unlockAds: 50},
+    {id: 0, name: "🎁 Starter Miner", cost: 0, reward: 10, type: "starter", unlockAds: 50},
     {id: 1, name: "🥉 Bronze Miner", cost: 2.00, reward: 25},
     {id: 2, name: "🥈 Silver Miner", cost: 5.00, reward: 75},
     {id: 3, name: "🥇 Gold Miner", cost: 15.00, reward: 250},
@@ -91,15 +104,28 @@ const MINERS = [
 ];
 
 function init(){
+    loadMinerData();
     updateUI();
     renderMiners();
+    updateTotalIncome();
     checkDaily();
+    setInterval(updateMiners, 1000); // update timer every 1s
+}
+function loadMinerData(){
+    MINERS.forEach(m=>{
+        minerData[m.id]={
+            owned: localStorage.getItem(`miner${m.id}_owned`)==='true',
+            lastClaim: parseInt(localStorage.getItem(`miner${m.id}_lastClaim`))||0,
+            adsWatched: parseInt(localStorage.getItem(`miner${m.id}_adsWatched`))||0
+        };
+    });
 }
 function updateUI(){
     document.getElementById('coinsHome').innerText = coins.toLocaleString() + ' APU';
     document.getElementById('usdtHome').innerText = usdt.toFixed(4) + ' USDT';
     document.getElementById('coinsWallet').innerText = coins.toLocaleString() + ' APU';
     document.getElementById('usdtWallet').innerText = usdt.toFixed(4) + ' USDT';
+    document.getElementById('userId').innerText = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'Guest';
     document.getElementById('totalEarned').innerText = coins.toLocaleString();
     document.getElementById('totalAds').innerText = totalAdsWatched;
 }
@@ -116,7 +142,7 @@ function showTopTab(tab){
     event.target.classList.add('active');
 }
 function claimDaily(){
-    if(localStorage.getItem('lastDailyClaim')===new Date().toDateString())return alert("Already claimed");
+    if(localStorage.getItem('lastDailyClaim')===new Date().toDateString())return alert("Already claimed today");
     coins+=50;localStorage.setItem('coins',coins);localStorage.setItem('lastDailyClaim',new Date().toDateString());
     updateUI();checkDaily();alert("+50 APU Claimed!");
 }
@@ -127,25 +153,44 @@ function checkDaily(){
     }
 }
 function watchHomeAd(){
-    if(Date.now()-lastAdTime<5000)return alert("Wait 5s");
-    lastAdTime=Date.now();coins+=10;totalAdsWatched+=1;localStorage.setItem('coins',coins);localStorage.setItem('totalAdsWatched',totalAdsWatched);
+    if(Date.now()-lastAdTime<COOLDOWN_TIME)return alert("Wait 5 seconds");
+    lastAdTime=Date.now();
+    coins+=10;totalAdsWatched+=1;
+    localStorage.setItem('coins',coins);localStorage.setItem('totalAdsWatched',totalAdsWatched);
     updateUI();alert("+10 APU Earned!");
 }
+function updateTotalIncome(){let total=0;MINERS.forEach(m=>{if(minerData[m.id].owned)total+=m.reward});document.getElementById('totalIncome').innerText=total.toLocaleString()+' APU/h'}
 function renderMiners(){
     const c=document.getElementById('minerList');c.innerHTML='';
     MINERS.forEach(m=>{
-        c.innerHTML+=`<div class="miner-card"><div class="miner-header"><div class="miner-name">${m.name}</div></div><div class="miner-info">Earn: ${m.reward} APU/hour | Cost: $${m.cost}</div><button class="miner-btn btn-buy" onclick="alert('Buy coming')">BUY / CLAIM</button></div>`
-    });
-    document.getElementById('totalIncome').innerText = '0 APU/h';
+        const d=minerData[m.id];const now=Date.now();
+        const isReady=d.owned&&(now-d.lastClaim>=MINER_INTERVAL);
+        const canClaim=isReady&&d.adsWatched>=2;
+        let buttons='';let extra='';
+        if(m.type==='starter'){
+            const progress=Math.min(totalAdsWatched,m.unlockAds);
+            const percent=(progress/m.unlockAds)*100;
+            extra=`<div class="progress-bar"><div class="progress-fill" style="width:${percent}%"></div></div><div class="progress-text">${progress}/${m.unlockAds} Ads Watched</div>`;
+            if(!d.owned)buttons=progress>=m.unlockAds?`<button class="miner-btn btn-buy" onclick="unlockStarter()">UNLOCK FREE</button>`:`<button class="miner-btn btn-buy" disabled>NEED ${m.unlockAds-progress} MORE ADS</button>`
+        }else{
+            if(!d.owned)buttons=`<button class="miner-btn btn-buy" onclick="buyMiner(${m.id})">BUY - $${m.cost}</button>`
+        }
+        if(d.owned&&!isReady){
+            const timeLeft=MINER_INTERVAL-(now-d.lastClaim);const mins=Math.floor(timeLeft/60000);const secs=Math.floor((timeLeft%60000)/1000);
+            buttons=`<button class="miner-btn btn-buy" disabled>MINING... ${mins}m ${secs}s</button>`
+        }
+        if(d.owned&&isReady){
+            buttons=`<div class="miner-btns"><button class="miner-btn btn-ad" onclick="watchAdForMiner(${m.id})" ${d.adsWatched>=2?'disabled':''}>WATCH AD ${d.adsWatched}/2</button><button class="miner-btn btn-claim" onclick="claimMiner(${m.id})" ${!canClaim?'disabled':''}>CLAIM ${m.reward}</button></div>`
+        }
+        c.innerHTML+=`<div class="miner-card ${d.owned?'active':''}"><div class="miner-header"><div class="miner-name">${m.name}</div><div class="miner-status ${d.owned?'active':''}">${d.owned?'ACTIVE':'LOCKED'}</div></div><div class="miner-info">Earn: ${m.reward} APU/hour | Cost: $${m.cost}</div>${extra}<div class="miner-progress">${isReady?m.reward+'/'+m.reward+' APU':'0/'+m.reward+' APU'}</div>${buttons}</div>`
+    })
 }
-function openSwap(){
-    let amount = prompt("Enter APU to swap. Min 200. Rate: 1 APU = 0.000025 USDT");
-    if(amount>=200 && amount<=coins){
-        coins-=parseInt(amount);usdt+=amount*0.000025;
-        localStorage.setItem('coins',coins);localStorage.setItem('usdt',usdt);
-        updateUI();alert("Swapped!");
-    }
-}
+function updateMiners(){renderMiners()}
+function unlockStarter(){minerData[0].owned=true;minerData[0].lastClaim=Date.now();localStorage.setItem(`miner0_owned`,'true');localStorage.setItem(`miner0_lastClaim`,minerData[0].lastClaim);renderMiners();updateTotalIncome();alert("🎁 Starter Miner Unlocked!")}
+function buyMiner(id){const m=MINERS.find(x=>x.id===id);if(usdt<m.cost)return alert(`Need $${m.cost} USDT`);usdt-=m.cost;minerData[id].owned=true;minerData[id].lastClaim=Date.now();localStorage.setItem('usdt',usdt);localStorage.setItem(`miner${id}_owned`,'true');localStorage.setItem(`miner${id}_lastClaim`,minerData[id].lastClaim);updateUI();renderMiners();updateTotalIncome();alert(`${m.name} Purchased!`)}
+function watchAdForMiner(id){if(Date.now()-lastAdTime<COOLDOWN_TIME)return alert("Wait 5s");lastAdTime=Date.now();minerData[id].adsWatched+=1;localStorage.setItem(`miner${id}_adsWatched`,minerData[id].adsWatched);renderMiners();alert("Ad watched for miner! 2/2 needed to claim")}
+function claimMiner(id){const m=MINERS.find(x=>x.id===id);const d=minerData[id];if(Date.now()-d.lastClaim<MINER_INTERVAL)return alert("Not ready");if(d.adsWatched<2)return alert("Watch 2 ads first");coins+=m.reward;d.lastClaim=Date.now();d.adsWatched=0;localStorage.setItem('coins',coins);localStorage.setItem(`miner${id}_lastClaim`,d.lastClaim);localStorage.setItem(`miner${id}_adsWatched`,0);updateUI();renderMiners();updateTotalIncome();alert(`+${m.reward} APU Claimed!`)}
+function openSwap(){let amount=prompt("Enter APU to swap. Min 200. Rate: 1 APU = 0.000025 USDT");amount=parseInt(amount);if(amount>=200&&amount<=coins){coins-=amount;usdt+=amount*COIN_VALUE;localStorage.setItem('coins',coins);localStorage.setItem('usdt',usdt);updateUI();alert(`Swapped ${amount} APU!`)}}
 
 window.onload = init;
 </script>
