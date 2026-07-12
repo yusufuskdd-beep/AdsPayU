@@ -103,13 +103,17 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 let coins = parseFloat(localStorage.getItem('coins')) || 2653;
 let usdt = parseFloat(localStorage.getItem('usdt')) || 0.23;
 let totalAdsWatched = parseInt(localStorage.getItem('totalAdsWatched')) || 0;
+let gigaCount = 0;
+let monetagCount = 0;
 let lastAdTime = 0;
+let adRunning = false;
 let minerData = {};
 let currentAdType = 'home';
 let currentAdMinerId = null;
 const MINER_INTERVAL = 3600000;
 const COOLDOWN_TIME = 5000;
 const COIN_VALUE = 0.000025;
+const MAX_DAILY_ADS = 100;
 
 const MINERS = [
     {id: 0, name: "🎁 Starter Miner", cost: 0, reward: 10, type: "starter", unlockAds: 50},
@@ -120,22 +124,53 @@ const MINERS = [
 ];
 
 function showToast(msg){const t=document.getElementById('toast');t.innerText=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2000)}
-function init(){loadMinerData();updateUI();renderMiners();updateTotalIncome();checkDaily();setInterval(updateMiners, 1000)}
+function init(){loadAdCounts();loadMinerData();updateUI();renderMiners();updateTotalIncome();checkDaily();setInterval(updateMiners, 1000)}
+
+function loadAdCounts(){
+    const today = new Date().toDateString();
+    if(localStorage.getItem('adDate')!== today){
+        localStorage.setItem('adDate', today);
+        localStorage.setItem('gigaCount', 0);
+        localStorage.setItem('monetagCount', 0);
+    }
+    gigaCount = parseInt(localStorage.getItem('gigaCount')) || 0;
+    monetagCount = parseInt(localStorage.getItem('monetagCount')) || 0;
+}
+
 function loadMinerData(){MINERS.forEach(m=>{minerData[m.id]={owned: localStorage.getItem(`miner${m.id}_owned`)==='true',lastClaim: parseInt(localStorage.getItem(`miner${m.id}_lastClaim`))||0,adsWatched: parseInt(localStorage.getItem(`miner${m.id}_adsWatched`))||0}})}
-function updateUI(){document.getElementById('coinsHome').innerText = coins.toLocaleString() + ' APU';document.getElementById('usdtHome').innerText = usdt.toFixed(4) + ' USDT';document.getElementById('coinsWallet').innerText = coins.toLocaleString() + ' APU';document.getElementById('usdtWallet').innerText = usdt.toFixed(4) + ' USDT';document.getElementById('userId').innerText = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'Guest';document.getElementById('totalEarned').innerText = coins.toLocaleString();document.getElementById('totalAds').innerText = totalAdsWatched}
+
+function updateUI(){
+    document.getElementById('coinsHome').innerText = coins.toLocaleString() + ' APU';
+    document.getElementById('usdtHome').innerText = usdt.toFixed(4) + ' USDT';
+    document.getElementById('coinsWallet').innerText = coins.toLocaleString() + ' APU';
+    document.getElementById('usdtWallet').innerText = usdt.toFixed(4) + ' USDT';
+    document.getElementById('userId').innerText = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'Guest';
+    document.getElementById('totalEarned').innerText = coins.toLocaleString();
+    document.getElementById('totalAds').innerText = totalAdsWatched;
+    document.getElementById('gigaCount').innerText = gigaCount;
+    document.getElementById('monetagCount').innerText = monetagCount;
+    
+    if(gigaCount >= MAX_DAILY_ADS) document.getElementById('gigaBtn').disabled = true;
+    if(monetagCount >= MAX_DAILY_ADS) document.getElementById('monetagBtn').disabled = true;
+}
+
 function showTab(tab){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById(tab).classList.add('active');event.target.classList.add('active')}
 function showTopTab(tab){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.top-tab').forEach(n=>n.classList.remove('active'));document.getElementById(tab).classList.add('active');event.target.classList.add('active')}
 function claimDaily(){if(localStorage.getItem('lastDailyClaim')===new Date().toDateString())return showToast("Already claimed");coins+=50;localStorage.setItem('coins',coins);localStorage.setItem('lastDailyClaim',new Date().toDateString());updateUI();checkDaily();showToast("+50 APU!")}
 function checkDaily(){if(localStorage.getItem('lastDailyClaim')===new Date().toDateString()){document.getElementById('dailyClaimBtn').disabled=true;document.getElementById('dailyClaimBtn').innerText="✅ CLAIMED TODAY"}}
 
-// REAL ADS LOGIC - 20 SECONDS
+// REAL ADS LOGIC - 20 SECONDS WITH COUNTER
 function openAdConfirm(type, minerId = null) {currentAdType = type;currentAdMinerId = minerId;document.getElementById('adConfirmModal').classList.add('active')}
 function closeAdConfirm() {document.getElementById('adConfirmModal').classList.remove('active')}
 function proceedAd() {closeAdConfirm();if (currentAdType === 'home') {watchHomeAd();} else if (currentAdType === 'miner') {watchAdForMiner(currentAdMinerId)}}
 
 function watchHomeAd() {
     if(Date.now()-lastAdTime<COOLDOWN_TIME)return showToast("Wait 5 seconds");
+    if(gigaCount >= MAX_DAILY_ADS && monetagCount >= MAX_DAILY_ADS) return showToast("Daily limit reached");
+    if(adRunning) return showToast("Ad already running");
+    
     lastAdTime=Date.now();
+    adRunning = true;
     showToast("Watching ad... 20s");
 
     try {
@@ -145,10 +180,22 @@ function watchHomeAd() {
     } catch(e) {}
 
     setTimeout(()=>{
+        adRunning = false;
         coins+=10;totalAdsWatched+=1;
-        localStorage.setItem('coins',coins);localStorage.setItem('totalAdsWatched',totalAdsWatched);
+        
+        // Alternate between giga and monetag counter
+        if(gigaCount <= monetagCount){
+            gigaCount++;
+            localStorage.setItem('gigaCount', gigaCount);
+        } else {
+            monetagCount++;
+            localStorage.setItem('monetagCount', monetagCount);
+        }
+        
+        localStorage.setItem('coins',coins);
+        localStorage.setItem('totalAdsWatched',totalAdsWatched);
         updateUI();showToast("+10 APU Earned!");
-    }, 20000); // 20 SECONDS
+    }, 20000);
 }
 
 function updateTotalIncome(){let total=0;MINERS.forEach(m=>{if(minerData[m.id].owned)total+=m.reward});document.getElementById('totalIncome').innerText=total.toLocaleString()+' APU/h'}
