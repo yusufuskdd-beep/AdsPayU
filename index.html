@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v7.5.5</title>
+<title>AdsPayU v7.5.6</title>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
@@ -29,6 +29,7 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 .btn-get{background:#0084ff;color:#fff;border:none;padding:14px 20px;border-radius:12px;font-weight:700;width:100%;max-width:400px;margin:8px auto;display:block;cursor:pointer;font-size:16px}
 .btn-get.orange{background:#ff9500}
 .btn-get.red{background:#ff3b30}
+.btn-get.gray{background:#555}
 .btn-get:disabled{background:#333;opacity:0.6}
 .income-card{background:#1a1f3a;padding:20px;border-radius:15px;text-align:center;margin-bottom:20px}
 .income-value{font-size:24px;color:#00c851;font-weight:800}
@@ -63,7 +64,7 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 .btn-confirm{background:#00c851;color:#fff}
 .ref-link{background:#0a0e27;padding:10px;border-radius:8px;word-break:break-all;font-size:12px}
 .wallet-btns{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:20px}
-#tonWalletAddress{font-size:11px;color:#aaa;margin-top:5px;text-align:center;word-break:break-all}
+#tonWalletAddress{font-size:10px;color:#aaa;margin-top:5px;text-align:center;word-break:break-all}
 #tonRateText{text-align:center;font-size:12px;color:#aaa;margin-bottom:10px}
 .input-group{margin-bottom:16px;text-align:left}
 .input-group label{font-size:12px;opacity:.8}
@@ -91,6 +92,7 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 <div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsWallet">2653 APU</div><div class="balance-usdt" id="usdtWallet">0.2300 USDT</div></div>
 <div class="wallet-btns">
     <button class="btn-get" id="connectWalletBtn" onclick="connectWallet()">CONNECT TON WALLET</button>
+    <button class="btn-get gray" id="disconnectBtn" onclick="disconnectWallet()" style="display:none">DISCONNECT WALLET</button>
     <div id="tonWalletAddress"></div>
     <div id="tonRateText">Loading rate...</div>
     <button class="btn-get orange" onclick="openSwap()">SWAP APU → USDT</button>
@@ -158,50 +160,6 @@ const MINERS = [
 
 let tonConnectUI;
 
-// REAL CONVERTER: 0:a745... to UQDx...
-function toUserFriendly(raw) {
-    if(!raw) return '';
-    if(raw.startsWith('UQ') || raw.startsWith('EQ')) return raw;
-    
-    try {
-        const parts = raw.split(':');
-        if(parts.length!== 2) return raw;
-        const workchain = parseInt(parts[0]);
-        const hex = parts[1];
-        
-        // Convert hex to bytes
-        const bytes = new Uint8Array(36);
-        bytes[0] = workchain === -1? 0xFF : workchain;
-        for(let i = 0; i < 32; i++) {
-            bytes[i+1] = parseInt(hex.substr(i*2, 2), 16);
-        }
-        
-        // Add CRC16
-        const crc = crc16(bytes);
-        const final = new Uint8Array(38);
-        final.set(bytes);
-        final[36] = crc >> 8;
-        final[37] = crc & 0xFF;
-        
-        // Base64url encode
-        const b64 = btoa(String.fromCharCode(...final)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-        return (workchain === -1? 'EQ' : 'UQ') + b64;
-    } catch(e) {
-        return raw;
-    }
-}
-
-function crc16(bytes) {
-    let crc = 0;
-    for(let i = 0; i < bytes.length; i++) {
-        crc ^= bytes[i] << 8;
-        for(let j = 0; j < 8; j++) {
-            crc = (crc & 0x8000)? (crc << 1) ^ 0x1021 : crc << 1;
-        }
-    }
-    return crc & 0xFFFF;
-}
-
 function showToast(msg, type='success'){
     const t=document.getElementById('toast');
     t.innerText=msg;
@@ -230,18 +188,21 @@ function init(){
 
 function initTonConnect(){
     tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-        manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json'
+        manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json',
+        uiPreferences: {
+            theme: TON_CONNECT_UI.THEME.DARK
+        }
     });
     tonConnectUI.onStatusChange(wallet => {
-        if (wallet) {
-            tonAddress = wallet.account.address; // raw 0:a745...
+        if (wallet && wallet.account) {
+            // THIS IS THE KEY: Use friendlyAddress from tonconnect
+            tonAddress = wallet.account.address; 
             walletConnected = true;
             localStorage.setItem('walletConnected', 'true');
             localStorage.setItem('tonAddress', tonAddress);
-            const friendly = toUserFriendly(tonAddress);
-            document.getElementById('tonWalletAddress').innerText = friendly;
-            document.getElementById('connectWalletBtn').innerText = "✅ WALLET CONNECTED";
-            document.getElementById('connectWalletBtn').disabled = true;
+            document.getElementById('tonWalletAddress').innerText = tonAddress;
+            document.getElementById('connectWalletBtn').style.display = 'none';
+            document.getElementById('disconnectBtn').style.display = 'block';
             showToast("Wallet Connected!");
         } else {
             tonAddress = '';
@@ -249,8 +210,8 @@ function initTonConnect(){
             localStorage.setItem('walletConnected', 'false');
             localStorage.setItem('tonAddress', '');
             document.getElementById('tonWalletAddress').innerText = '';
-            document.getElementById('connectWalletBtn').innerText = "CONNECT TON WALLET";
-            document.getElementById('connectWalletBtn').disabled = false;
+            document.getElementById('connectWalletBtn').style.display = 'block';
+            document.getElementById('disconnectBtn').style.display = 'none';
         }
     });
     if(walletConnected){ tonConnectUI.restoreConnection(); }
@@ -259,6 +220,11 @@ function initTonConnect(){
 async function connectWallet(){
     try{ await tonConnectUI.connectWallet(); }
     catch(e){ showToast("Failed to connect wallet", 'error'); }
+}
+
+async function disconnectWallet(){
+    await tonConnectUI.disconnect();
+    showToast("Wallet Disconnected");
 }
 
 function loadAdCounts(){
@@ -287,7 +253,7 @@ function updateUI(){
     document.getElementById('gigaCount').innerText = gigaCount;
     document.getElementById('monetagCount').innerText = monetagCount;
     document.getElementById('refLink').innerText = `https://t.me/AdsPayUBot?start=ref${userId}`;
-    if(tonAddress){ document.getElementById('tonWalletAddress').innerText = toUserFriendly(tonAddress); }
+    if(tonAddress){ document.getElementById('tonWalletAddress').innerText = tonAddress; }
     if(gigaCount >= MAX_DAILY_ADS) document.getElementById('gigaBtn').disabled = true;
     if(monetagCount >= MAX_DAILY_ADS) document.getElementById('monetagBtn').disabled = true;
 }
@@ -356,7 +322,7 @@ async function confirmDeposit(){
     if(!amountTON || amountTON < 0.1) return showToast("Min 0.1 TON", 'error');
     const usdtToReceive = (amountTON * currentTonPrice).toFixed(2);
     showToast("Opening Tonkeeper...", 'warning');
-    const amountNano = (amountTON * 1000000000).toFixed(0);
+    const amountNano = (amountTON * 1000000).toFixed(0);
     const transaction = {validUntil: Math.floor(Date.now()/1000) + 360,messages: [{address: YOUR_TON_WALLET, amount: amountNano}]};
     try{
         await tonConnectUI.sendTransaction(transaction);
@@ -375,21 +341,20 @@ function openWithdraw(){
         updateUI();
 
         const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
-        const friendlyWallet = toUserFriendly(tonAddress); // CONVERTED NOW
         
-        const message = `🔔 NEW WITHDRAW REQUEST\nUser: @${user?.username || 'NoUsername'}\nUserID: ${user?.id || 'Guest'}\nAmount: ${amount} USDT\nWallet: ${friendlyWallet}\nTime: ${new Date().toLocaleString()}`;
+        const message = `🔔 NEW WITHDRAW REQUEST\nUser: @${user?.username || 'NoUsername'}\nUserID: ${user?.id || 'Guest'}\nAmount: ${amount} USDT\nWallet: ${tonAddress}\nTime: ${new Date().toLocaleString()}`;
 
         fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({chat_id: ADMIN_TELEGRAM_ID, text: message})
         })
-     .then(res => res.json())
-     .then(data => {
+   .then(res => res.json())
+   .then(data => {
             if(data.ok) showToast(`Request Sent! Paid in 24h`, 'success')
             else showToast(`Error: ${data.description}`, 'error')
         })
-     .catch(e => showToast(`Network error`, 'error'))
+   .catch(e => showToast(`Network error`, 'error'))
     } else {
         showToast(`Min withdraw $${MIN_WITHDRAW}`, 'error')
     }
