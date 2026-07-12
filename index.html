@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v7.8.3</title>
+<title>AdsPayU v7.9.1</title>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
@@ -91,9 +91,9 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 <div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsWallet">2653 APU</div><div class="balance-usdt" id="usdtWallet">0.2300 USDT</div></div>
 <div class="wallet-btns">
     <button class="btn-get" id="connectBtn">🔗 CONNECT TON</button>
-    <div id="tonRateText">Rate: 1 USDT = 1 USDT</div>
+    <div id="tonRateText">Rate: Loading...</div>
     <button class="btn-get orange" onclick="openSwap()">SWAP APU → USDT</button>
-    <button class="btn-get" onclick="openDeposit()">DEPOSIT USDT</button>
+    <button class="btn-get" onclick="openDeposit()">DEPOSIT TON</button>
     <button class="btn-get red" onclick="openWithdraw()">WITHDRAW USDT</button>
 </div>
 </div>
@@ -119,7 +119,6 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 
 <script>
 const YOUR_TON_WALLET = "UQCnRX9PZUv8GAyv4kz4OZ3u8r0vA-CcUu-lzunVsTNIo7sw";
-const USDT_JETTON_MASTER = "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs"; // Official USDT
 const MIN_WITHDRAW = 0.50;
 const ADMIN_TELEGRAM_ID = 8954036308;
 const BOT_TOKEN = "8840764457:AAGWQMHVGG2ksMv-qr27D49Y3j_wYE4E8-4";
@@ -139,6 +138,7 @@ let userWalletAddress = localStorage.getItem('walletAddress') || null;
 let walletConnected = localStorage.getItem('walletConnected') === 'true';
 let currentTab = 'home';
 let currentTopTab = 'wallet';
+let currentTonPrice = 3.50;
 
 const MINER_INTERVAL = 3600000;
 const COOLDOWN_TIME = 5000;
@@ -163,11 +163,20 @@ function showToast(msg, type='success'){
     setTimeout(()=>t.style.display='none',3000)
 }
 
-function toNano(amount){ return Math.floor(amount * 1000000).toString(); } // USDT = 6 decimals
+async function fetchTonPrice(){
+    try{
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd');
+        const data = await res.json();
+        currentTonPrice = data['the-open-network'].usd;
+        document.getElementById('tonRateText').innerText = `Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT`;
+    }catch(e){
+        document.getElementById('tonRateText').innerText = `Rate: $3.50 USDT - Fallback`;
+    }
+}
 
 function init(){
     if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}
-    loadAdCounts();loadMinerData();updateUI();renderMiners();updateTotalIncome();checkDaily();initTonConnect();
+    loadAdCounts();loadMinerData();updateUI();renderMiners();updateTotalIncome();checkDaily();initTonConnect();fetchTonPrice();
     setInterval(updateMiners, 1000);
 }
 
@@ -285,11 +294,11 @@ function openDeposit(){
     modal.className = 'modal active';
     modal.innerHTML = `
         <div class="modal-content">
-            <div class="modal-title">💰 Deposit USDT</div>
-            <div class="modal-info">Rate: 1 USDT = 1 USDT<br>Network: TON</div>
+            <div class="modal-title">💰 Deposit TON</div>
+            <div class="modal-info">Current Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT<br>Min: 0.1 TON</div>
             <div class="input-group">
-                <label>Enter USDT Amount. Min 1</label>
-                <input type="number" id="depositAmount" placeholder="10" step="1" min="1">
+                <label>Enter TON Amount</label>
+                <input type="number" id="depositAmount" placeholder="0.1" step="0.1" min="0.1">
             </div>
             <div class="modal-btns">
                 <button class="modal-btn btn-cancel" onclick="this.parentElement.parentElement.parentElement.remove()">CANCEL</button>
@@ -301,44 +310,36 @@ function openDeposit(){
 }
 
 async function confirmDeposit(){
-    const amountUSDT = parseFloat(document.getElementById('depositAmount').value);
+    const amountTON = parseFloat(document.getElementById('depositAmount').value);
     document.querySelector('.modal.active').remove();
-    if(!amountUSDT || amountUSDT < 1) return showToast("Min 1 USDT", 'error');
+    if(!amountTON || amountTON < 0.1) return showToast("Min 0.1 TON", 'error');
 
-    showToast("Opening Tonkeeper for USDT...", 'warning');
+    await fetchTonPrice();
+    const usdtToReceive = (amountTON * currentTonPrice).toFixed(2);
 
-    const amountNano = toNano(amountUSDT);
+    showToast("Opening Tonkeeper...", 'warning');
 
-    // THIS IS THE KEY: Send to USDT Jetton Master with comment = your wallet
-    // Tonkeeper will show "Send USDT"
+    const amountNano = (amountTON * 1000000000).toFixed(0); // TON = 9 decimals
+
     const transaction = {
-        validUntil: Math.floor(Date.now()/1000) + 600,
+        validUntil: Math.floor(Date.now()/1000) + 360,
         messages: [{
-            address: USDT_JETTON_MASTER,
-            amount: "100000000", // 0.1 TON for gas
-            payload: btoa(JSON.stringify({
-                "op": "transfer",
-                "query_id": 0,
-                "amount": amountNano,
-                "destination": YOUR_TON_WALLET,
-                "response_destination": userWalletAddress,
-                "comment": userWalletAddress // So you know who deposited
-            }))
+            address: YOUR_TON_WALLET,
+            amount: amountNano
         }]
     };
 
     try{
         await tonConnectUI.sendTransaction(transaction);
-        showToast(`Confirm USDT transfer in Tonkeeper!`, 'success');
+        showToast(`Sent ${amountTON} TON! Crediting $${usdtToReceive} USDT in 20s...`, 'success');
         setTimeout(() => {
-            usdt += amountUSDT; // 1:1
+            usdt += parseFloat(usdtToReceive);
             localStorage.setItem('usdt', usdt);
             updateUI();
-            showToast(`+${amountUSDT} USDT Credited!`, 'success');
-        }, 30000);
+            showToast(`+$${usdtToReceive} USDT Credited!`, 'success');
+        }, 20000);
     }catch(e){
         showToast("Transaction cancelled", 'error');
-        console.log(e)
     }
 }
 
