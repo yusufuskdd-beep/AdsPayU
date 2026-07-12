@@ -174,24 +174,38 @@ function initTon(){
         }
 
         const wallets = await tonConnectUI.getWallets();
-        if(wallets.length === 0) return showToast("No wallets found");
 
-        let walletList = "Choose Wallet:\n\n";
-        wallets.forEach((w, i) => {
-            walletList += `${i+1}. ${w.name}\n`;
-        });
-
-        let choice = prompt(walletList + "\nEnter number:");
-        choice = parseInt(choice) - 1;
-
-        if(wallets[choice]){
-            if(window.Telegram?.WebApp){
-                Telegram.WebApp.openLink(wallets[choice].universalLink);
-            } else {
-                window.open(wallets[choice].universalLink);
-            }
-        }
+        let modal = document.createElement('div');
+        modal.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center";
+        modal.innerHTML = `
+        <div style="background:#1a1f3a;padding:20px;border-radius:15px;width:90%;max-width:350px">
+            <div style="font-size:18px;font-weight:800;margin-bottom:15px;text-align:center">Connect Wallet</div>
+            ${wallets.map(w => `
+                <button onclick="connectWallet('${w.universalLink}')"
+                style="width:100%;padding:15px;margin-bottom:10px;background:#0084ff;border:none;border-radius:10px;color:#fff;font-weight:700;font-size:16px">
+                ${w.name}
+                </button>
+            `).join('')}
+            <button onclick="this.parentElement.parentElement.remove()"
+            style="width:100%;padding:12px;background:#333;border:none;border-radius:10px;color:#fff;font-weight:700">
+            CANCEL
+            </button>
+        </div>`;
+        document.body.appendChild(modal);
     };
+}
+
+async function connectWallet(universalLink){
+    document.querySelectorAll('div[style*="position:fixed"]').forEach(el => el.remove());
+
+    const connectRequest = await tonConnectUI.connectWallet();
+    const finalLink = universalLink + '?connect=' + encodeURIComponent(connectRequest);
+
+    if(window.Telegram?.WebApp){
+        Telegram.WebApp.openLink(finalLink);
+    } else {
+        window.open(finalLink);
+    }
 }
 
 function loadAdCounts(){
