@@ -1,5 +1,7 @@
 {
-  "url": "https://adspayu.vercel.app/",
+  "url": "https://adspayu.vercel.app",
   "name": "AdsPayU",
-  "iconUrl": "https://adspayu.vercel.app/icon.png"
+  "iconUrl": "https://adspayu.vercel.app/icon.png",
+  "termsOfUseUrl": "https://adspayu.vercel.app/terms",
+  "privacyPolicyUrl": "https://adspayu.vercel.app/privacy"
 }
