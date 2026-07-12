@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>AdsPayU</title>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
 body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
@@ -12,20 +13,20 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 .topbar{display:flex;justify-content:space-between;align-items:center;padding:15px 20px}
 .topbar h1{font-size:24px;font-weight:800}
 .top-tabs{display:flex;gap:10px}
-.top-tab{padding:8px 15px;background:#1a1f3a;border:none;border-radius:10px;color:#aaa}
+.top-tab{padding:8px 15px;background:#1a1f3a;border:none;border-radius:10px;color:#aaa;cursor:pointer}
 .top-tab.active{background:#0084ff;color:#fff}
 .balance-card{background:linear-gradient(135deg,#1a1f3a,#0f1429);padding:30px;border-radius:20px;text-align:center;margin:20px 0}
 .balance-label{color:#aaa;font-size:12px;letter-spacing:1px}
 .balance-apu{font-size:40px;color:#ffd700;font-weight:900;margin:10px 0}
 .balance-usdt{font-size:16px;color:#00c851}
-.daily-claim{background:linear-gradient(135deg,#00c851,#00a043);width:100%;padding:18px;border-radius:15px;border:none;color:#fff;font-size:18px;font-weight:800;margin-bottom:20px}
+.daily-claim{background:linear-gradient(135deg,#00c851,#00a043);width:100%;padding:18px;border-radius:15px;border:none;color:#fff;font-size:18px;font-weight:800;margin-bottom:20px;cursor:pointer}
 .daily-claim:disabled{background:#333}
 .card{background:#1a1f3a;padding:15px;border-radius:15px;margin-bottom:15px}
 .card-header{display:flex;align-items:center;gap:15px}
 .card-icon{font-size:30px}
 .card-title{font-weight:700}
 .card-sub{color:#aaa;font-size:12px}
-.btn-get{background:#0084ff;color:#fff;border:none;padding:10px 20px;border-radius:10px;font-weight:700;width:100%;margin-top:10px}
+.btn-get{background:#0084ff;color:#fff;border:none;padding:10px 20px;border-radius:10px;font-weight:700;width:100%;margin-top:10px;cursor:pointer}
 .btn-get.orange{background:#ff9500}
 .btn-get.red{background:#ff3b30}
 .btn-get:disabled{background:#333}
@@ -40,7 +41,7 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 .miner-info{color:#aaa;font-size:12px}
 .miner-progress{font-size:12px;margin:8px 0}
 .miner-btns{display:flex;gap:8px}
-.miner-btn{flex:1;padding:12px;border:none;border-radius:10px;font-weight:700;font-size:12px}
+.miner-btn{flex:1;padding:12px;border:none;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer}
 .btn-buy{background:#0084ff;color:#fff}
 .btn-claim{background:#00c851;color:#fff}
 .btn-ad{background:#ff9500;color:#fff}
@@ -49,7 +50,7 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 .progress-fill{height:100%;background:#00c851}
 .progress-text{font-size:11px;color:#aaa;text-align:center}
 .bottom-nav{position:fixed;bottom:0;left:0;width:100%;display:flex;background:#1a1f3a;border-top:1px solid #2a2f4a}
-.nav-item{flex:1;padding:15px;background:none;border:none;color:#aaa;font-weight:600}
+.nav-item{flex:1;padding:15px;background:none;border:none;color:#aaa;font-weight:600;cursor:pointer}
 .nav-item.active{color:#0084ff}
 .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:999;align-items:center;justify-content:center}
 .modal.active{display:flex}
@@ -57,7 +58,7 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 .modal-title{font-size:18px;font-weight:800;margin-bottom:10px}
 .modal-info{color:#aaa;font-size:14px;margin-bottom:20px}
 .modal-btns{display:flex;gap:10px}
-.modal-btn{flex:1;padding:12px;border:none;border-radius:10px;font-weight:700}
+.modal-btn{flex:1;padding:12px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
 .btn-cancel{background:#333;color:#fff}
 .btn-confirm{background:#00c851;color:#fff}
 .ref-link{background:#0a0e27;padding:10px;border-radius:8px;word-break:break-all;font-size:12px}
@@ -70,17 +71,17 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 <div class="modal" id="adConfirmModal"><div class="modal-content"><div class="modal-title">⚠️ Important</div><div class="modal-info">Watch the ad for at least <b>20 seconds</b> to get credit.</div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeAdConfirm()">CANCEL</button><button class="modal-btn btn-confirm" onclick="proceedAd()">WATCH AD</button></div></div></div>
 
 <div id="app">
-<div class="topbar"><h1>AdsPayU</h1><div class="top-tabs"><button class="top-tab active" onclick="showTopTab('wallet')">💰 Wallet</button><button class="top-tab" onclick="showTopTab('profile')">👤 Profile</button></div></div>
+<div class="topbar"><h1>AdsPayU</h1><div class="top-tabs"><button class="top-tab active" id="walletTab" onclick="showTopTab('wallet')">💰 Wallet</button><button class="top-tab" id="profileTab" onclick="showTopTab('profile')">👤 Profile</button></div></div>
 
 <div id="home" class="page active">
-<div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsHome">0 APU</div><div class="balance-usdt" id="usdtHome">0.0000 USDT</div></div>
+<div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsHome">2653 APU</div><div class="balance-usdt" id="usdtHome">0.2300 USDT</div></div>
 <button class="daily-claim" id="dailyClaimBtn" onclick="claimDaily()">🎁 CLAIM DAILY 50 APU</button>
 <div class="card"><div class="card-header"><div class="card-icon">🎯</div><div><div class="card-title">GigaPub Ads</div><div class="card-sub"><span id="gigaCount">0</span>/100 today = 10 APU each</div></div><button class="btn-get" id="gigaBtn" onclick="openAdConfirm('home')">Watch</button></div></div>
 <div class="card"><div class="card-header"><div class="card-icon">💰</div><div><div class="card-title">Monetag Ads</div><div class="card-sub"><span id="monetagCount">0</span>/100 today = 10 APU each</div></div><button class="btn-get orange" id="monetagBtn" onclick="openAdConfirm('home')">Watch</button></div></div>
 </div>
 
 <div id="wallet" class="page">
-<div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsWallet">0 APU</div><div class="balance-usdt" id="usdtWallet">0.0000 USDT</div></div>
+<div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsWallet">2653 APU</div><div class="balance-usdt" id="usdtWallet">0.2300 USDT</div></div>
 <button class="btn-get orange" onclick="openSwap()">SWAP APU → USDT</button>
 <button class="btn-get" id="tonConnectBtn">CONNECT TON WALLET</button>
 <div id="tonWalletAddress" style="font-size:11px;color:#aaa;margin-top:5px"></div>
@@ -99,8 +100,8 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 </div>
 
 <div class="bottom-nav">
-<button class="nav-item active" onclick="showTab('home')">🏠 Home</button>
-<button class="nav-item" onclick="showTab('miner')">⚡ Miner</button>
+<button class="nav-item active" id="homeNav" onclick="showTab('home')">🏠 Home</button>
+<button class="nav-item" id="minerNav" onclick="showTab('miner')">⚡ Miner</button>
 </div>
 </div>
 
@@ -120,6 +121,8 @@ let minerData = {};
 let currentAdType = 'home';
 let currentAdMinerId = null;
 let tonAddress = localStorage.getItem('tonAddress') || '';
+let currentTab = 'home';
+let currentTopTab = 'wallet';
 const MINER_INTERVAL = 3600000;
 const COOLDOWN_TIME = 5000;
 const COIN_VALUE = 0.000025;
@@ -138,7 +141,11 @@ const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
 });
 
 function showToast(msg){const t=document.getElementById('toast');t.innerText=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2000)}
-function init(){loadAdCounts();loadMinerData();updateUI();renderMiners();updateTotalIncome();checkDaily();initTon();setInterval(updateMiners, 1000)}
+
+function init(){
+    if(window.Telegram?.WebApp){Telegram.WebApp.ready();}
+    loadAdCounts();loadMinerData();updateUI();renderMiners();updateTotalIncome();checkDaily();initTon();setInterval(updateMiners, 1000)
+}
 
 function initTon(){
     tonConnectUI.onStatusChange(wallet => {
@@ -185,8 +192,22 @@ function updateUI(){
 
 function copyRef(){navigator.clipboard.writeText(document.getElementById('refLink').innerText);showToast("Referral link copied!")}
 
-function showTab(tab){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById(tab).classList.add('active');event.target.classList.add('active')}
-function showTopTab(tab){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.top-tab').forEach(n=>n.classList.remove('active'));document.getElementById(tab).classList.add('active');event.target.classList.add('active')}
+// FIXED TAB FUNCTIONS - NO event.target
+function showTab(tab){
+    currentTab = tab;
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
+    document.getElementById(tab+'Nav').classList.add('active');
+}
+function showTopTab(tab){
+    currentTopTab = tab;
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.top-tab').forEach(n=>n.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
+    document.getElementById(tab+'Tab').classList.add('active');
+}
+
 function claimDaily(){if(localStorage.getItem('lastDailyClaim')===new Date().toDateString())return showToast("Already claimed");coins+=50;localStorage.setItem('coins',coins);localStorage.setItem('lastDailyClaim',new Date().toDateString());updateUI();checkDaily();showToast("+50 APU!")}
 function checkDaily(){if(localStorage.getItem('lastDailyClaim')===new Date().toDateString()){document.getElementById('dailyClaimBtn').disabled=true;document.getElementById('dailyClaimBtn').innerText="✅ CLAIMED TODAY"}}
 
@@ -203,7 +224,7 @@ function watchHomeAd() {
     adRunning = true;
     showToast("Watching ad... 20s");
 
-    try { if (typeof show_11258922 === 'function') { show_11258922(); } catch(e) {}
+    try { if (typeof show_11258922 === 'function') { show_11258922(); } } catch(e) {}
 
     setTimeout(()=>{
         adRunning = false;
