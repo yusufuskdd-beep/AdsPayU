@@ -165,35 +165,15 @@ function initTon(){
             document.getElementById('tonWalletAddress').innerText = '';
         }
     });
-    
+
     document.getElementById('tonConnectBtn').onclick = async () => {
         if(tonAddress){
             tonConnectUI.disconnect();
             showToast("Wallet Disconnected");
             return;
         }
-        
-        if(window.Telegram?.WebApp){
-            const wallets = await tonConnectUI.getWallets();
-            
-            const tkWallet = wallets.find(w => w.name.toLowerCase().includes('tonkeeper'));
-            const tgWallet = wallets.find(w => w.name === 'Wallet');
-            const otherWallet = wallets.find(w => w.appUrl || w.universalLink);
 
-            if(tkWallet){
-                Telegram.WebApp.openLink(tkWallet.universalLink);
-                showToast("Opening Tonkeeper...");
-            } else if(tgWallet){
-                Telegram.WebApp.openLink(tgWallet.universalLink);
-                showToast("Opening Telegram Wallet...");
-            } else if(otherWallet){
-                Telegram.WebApp.openLink(otherWallet.universalLink);
-            } else {
-                tonConnectUI.openModal();
-            }
-        } else {
-            tonConnectUI.openModal();
-        }
+        tonConnectUI.openModal();
     };
 }
 
@@ -223,12 +203,12 @@ function updateUI(){
     document.getElementById('gigaCount').innerText = gigaCount;
     document.getElementById('monetagCount').innerText = monetagCount;
     document.getElementById('refLink').innerText = `https://t.me/AdsPayUBot?start=ref${userId}`;
-    
+
     if(tonAddress){
         document.getElementById('tonWalletAddress').innerText = tonAddress.slice(0,8) + '...' + tonAddress.slice(-8);
         document.getElementById('tonConnectBtn').innerText = 'DISCONNECT WALLET';
     }
-    
+
     if(gigaCount >= MAX_DAILY_ADS) document.getElementById('gigaBtn').disabled = true;
     if(monetagCount >= MAX_DAILY_ADS) document.getElementById('monetagBtn').disabled = true;
 }
@@ -261,19 +241,19 @@ function watchHomeAd() {
     if(Date.now()-lastAdTime<COOLDOWN_TIME)return showToast("Wait 5 seconds");
     if(gigaCount >= MAX_DAILY_ADS && monetagCount >= MAX_DAILY_ADS) return showToast("Daily limit reached");
     if(adRunning) return showToast("Ad already running");
-    
+
     lastAdTime=Date.now();
     adRunning = true;
     showToast("Watching ad... 20s");
 
-    try { 
-        if (typeof show_11258922 === 'function') { show_11258922(); } 
+    try {
+        if (typeof show_11258922 === 'function') { show_11258922(); }
     } catch(e) { console.log(e) }
 
     setTimeout(()=>{
         adRunning = false;
         coins+=10;totalAdsWatched+=1;
-        if(gigaCount <= monetagCount){gigaCount++;localStorage.setItem('gigaCount', gigaCount);} 
+        if(gigaCount <= monetagCount){gigaCount++;localStorage.setItem('gigaCount', gigaCount);}
         else {monetagCount++;localStorage.setItem('monetagCount', monetagCount);}
         localStorage.setItem('coins',coins);localStorage.setItem('totalAdsWatched',totalAdsWatched);
         updateUI();showToast("+10 APU Earned!");
