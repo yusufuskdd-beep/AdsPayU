@@ -5,10 +5,6 @@ let lastAdTime = 0;
 let minerData = {};
 let USER_ID = 'guest';
 let username = 'Guest';
-let userWalletAddress = null;
-let walletConnected = false;
-let currentTonPrice = 2.5;
-let tonConnectUI;
 
 const MINER_INTERVAL = 3600000;
 const COOLDOWN_TIME = 5000;
@@ -51,7 +47,6 @@ function init() {
         updateTotalIncome();
         checkDaily();
         initTonConnect();
-        showToast("App Loaded", 'success');
     }, 500);
 }
 
@@ -77,11 +72,12 @@ function updateUI() {
     document.getElementById('totalAds').innerText = totalAdsWatched;
 }
 
+// FIXED: NO EVENT USED
 function showTab(tabName) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById(tabName).classList.add('active');
-    event.currentTarget.classList.add('active');
+    document.querySelector(`.nav-item[onclick*="${tabName}"]`).classList.add('active');
 }
 
 function showTopTab(tabName) {
