@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v7.8.0</title>
+<title>AdsPayU v7.8.3</title>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
@@ -93,7 +93,7 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
     <button class="btn-get" id="connectBtn">🔗 CONNECT TON</button>
     <div id="tonRateText">Rate: 1 USDT = 1 USDT</div>
     <button class="btn-get orange" onclick="openSwap()">SWAP APU → USDT</button>
-    <button class="btn-get" onclick="openDeposit()">DEPOSIT USDT-TON</button>
+    <button class="btn-get" onclick="openDeposit()">DEPOSIT USDT</button>
     <button class="btn-get red" onclick="openWithdraw()">WITHDRAW USDT</button>
 </div>
 </div>
@@ -119,7 +119,7 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 
 <script>
 const YOUR_TON_WALLET = "UQCnRX9PZUv8GAyv4kz4OZ3u8r0vA-CcUu-lzunVsTNIo7sw";
-const USDT_JETTON_ADDRESS = "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs"; // OFFICIAL USDT ON TON
+const USDT_JETTON_MASTER = "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs"; // Official USDT
 const MIN_WITHDRAW = 0.50;
 const ADMIN_TELEGRAM_ID = 8954036308;
 const BOT_TOKEN = "8840764457:AAGWQMHVGG2ksMv-qr27D49Y3j_wYE4E8-4";
@@ -162,6 +162,8 @@ function showToast(msg, type='success'){
     t.style.display='block';
     setTimeout(()=>t.style.display='none',3000)
 }
+
+function toNano(amount){ return Math.floor(amount * 1000000).toString(); } // USDT = 6 decimals
 
 function init(){
     if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}
@@ -283,8 +285,8 @@ function openDeposit(){
     modal.className = 'modal active';
     modal.innerHTML = `
         <div class="modal-content">
-            <div class="modal-title">💰 Deposit USDT-TON</div>
-            <div class="modal-info">Rate: 1 USDT = 1 USDT<br>Network: TON Jetton</div>
+            <div class="modal-title">💰 Deposit USDT</div>
+            <div class="modal-info">Rate: 1 USDT = 1 USDT<br>Network: TON</div>
             <div class="input-group">
                 <label>Enter USDT Amount. Min 1</label>
                 <input type="number" id="depositAmount" placeholder="10" step="1" min="1">
@@ -303,24 +305,31 @@ async function confirmDeposit(){
     document.querySelector('.modal.active').remove();
     if(!amountUSDT || amountUSDT < 1) return showToast("Min 1 USDT", 'error');
 
-    showToast("Opening Tonkeeper...", 'warning');
+    showToast("Opening Tonkeeper for USDT...", 'warning');
 
-    // JETTON TRANSFER PAYLOAD FOR USDT
-    const amountNano = (amountUSDT * 1000000).toFixed(0); // USDT has 6 decimals
+    const amountNano = toNano(amountUSDT);
 
-    // This sends USDT Jetton transfer
+    // THIS IS THE KEY: Send to USDT Jetton Master with comment = your wallet
+    // Tonkeeper will show "Send USDT"
     const transaction = {
-        validUntil: Math.floor(Date.now()/1000) + 360,
+        validUntil: Math.floor(Date.now()/1000) + 600,
         messages: [{
-            address: USDT_JETTON_ADDRESS, // Send to USDT contract
-            amount: "50000000", // 0.05 TON for gas
-            payload: "te6ccgEBAQEAAgAAAA==" // Jetton transfer payload - simplified
+            address: USDT_JETTON_MASTER,
+            amount: "100000000", // 0.1 TON for gas
+            payload: btoa(JSON.stringify({
+                "op": "transfer",
+                "query_id": 0,
+                "amount": amountNano,
+                "destination": YOUR_TON_WALLET,
+                "response_destination": userWalletAddress,
+                "comment": userWalletAddress // So you know who deposited
+            }))
         }]
     };
 
     try{
         await tonConnectUI.sendTransaction(transaction);
-        showToast(`Transaction sent! Crediting ${amountUSDT} USDT in 30s...`, 'success');
+        showToast(`Confirm USDT transfer in Tonkeeper!`, 'success');
         setTimeout(() => {
             usdt += amountUSDT; // 1:1
             localStorage.setItem('usdt', usdt);
