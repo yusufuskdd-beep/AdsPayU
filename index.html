@@ -139,7 +139,7 @@ const MINERS = [
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
     manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json',
     actionsConfiguration: {
-        twaReturnUrl: 'https://t.me/AdsPayUBot' // CHANGE TO YOUR BOT USERNAME
+        twaReturnUrl: 'https://t.me/AdsPayUBot'
     }
 });
 
@@ -159,6 +159,8 @@ function initTon(){
             document.getElementById('tonConnectBtn').innerText = 'DISCONNECT WALLET';
             showToast("Wallet Connected!");
         } else {
+            tonAddress = '';
+            localStorage.removeItem('tonAddress');
             document.getElementById('tonConnectBtn').innerText = 'CONNECT TON WALLET';
             document.getElementById('tonWalletAddress').innerText = '';
         }
@@ -173,13 +175,19 @@ function initTon(){
         
         if(window.Telegram?.WebApp){
             const wallets = await tonConnectUI.getWallets();
-            const tgWallet = wallets.find(w => w.name === 'Wallet');
-            const tkWallet = wallets.find(w => w.name === 'Tonkeeper');
             
-            if(tgWallet){
-                Telegram.WebApp.openLink(tgWallet.universalLink);
-            } else if(tkWallet){
+            const tkWallet = wallets.find(w => w.name.toLowerCase().includes('tonkeeper'));
+            const tgWallet = wallets.find(w => w.name === 'Wallet');
+            const otherWallet = wallets.find(w => w.appUrl || w.universalLink);
+
+            if(tkWallet){
                 Telegram.WebApp.openLink(tkWallet.universalLink);
+                showToast("Opening Tonkeeper...");
+            } else if(tgWallet){
+                Telegram.WebApp.openLink(tgWallet.universalLink);
+                showToast("Opening Telegram Wallet...");
+            } else if(otherWallet){
+                Telegram.WebApp.openLink(otherWallet.universalLink);
             } else {
                 tonConnectUI.openModal();
             }
