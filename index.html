@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v7.6.1</title>
+<title>AdsPayU v7.6.2</title>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
@@ -160,24 +160,6 @@ const MINERS = [
 
 let tonConnectUI;
 
-function rawToUQ(rawAddress) {
-    if(!rawAddress ||!rawAddress.includes(':')) return rawAddress;
-    const [wc, hex] = rawAddress.split(':');
-    const workchain = parseInt(wc);
-    const address = new Uint8Array(34);
-    address[0] = workchain & 0xFF;
-    for(let i = 0; i < 32; i++) address[i + 1] = parseInt(hex.substr(i * 2, 2), 16);
-    let crc = 0;
-    for(let i = 0; i < 34; i++) {
-        crc ^= address[i] << 8;
-        for(let j = 0; j < 8; j++) crc = (crc & 0x8000)? (crc << 1) ^ 0x1021 : crc << 1;
-    }
-    crc &= 0xFFFF;
-    address[32] = crc >> 8; address[33] = crc & 0xFF;
-    const base64 = btoa(String.fromCharCode(...address));
-    return 'UQ' + base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-}
-
 function showToast(msg, type='success'){
     const t=document.getElementById('toast');
     t.innerText=msg;
@@ -187,15 +169,26 @@ function showToast(msg, type='success'){
 }
 
 async function loadTonPrice(){
+    let loaded = false;
+    // Timeout after 2 seconds
+    setTimeout(()=>{
+        if(!loaded){
+            currentTonPrice = 3.50;
+            document.getElementById('tonRateText').innerText = `Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT`;
+        }
+    }, 2000);
+
     try{
         const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd');
-        if(!res.ok) throw new Error();
         const data = await res.json();
         currentTonPrice = data['the-open-network'].usd;
+        loaded = true;
+        document.getElementById('tonRateText').innerText = `Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT`;
     }catch(e){
-        currentTonPrice = 3.50; // FALLBACK RATE
+        loaded = true;
+        currentTonPrice = 3.50;
+        document.getElementById('tonRateText').innerText = `Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT`;
     }
-    document.getElementById('tonRateText').innerText = `Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT`;
 }
 
 function init(){
@@ -211,17 +204,17 @@ function initTonConnect(){
     });
     tonConnectUI.onStatusChange(wallet => {
         if (wallet && wallet.account) {
-            const raw = wallet.account.address;
-            tonAddress = rawToUQ(raw);
+            // USE DIRECT ADDRESS FROM WALLET. NO CONVERSION
+            tonAddress = wallet.account.address; 
             walletConnected = true;
             localStorage.setItem('walletConnected', 'true');
-            localStorage.setItem('tonAddress', tonAddress); // SAVE CORRECT ADDRESS
+            localStorage.setItem('tonAddress', tonAddress);
             document.getElementById('tonWalletAddress').innerText = tonAddress;
             document.getElementById('connectWalletBtn').style.display = 'none';
             document.getElementById('disconnectBtn').style.display = 'block';
             showToast("Wallet Connected!");
         } else {
-            tonAddress = localStorage.getItem('tonAddress') || ''; // LOAD SAVED ADDRESS
+            tonAddress = localStorage.getItem('tonAddress') || '';
             walletConnected = false;
             localStorage.setItem('walletConnected', 'false');
             document.getElementById('tonWalletAddress').innerText = tonAddress;
