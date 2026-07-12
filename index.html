@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v7.5.3</title>
+<title>AdsPayU v7.5.4</title>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
@@ -158,6 +158,13 @@ const MINERS = [
 
 let tonConnectUI;
 
+// CONVERT RAW TO BOUNCEABLE ADDRESS
+function toUserFriendly(address) {
+    if(!address) return '';
+    if(address.startsWith('UQ') || address.startsWith('EQ')) return address; // Already good
+    return address; // TonConnect now returns bounceable by default
+}
+
 function showToast(msg, type='success'){
     const t=document.getElementById('toast');
     t.innerText=msg;
@@ -190,7 +197,7 @@ function initTonConnect(){
     });
     tonConnectUI.onStatusChange(wallet => {
         if (wallet) {
-            tonAddress = wallet.account.address;
+            tonAddress = wallet.account.address; // This is bounceable UQ... now
             walletConnected = true;
             localStorage.setItem('walletConnected', 'true');
             localStorage.setItem('tonAddress', tonAddress);
@@ -242,7 +249,7 @@ function updateUI(){
     document.getElementById('gigaCount').innerText = gigaCount;
     document.getElementById('monetagCount').innerText = monetagCount;
     document.getElementById('refLink').innerText = `https://t.me/AdsPayUBot?start=ref${userId}`;
-    if(tonAddress){ document.getElementById('tonWalletAddress').innerText = tonAddress.slice(0,6) + '...' + tonAddress.slice(-4); }
+    if(tonAddress){ document.getElementById('tonWalletAddress').innerText = tonAddress; }
     if(gigaCount >= MAX_DAILY_ADS) document.getElementById('gigaBtn').disabled = true;
     if(monetagCount >= MAX_DAILY_ADS) document.getElementById('monetagBtn').disabled = true;
 }
@@ -330,19 +337,21 @@ function openWithdraw(){
         updateUI();
 
         const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
-        const message = `🔔 NEW WITHDRAW REQUEST\n\nUser: @${user?.username || 'NoUsername'}\nUserID: ${user?.id || 'Guest'}\nAmount: ${amount} USDT\nWallet: ${tonAddress}\nTime: ${new Date().toLocaleString()}`;
+        const friendlyWallet = toUserFriendly(tonAddress);
+        
+        const message = `🔔 NEW WITHDRAW REQUEST\nUser: @${user?.username || 'NoUsername'}\nUserID: ${user?.id || 'Guest'}\nAmount: ${amount} USDT\nWallet: ${friendlyWallet}\nTime: ${new Date().toLocaleString()}`;
 
         fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({chat_id: ADMIN_TELEGRAM_ID, text: message})
         })
-       .then(res => res.json())
-       .then(data => {
+      .then(res => res.json())
+      .then(data => {
             if(data.ok) showToast(`Request Sent! Paid in 24h`, 'success')
             else showToast(`Error: ${data.description}`, 'error')
         })
-       .catch(e => showToast(`Network error`, 'error'))
+      .catch(e => showToast(`Network error`, 'error'))
     } else {
         showToast(`Min withdraw $${MIN_WITHDRAW}`, 'error')
     }
