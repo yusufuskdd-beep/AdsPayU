@@ -139,7 +139,7 @@ const MINERS = [
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
     manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json',
     actionsConfiguration: {
-        twaReturnUrl: 'https://t.me/AdsPayUBot'
+        twaReturnUrl: 'https://t.me/AdsPayUBot' // <-- CHANGE TO YOUR BOT USERNAME
     }
 });
 
@@ -192,7 +192,7 @@ async function showWalletPicker(){
             title: 'Connect Wallet',
             message: 'Choose your TON wallet',
             buttons: [
-               ...topWallets.map(w => ({id: w.name, type: 'default', text: w.name})),
+             ...topWallets.map(w => ({id: w.name, type: 'default', text: w.name})),
                 {id: 'cancel', type: 'cancel', text: 'Cancel'}
             ]
         }, async (btnId) => {
@@ -200,7 +200,12 @@ async function showWalletPicker(){
             const selected = topWallets.find(w => w.name === btnId);
             if(selected){
                 const finalLink = selected.universalLink + '?connect=' + encodeURIComponent(connectRequest);
-                Telegram.WebApp.openLink(finalLink);
+                
+                if(selected.name.toLowerCase().includes('tonkeeper')){
+                    Telegram.WebApp.openTelegramLink(finalLink); // Forces app to open
+                } else {
+                    Telegram.WebApp.openLink(finalLink);
+                }
             }
         });
     }
