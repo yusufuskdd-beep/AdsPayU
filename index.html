@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v7.6.0</title>
+<title>AdsPayU v7.6.1</title>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
@@ -160,32 +160,22 @@ const MINERS = [
 
 let tonConnectUI;
 
-// CONVERT RAW TO UQ NON-BOUNCEABLE - FOR EXCHANGES
 function rawToUQ(rawAddress) {
     if(!rawAddress ||!rawAddress.includes(':')) return rawAddress;
     const [wc, hex] = rawAddress.split(':');
     const workchain = parseInt(wc);
-    
     const address = new Uint8Array(34);
     address[0] = workchain & 0xFF;
-    for(let i = 0; i < 32; i++) {
-        address[i + 1] = parseInt(hex.substr(i * 2, 2), 16);
-    }
-    
+    for(let i = 0; i < 32; i++) address[i + 1] = parseInt(hex.substr(i * 2, 2), 16);
     let crc = 0;
     for(let i = 0; i < 34; i++) {
         crc ^= address[i] << 8;
-        for(let j = 0; j < 8; j++) {
-            crc = (crc & 0x8000)? (crc << 1) ^ 0x1021 : crc << 1;
-        }
+        for(let j = 0; j < 8; j++) crc = (crc & 0x8000)? (crc << 1) ^ 0x1021 : crc << 1;
     }
     crc &= 0xFFFF;
-    address[32] = crc >> 8;
-    address[33] = crc & 0xFF;
-    
+    address[32] = crc >> 8; address[33] = crc & 0xFF;
     const base64 = btoa(String.fromCharCode(...address));
-    const urlSafe = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-    return 'UQ' + urlSafe;
+    return 'UQ' + base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 }
 
 function showToast(msg, type='success'){
@@ -199,12 +189,13 @@ function showToast(msg, type='success'){
 async function loadTonPrice(){
     try{
         const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd');
+        if(!res.ok) throw new Error();
         const data = await res.json();
         currentTonPrice = data['the-open-network'].usd;
-        document.getElementById('tonRateText').innerText = `Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT`;
     }catch(e){
-        document.getElementById('tonRateText').innerText = `Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT`;
+        currentTonPrice = 3.50; // FALLBACK RATE
     }
+    document.getElementById('tonRateText').innerText = `Rate: 1 TON = $${currentTonPrice.toFixed(2)} USDT`;
 }
 
 function init(){
@@ -221,20 +212,19 @@ function initTonConnect(){
     tonConnectUI.onStatusChange(wallet => {
         if (wallet && wallet.account) {
             const raw = wallet.account.address;
-            tonAddress = rawToUQ(raw); // UQ format for exchanges
+            tonAddress = rawToUQ(raw);
             walletConnected = true;
             localStorage.setItem('walletConnected', 'true');
-            localStorage.setItem('tonAddress', tonAddress);
+            localStorage.setItem('tonAddress', tonAddress); // SAVE CORRECT ADDRESS
             document.getElementById('tonWalletAddress').innerText = tonAddress;
             document.getElementById('connectWalletBtn').style.display = 'none';
             document.getElementById('disconnectBtn').style.display = 'block';
             showToast("Wallet Connected!");
         } else {
-            tonAddress = '';
+            tonAddress = localStorage.getItem('tonAddress') || ''; // LOAD SAVED ADDRESS
             walletConnected = false;
             localStorage.setItem('walletConnected', 'false');
-            localStorage.setItem('tonAddress', '');
-            document.getElementById('tonWalletAddress').innerText = '';
+            document.getElementById('tonWalletAddress').innerText = tonAddress;
             document.getElementById('connectWalletBtn').style.display = 'block';
             document.getElementById('disconnectBtn').style.display = 'none';
         }
@@ -249,6 +239,7 @@ async function connectWallet(){
 
 async function disconnectWallet(){
     await tonConnectUI.disconnect();
+    localStorage.setItem('walletConnected', 'false');
     showToast("Wallet Disconnected");
 }
 
@@ -347,7 +338,7 @@ async function confirmDeposit(){
     if(!amountTON || amountTON < 0.1) return showToast("Min 0.1 TON", 'error');
     const usdtToReceive = (amountTON * currentTonPrice).toFixed(2);
     showToast("Opening Tonkeeper...", 'warning');
-    const amountNano = (amountTON * 1000000000).toFixed(0);
+    const amountNano = (amountTON * 1000000).toFixed(0);
     const transaction = {validUntil: Math.floor(Date.now()/1000) + 360,messages: [{address: YOUR_TON_WALLET, amount: amountNano}]};
     try{
         await tonConnectUI.sendTransaction(transaction);
