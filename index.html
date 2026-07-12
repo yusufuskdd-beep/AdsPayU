@@ -62,6 +62,7 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 .btn-cancel{background:#333;color:#fff}
 .btn-confirm{background:#00c851;color:#fff}
 .ref-link{background:#0a0e27;padding:10px;border-radius:8px;word-break:break-all;font-size:12px}
+#tonConnectBtnContainer{width:100%;margin-top:10px}
 </style>
 </head>
 <body>
@@ -83,8 +84,11 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 <div id="wallet" class="page">
 <div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsWallet">2653 APU</div><div class="balance-usdt" id="usdtWallet">0.2300 USDT</div></div>
 <button class="btn-get orange" onclick="openSwap()">SWAP APU → USDT</button>
-<button class="btn-get" id="tonConnectBtn">CONNECT TON WALLET</button>
-<div id="tonWalletAddress" style="font-size:11px;color:#aaa;margin-top:5px"></div>
+
+<!-- THIS IS THE KEY: TonConnect UI Button -->
+<div id="tonConnectBtnContainer"></div>
+<div id="tonWalletAddress" style="font-size:11px;color:#aaa;margin-top:5px;text-align:center"></div>
+
 <button class="btn-get" onclick="openDeposit()">DEPOSIT USDT</button>
 <button class="btn-get red" onclick="openWithdraw()">WITHDRAW USDT</button>
 </div>
@@ -136,81 +140,34 @@ const MINERS = [
     {id: 4, name: "💎 Diamond Miner", cost: 50.00, reward: 1000}
 ];
 
-const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-    manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json',
-    actionsConfiguration: {
-        twaReturnUrl: 'https://t.me/AdsPayUBot'
-    }
-});
+let tonConnectUI; // GLOBAL
 
 function showToast(msg){const t=document.getElementById('toast');t.innerText=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2000)}
 
 function init(){
     if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}
-    loadAdCounts();loadMinerData();updateUI();renderMiners();updateTotalIncome();checkDaily();initTon();setInterval(updateMiners, 1000)
+    loadAdCounts();loadMinerData();updateUI();renderMiners();updateTotalIncome();checkDaily();initTonConnect();setInterval(updateMiners, 1000)
 }
 
-function initTon(){
+// THIS IS YOUR OLD WORKING CODE
+function initTonConnect(){
+    tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+        manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json',
+        buttonRootId: 'tonConnectBtnContainer' // Renders the official button
+    });
+
     tonConnectUI.onStatusChange(wallet => {
         if (wallet) {
             tonAddress = wallet.account.address;
             localStorage.setItem('tonAddress', tonAddress);
             document.getElementById('tonWalletAddress').innerText = tonAddress.slice(0,8) + '...' + tonAddress.slice(-8);
-            document.getElementById('tonConnectBtn').innerText = 'DISCONNECT WALLET';
             showToast("Wallet Connected!");
         } else {
             tonAddress = '';
             localStorage.removeItem('tonAddress');
-            document.getElementById('tonConnectBtn').innerText = 'CONNECT TON WALLET';
             document.getElementById('tonWalletAddress').innerText = '';
         }
     });
-
-    document.getElementById('tonConnectBtn').onclick = async () => {
-        if(tonAddress){
-            tonConnectUI.disconnect();
-            showToast("Wallet Disconnected");
-            return;
-        }
-        showWalletPicker();
-    };
-}
-
-async function showWalletPicker(){
-    const wallets = await tonConnectUI.getWallets();
-    const connectRequest = await tonConnectUI.connectWallet();
-    const encodedRequest = encodeURIComponent(connectRequest);
-    
-    if(window.Telegram?.WebApp){
-        Telegram.WebApp.showPopup({
-            title: 'Connect Wallet',
-            message: 'Choose your TON wallet',
-            buttons: [
-                {id: 'tonkeeper', type: 'default', text: 'Tonkeeper'},
-                {id: 'wallet', type: 'default', text: 'Telegram Wallet'},
-                {id: 'copy', type: 'default', text: 'Copy Link'},
-                {id: 'cancel', type: 'cancel', text: 'Cancel'}
-            ]
-        }, async (btnId) => {
-            if(btnId === 'cancel') return;
-            
-            if(btnId === 'tonkeeper'){
-                const tgLink = `tg://tonconnect?connect=${encodedRequest}&manifestUrl=https://adspayu.vercel.app/tonconnect-manifest.json`;
-                setTimeout(() => {
-                    Telegram.WebApp.openTelegramLink(tgLink);
-                }, 100);
-                
-            } else if(btnId === 'wallet'){
-                const wallet = wallets.find(w => w.name === 'Wallet');
-                const finalLink = wallet.universalLink + '?connect=' + encodedRequest;
-                Telegram.WebApp.openLink(finalLink);
-            } else if(btnId === 'copy'){
-                const tgLink = `tg://tonconnect?connect=${encodedRequest}&manifestUrl=https://adspayu.vercel.app/tonconnect-manifest.json`;
-                navigator.clipboard.writeText(tgLink);
-                showToast("Link copied! Open in Tonkeeper manually");
-            }
-        });
-    }
 }
 
 function loadAdCounts(){
@@ -242,7 +199,6 @@ function updateUI(){
 
     if(tonAddress){
         document.getElementById('tonWalletAddress').innerText = tonAddress.slice(0,8) + '...' + tonAddress.slice(-8);
-        document.getElementById('tonConnectBtn').innerText = 'DISCONNECT WALLET';
     }
 
     if(gigaCount >= MAX_DAILY_ADS) document.getElementById('gigaBtn').disabled = true;
