@@ -60,7 +60,6 @@ body{background:#0a0e27;color:#fff;overflow-x:hidden;padding-bottom:80px}
 .modal-btn{flex:1;padding:12px;border:none;border-radius:10px;font-weight:700}
 .btn-cancel{background:#333;color:#fff}
 .btn-confirm{background:#00c851;color:#fff}
-input{background:#0a0e27;border:1px solid #2a2f4a;color:#fff;padding:12px;border-radius:10px;width:100%;margin:10px 0}
 .ref-link{background:#0a0e27;padding:10px;border-radius:8px;word-break:break-all;font-size:12px}
 </style>
 </head>
@@ -125,7 +124,6 @@ const MINER_INTERVAL = 3600000;
 const COOLDOWN_TIME = 5000;
 const COIN_VALUE = 0.000025;
 const MAX_DAILY_ADS = 100;
-const ADMIN_ID = '12345678'; // CHANGE TO YOUR TELEGRAM ID
 
 const MINERS = [
     {id: 0, name: "🎁 Starter Miner", cost: 0, reward: 10, type: "starter", unlockAds: 50},
@@ -136,7 +134,7 @@ const MINERS = [
 ];
 
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-    manifestUrl: 'https://yourdomain.com/tonconnect-manifest.json' // CHANGE THIS
+    manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json'
 });
 
 function showToast(msg){const t=document.getElementById('toast');t.innerText=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2000)}
@@ -179,20 +177,10 @@ function updateUI(){
     document.getElementById('refCount').innerText = refCount;
     document.getElementById('gigaCount').innerText = gigaCount;
     document.getElementById('monetagCount').innerText = monetagCount;
-    document.getElementById('refLink').innerText = `https://t.me/YourBot?start=ref${userId}`; // CHANGE BOT NAME
+    document.getElementById('refLink').innerText = `https://t.me/AdsPayUBot?start=ref${userId}`;
     
     if(gigaCount >= MAX_DAILY_ADS) document.getElementById('gigaBtn').disabled = true;
     if(monetagCount >= MAX_DAILY_ADS) document.getElementById('monetagBtn').disabled = true;
-    if(userId == ADMIN_ID) addAdminButton();
-}
-
-function addAdminButton(){
-    if(!document.getElementById('adminBtn')){
-        const btn = document.createElement('button');
-        btn.id='adminBtn';btn.innerText='⚙️ ADMIN PANEL';btn.className='btn-get red';
-        btn.onclick = () => alert(`Total Users: 1\nTotal APU: ${coins}\nTotal USDT: ${usdt}`);
-        document.getElementById('profile').appendChild(btn);
-    }
 }
 
 function copyRef(){navigator.clipboard.writeText(document.getElementById('refLink').innerText);showToast("Referral link copied!")}
@@ -215,7 +203,7 @@ function watchHomeAd() {
     adRunning = true;
     showToast("Watching ad... 20s");
 
-    try { if (typeof show_11258922 === 'function') { show_11258922(); } } catch(e) {}
+    try { if (typeof show_11258922 === 'function') { show_11258922(); } catch(e) {}
 
     setTimeout(()=>{
         adRunning = false;
