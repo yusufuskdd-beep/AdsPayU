@@ -7,7 +7,7 @@ const SAVE_KEY = `minerads_save_${user.id}`;
 
 let balance = 10.0;
 let lastTick = Date.now();
-let minerInstances = []; // each miner is its own object now
+let minerInstances = []; // each miner is its own object
 let nextInstanceId = 1;
 
 const minerTemplates = [
@@ -49,6 +49,7 @@ function loadGame() {
     minerInstances = data.minerInstances || [];
     nextInstanceId = data.nextInstanceId || 1;
 
+    // offline earnings per instance
     const offlineSeconds = (Date.now() - lastTick) / 1000;
     minerInstances.forEach(m => {
       m.farmed += m.rate * offlineSeconds;
@@ -95,6 +96,7 @@ function buyMiner(templateId) {
   if (balance >= template.cost) {
     balance -= template.cost;
     
+    // create new instance
     minerInstances.push({
       instanceId: nextInstanceId++,
       templateId: template.id,
@@ -128,4 +130,101 @@ function renderHome() {
       <h3>⛏️ Farming</h3>
       <p>Rate: <b>${(totalRate*86400).toFixed(4)} TON/day</b></p>
       <p>Farmed: <b id="farmedTotal">${totalFarmed.toFixed(6)}</b> TON</p>
-      <div class="progress"><div class="progress-bar" style="width:100
+      <div class="progress"><div class="progress-bar" style="width:100%"></div></div>
+      <button class="btn" style="margin-top:12px" onclick="claim()">Claim</button>
+    </div>
+    <div class="card">
+      <h3>Your Miners</h3>
+      ${minerInstances.length > 0 ? minerInstances.map(m => `
+        <div class="miner-unit">
+          <h4>${m.img} ${m.name} #${m.instanceId}</h4>
+          <p style="color:var(--muted); font-size:12px">
+            ${(m.rate*86400).toFixed(4)} TON/day • Farmed: <span id="farmed-${m.instanceId}">${m.farmed.toFixed(6)}</span> TON
+          </p>
+        </div>
+      `).join('') : '<p style="color:var(--muted)">No miners yet</p>'}
+    </div>
+  `;
+}
+
+function renderShop() {
+  document.getElementById('content').innerHTML = `
+    <h2>Shop</h2>
+    ${minerTemplates.map(t => {
+      const ownedCount = minerInstances.filter(m => m.templateId === t.id).length;
+      const payout = (t.cost * (1 + t.bonus)).toFixed(2);
+      const disabled = ownedCount >= 3 ? 'disabled' : '';
+      return `
+      <div class="card miner">
+        <div class="miner-info">
+          <h3>${t.img} ${t.name}</h3>
+          <p>${(t.rate*86400).toFixed(4)} TON/day • Owned: ${ownedCount}/3</p>
+          <p>30d Payout: <b>${payout} TON</b>  +${(t.bonus*100)}%</p>
+          <p><b>${t.cost} TON</b></p>
+        </div>
+        <button class="btn" ${disabled} onclick="buyMiner(${t.id})">${disabled ? 'MAX' : 'Buy'}</button>
+      </div>
+    `}).join('')}
+  `;
+}
+
+function renderTasks() {
+  document.getElementById('content').innerHTML = `
+    <h2>Tasks</h2>
+    <div class="card"><p>Join Telegram Channel</p><button class="btn">+0.1 TON</button></div>
+    <div class="card"><p>Invite 3 Friends</p><button class="btn">+0.5 TON</button></div>
+  `;
+}
+
+function renderReferral() {
+  const refLink = `https://t.me/your_bot?start=${user.id}`;
+  document.getElementById('content').innerHTML = `
+    <h2>Referral</h2>
+    <div class="card">
+      <p>Earn 10% from friends mining</p>
+      <input value="${refLink}" readonly style="width:100%;padding:8px;border-radius:8px;background:#1e2a40;border:1px solid #333;color:var(--text)"/>
+      <button class="btn" onclick="navigator.clipboard.writeText('${refLink}')">Copy Link</button>
+    </div>
+  `;
+}
+
+function renderWallet() {
+  document.getElementById('content').innerHTML = `
+    <h2>Wallet</h2>
+    <div class="card">
+      <p>Connect your TON wallet to withdraw</p>
+      <div id="ton-connect-button"></div>
+    </div>
+  `;
+  tonConnectUI.mount('#ton-connect-button');
+}
+
+function renderProfile() {
+  document.getElementById('content').innerHTML = `
+    <h2>Profile</h2>
+    <div class="card">
+      <p><b>Name:</b> ${user.first_name}</p>
+      <p><b>ID:</b> ${user.id}</p>
+      <p><b>Total Mined:</b> ${getTotalFarmed().toFixed(4)} TON</p>
+      <p><b>Total Miners:</b> ${minerInstances.length}</p>
+    </div>
+  `;
+}
+
+function claim() {
+  const total = getTotalFarmed();
+  balance += total;
+  minerInstances.forEach(m => m.farmed = 0); // reset each instance
+  updateBalance();
+  saveGame();
+  tg.showPopup({ title: "Claimed!", message: `${total.toFixed(4)} TON added to balance` });
+  renderHome();
+}
+
+// INIT
+loadGame();
+updateBalance();
+renderHome();
+document.querySelector('.tabbar button[data-tab="home"]').classList.add('active');
+setInterval(farmTick, 1000);
+setInterval(saveGame, 3000);
