@@ -3,19 +3,19 @@ tg.expand();
 tg.setHeaderColor('#0a0f1a');
 
 let user = tg.initDataUnsafe.user || { first_name: "Miner" };
-let balance = 5.0; // demo TON balance
+let balance = 10.0; // demo TON balance
 let tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
   manifestUrl: 'https://yourdomain.com/tonconnect-manifest.json'
 });
 
-// 6 miners with different stats
+// 6 miners: cost, 30d bonus, max 3 each
 const miners = [
-  { id: 1, name: "Micro Miner", price: 0.5, rate: 0.001, owned: 0, img: "⛏️" },
-  { id: 2, name: "Basic Miner", price: 1.5, rate: 0.003, owned: 0, img: "⚙️" },
-  { id: 3, name: "Pro Miner", price: 5, rate: 0.012, owned: 0, img: "🚀" },
-  { id: 4, name: "GPU Rig", price: 15, rate: 0.04, owned: 0, img: "🖥️" },
-  { id: 5, name: "ASIC Farm", price: 50, rate: 0.15, owned: 0, img: "🏭" },
-  { id: 6, name: "Quantum Miner", price: 200, rate: 0.7, owned: 0, img: "⚡" }
+  { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000424, owned: 0, max: 3, img: "⛏️" },
+  { id: 2, name: "Basic Miner", cost: 3, bonus: 0.15, rate: 0.00000133, owned: 0, max: 3, img: "⚙️" },
+  { id: 3, name: "Pro Miner", cost: 5, bonus: 0.20, rate: 0.00000231, owned: 0, max: 3, img: "🚀" },
+  { id: 4, name: "GPU Rig", cost: 10, bonus: 0.25, rate: 0.00000482, owned: 0, max: 3, img: "🖥️" },
+  { id: 5, name: "ASIC Farm", cost: 25, bonus: 0.30, rate: 0.00001254, owned: 0, max: 3, img: "🏭" },
+  { id: 6, name: "Quantum Miner", cost: 50, bonus: 0.35, rate: 0.00002604, owned: 0, max: 3, img: "⚡" }
 ];
 
 let farmingRate = 0;
@@ -45,7 +45,7 @@ function updateBalance() {
 
 function farmTick() {
   const now = Date.now();
-  const delta = (now - lastTick) / 1000; // seconds
+  const delta = (now - lastTick) / 1000;
   farmed += farmingRate * delta;
   lastTick = now;
   const el = document.getElementById('farmed');
@@ -55,12 +55,13 @@ setInterval(farmTick, 1000);
 
 function buyMiner(id) {
   const m = miners.find(x => x.id === id);
-  if (balance >= m.price) {
-    balance -= m.price;
+  if (m.owned >= m.max) return tg.showAlert(`Max ${m.max} ${m.name} reached`);
+  if (balance >= m.cost) {
+    balance -= m.cost;
     m.owned += 1;
     farmingRate += m.rate;
     updateBalance();
-    tg.showPopup({ title: "Purchased!", message: `You bought ${m.name}` });
+    tg.showPopup({ title: "Purchased!", message: `You bought ${m.name} for ${m.cost} TON` });
     renderShop();
   } else {
     tg.showAlert("Not enough TON");
@@ -68,14 +69,15 @@ function buyMiner(id) {
 }
 
 function renderHome() {
+  const roiDays = farmingRate > 0 ? (balance / (farmingRate * 86400)).toFixed(1) : '∞';
   document.getElementById('content').innerHTML = `
     <div class="card">
       <h2>Welcome, ${user.first_name}</h2>
-      <p style="color:var(--muted)">Farm TON tokens 24/7</p>
+      <p style="color:var(--muted)">All miners ROI in 30 days + bonus</p>
     </div>
     <div class="card">
       <h3>⛏️ Farming</h3>
-      <p>Rate: <b>${farmingRate.toFixed(4)} TON/s</b></p>
+      <p>Rate: <b>${(farmingRate*86400).toFixed(4)} TON/day</b></p>
       <p>Farmed: <b id="farmed">${farmed.toFixed(6)}</b> TON</p>
       <div class="progress"><div class="progress-bar" style="width:100%"></div></div>
       <button class="btn" style="margin-top:12px" onclick="claim()">Claim</button>
@@ -90,16 +92,20 @@ function renderHome() {
 function renderShop() {
   document.getElementById('content').innerHTML = `
     <h2>Shop</h2>
-    ${miners.map(m => `
+    ${miners.map(m => {
+      const payout = (m.cost * (1 + m.bonus)).toFixed(2);
+      const disabled = m.owned >= m.max ? 'disabled' : '';
+      return `
       <div class="card miner">
         <div class="miner-info">
           <h3>${m.img} ${m.name}</h3>
-          <p>${m.rate} TON/s • Owned: ${m.owned}</p>
-          <p><b>${m.price} TON</b></p>
+          <p>${(m.rate*86400).toFixed(4)} TON/day • Owned: ${m.owned}/${m.max}</p>
+          <p>30d Payout: <b>${payout} TON</b>  +${(m.bonus*100)}%</p>
+          <p><b>${m.cost} TON</b></p>
         </div>
-        <button class="btn" onclick="buyMiner(${m.id})">Buy</button>
+        <button class="btn" ${disabled} onclick="buyMiner(${m.id})">${disabled ? 'MAX' : 'Buy'}</button>
       </div>
-    `).join('')}
+    `}).join('')}
   `;
 }
 
