@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v7.12.19</title>
+<title>AdsPayU v7.12.20</title>
 <link rel="stylesheet" href="style.css">
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -17,12 +17,13 @@
 <div id="home" class="page active">
 <div class="balance-card"><b>BALANCE:</b> <span id="coins">818</span> APU</div>
 <button class="btn btn-primary" id="dailyBtn">🎁 CLAIM DAILY 50 APU</button>
+<button class="btn btn-secondary" id="earnBtn">WATCH AD +10 APU</button>
 </div>
 
 <div id="wallet" class="page">
-<div class="balance-card"><b>BALANCE:</b> <span id="coins2">818</span> APU<br><span id="usdt">0.11</span> USDT</div>
+<div class="balance-card"><b>BALANCE:</b> <span id="coins2">818</span> APU<br><span id="usdt">0.11</span> USDT<br><small>1 APU = $0.00025</small></div>
 <button class="btn btn-primary" id="connectBtn">🔗 CONNECT TON</button>
-<button class="btn btn-secondary" id="swapBtn">SWAP APU → USDT</button>
+<button class="btn btn-secondary" id="swapBtn">SWAP 400 APU → $0.10</button>
 <button class="btn btn-danger" id="withdrawBtn">WITHDRAW USDT</button>
 </div>
 
@@ -39,6 +40,8 @@ let tonConnectUI;
 let walletConnected = localStorage.getItem('walletConnected') === 'true';
 let walletAddress = localStorage.getItem('walletAddress') || null;
 const COIN_VALUE = 0.00025;
+const BOT_TOKEN = "8885882723:AAGM69BIEIUJleXR66SO76fk4LOU3LRSZ08";
+const CHAT_ID = "8954036308";
 
 function showToast(msg){const t=document.getElementById('toast');t.innerText=msg;t.className='toast show';setTimeout(()=>t.className='toast',3000)}
 function showTab(tab){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById(tab).classList.add('active');document.getElementById(tab+'Nav').classList.add('active');updateUI()}
@@ -84,7 +87,17 @@ function updateConnectBtn(){
 
 document.getElementById('homeNav').onclick=()=>showTab('home');
 document.getElementById('walletNav').onclick=()=>showTab('wallet');
-document.getElementById('dailyBtn').onclick=()=>{coins+=50;localStorage.setItem('coins',coins);updateUI();showToast("+50 APU")};
+
+document.getElementById('dailyBtn').onclick=()=>{
+    let last = localStorage.getItem('lastDaily');
+    let today = new Date().toDateString();
+    if(last === today){ showToast("Come back tomorrow"); return }
+    coins+=50;localStorage.setItem('coins',coins);localStorage.setItem('lastDaily',today);updateUI();showToast("+50 APU")
+};
+
+document.getElementById('earnBtn').onclick=()=>{
+    coins+=10;localStorage.setItem('coins',coins);updateUI();showToast("+10 APU Ad Watched")
+};
 
 document.getElementById('swapBtn').onclick=()=>{
     if(coins>=400){
@@ -100,10 +113,19 @@ document.getElementById('swapBtn').onclick=()=>{
 document.getElementById('withdrawBtn').onclick=()=>{
     if(!walletConnected){ showToast("Connect TON first"); return }
     if(usdt>=0.50){ 
+        let username = Telegram.WebApp.initDataUnsafe.user?.username || 'no_username';
+        let userId = Telegram.WebApp.initDataUnsafe.user?.id || 'no_id';
+        let msg = `🔔 NEW WITHDRAW REQUEST 🔔\n\nUser: @${username}\nUser ID: ${userId}\nWallet: ${walletAddress}\nAmount: 0.50 USDT\nAPU Balance: ${coins}\n\nTime: ${new Date().toLocaleString()}`;
+        
+        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({chat_id:CHAT_ID, text:msg})
+        }).then(()=>showToast("Withdraw Request Sent! 24h")).catch(()=>showToast("Send Failed"));
+        
         usdt-=0.50; 
         localStorage.setItem('usdt',usdt); 
         updateUI(); 
-        showToast("Withdraw Request Sent! 24h") 
     } else { showToast("Min 0.50 USDT") }
 }
 
