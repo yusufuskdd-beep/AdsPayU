@@ -3,12 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v7.12.1</title>
+<title>AdsPayU v7.12.2</title>
 <link rel="stylesheet" href="style.css">
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
+<script>
+    // INSTANT LOAD - prevents old balance flash
+    let coins = parseFloat(localStorage.getItem('coins')) || 818;
+    let usdt = parseFloat(localStorage.getItem('usdt')) || 0.11;
+    let totalAdsWatched = parseInt(localStorage.getItem('totalAdsWatched')) || 0;
+    
+    function instantUpdate(){
+        document.addEventListener('DOMContentLoaded', ()=>{
+            const coinsHome = document.getElementById('coinsHome');
+            const usdtHome = document.getElementById('usdtHome');
+            const coinsWallet = document.getElementById('coinsWallet');
+            const usdtWallet = document.getElementById('usdtWallet');
+            const totalAds = document.getElementById('totalAds');
+            if(coinsHome) coinsHome.innerText = coins.toLocaleString()+' APU';
+            if(usdtHome) usdtHome.innerText = usdt.toFixed(2)+' USDT';
+            if(coinsWallet) coinsWallet.innerText = coins.toLocaleString()+' APU';
+            if(usdtWallet) usdtWallet.innerText = usdt.toFixed(2)+' USDT';
+            if(totalAds) totalAds.innerText = totalAdsWatched;
+        })
+    }
+    instantUpdate();
+</script>
 
 <div id="toast" class="toast">Toast</div>
 
@@ -66,9 +88,7 @@ const MIN_WITHDRAW = 0.50;
 const ADMIN_TELEGRAM_ID = 8954036308;
 const BOT_TOKEN = "8840764457:AAGWQMHVGG2ksMv-qr27D49Y3j_wYE4E8-4";
 
-let coins = parseFloat(localStorage.getItem('coins')) || 818;
-let usdt = parseFloat(localStorage.getItem('usdt')) || 0.11;
-let totalAdsWatched = parseInt(localStorage.getItem('totalAdsWatched')) || 0;
+// REMOVED DUPLICATE DECLARATIONS - we use the ones from top script now
 let gigaCount = 0, monetagCount = 0, lastAdTime = 0;
 let minerData = {}, currentAdType = 'home', currentAdMinerId = null;
 let userWalletAddress = localStorage.getItem('walletAddress') || null;
@@ -212,7 +232,7 @@ async function confirmDeposit(){
     const amountTON=parseFloat(document.getElementById('depositAmount').value);document.querySelector('.modal').remove();
     if(!amountTON||amountTON<0.1)return showToast("Min 0.1 TON",'error');isDepositing=true;
     await fetchTonPrice();const usdtToReceive=(amountTON*currentTonPrice).toFixed(2);showToast("Opening Tonkeeper...",'warning');
-    const transaction={validUntil:Math.floor(Date.now()/1000)+360,messages:[{address:YOUR_TON_WALLET,amount:(amountTON*1000000000).toFixed(0)}]};
+    const transaction={validUntil:Math.floor(Date.now()/1000)+360,messages:[{address:YOUR_TON_WALLET,amount:(amountTON*1000000).toFixed(0)}]};
     try{await tonConnectUI.sendTransaction(transaction);
         setTimeout(()=>{usdt+=parseFloat(usdtToReceive);localStorage.setItem('usdt',usdt);addHistory('deposit',{amountTON,amountUSDT:usdtToReceive});updateUI();renderHistory();showToast(`+$${usdtToReceive} Credited!`);isDepositing=false},20000)
     }catch(e){showToast("Cancelled",'error');isDepositing=false}
@@ -225,7 +245,7 @@ function openWithdraw(){
         usdt-=amount;localStorage.setItem('usdt',usdt);addHistory('withdraw',{amount});updateUI();renderHistory();
         const user=window.Telegram?.WebApp?.initDataUnsafe?.user;
         fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:ADMIN_TELEGRAM_ID,text:`🔔 WITHDRAW\n@${user?.username}\nID:${user?.id}\n${amount} USDT\n${userWalletAddress}`})})
-  .then(res=>res.json()).then(data=>{if(data.ok)showToast("Request Sent! 24h",'success')}).catch(()=>showToast("Network error",'error'));
+ .then(res=>res.json()).then(data=>{if(data.ok)showToast("Request Sent! 24h",'success')}).catch(()=>showToast("Network error",'error'));
     }else{showToast(`Min $${MIN_WITHDRAW}`,'error')}
 }
 
