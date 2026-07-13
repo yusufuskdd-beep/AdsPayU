@@ -2,32 +2,26 @@ const tg = window.Telegram.WebApp;
 const API_URL = "https://adspayu-backend-5y7g.onrender.com";
 let userId = null;
 let userData = {};
-let miningInterval = null; // for live counter
+let miningInterval = null;
+
+// Mining rates per MINER per MINUTE
+const RATES_PER_MIN = { 1: 0.005, 2: 0.035, 3: 0.150, 4: 0.312, 5: 0.957 };
+const RATES_PER_SEC = Object.fromEntries(Object.entries(RATES_PER_MIN).map(([k,v]) => [k, v/60]));
 
 tg.expand();
 tg.setHeaderColor("#0a0b0f");
 tg.BackButton.show();
 
-// Mining rates per MINER per SECOND
-const RATES_PER_SECOND = {
-  1: 0.005 / 60,   // Tier 1
-  2: 0.035 / 60,   // Tier 2  
-  3: 0.150 / 60,   // Tier 3
-  4: 0.312 / 60,   // Tier 4
-  5: 0.957 / 60    // Tier 5
-};
-
 async function init() {
   try {
     const res = await fetch(`${API_URL}/api/auth`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({initData: tg.initData})
     });
     userData = await res.json();
     userId = userData.id;
     updateUI();
-    startLiveMining(); // start the counter
+    startLiveMining();
   } catch(e) {
     tg.showPopup({message: "Backend Error: " + e.message});
   }
@@ -40,15 +34,19 @@ function updateUI() {
   document.getElementById('pendingYield').textContent = '+' + userData.pending.toFixed(6);
   document.getElementById('activeMiners').textContent = userData.miners;
   document.getElementById('totalEarned').textContent = userData.earned.toFixed(2);
+
+  const ratePerMin = RATES_PER_MIN[userData.miners] || RATES_PER_MIN[1];
+  const dailyEarn = ratePerMin * userData.miners * 60 * 24;
+  document.getElementById('dailyEstimate').textContent = `Est. 24h: +${dailyEarn.toFixed(4)} MCT`;
 }
 
 function startLiveMining() {
-  clearInterval(miningInterval); // stop old one
+  clearInterval(miningInterval);
   miningInterval = setInterval(() => {
-    const ratePerSec = RATES_PER_SECOND[userData.miners] || RATES_PER_SECOND[1];
-    userData.pending += ratePerSec * userData.miners; // add every second
+    const ratePerSec = RATES_PER_SEC[userData.miners] || RATES_PER_SEC[1];
+    userData.pending += ratePerSec * userData.miners;
     document.getElementById('pendingYield').textContent = '+' + userData.pending.toFixed(6);
-  }, 1000); // every 1 second
+  }, 1000);
 }
 
 function showPage(id, el) {
@@ -59,15 +57,12 @@ function showPage(id, el) {
 }
 
 async function claim() {
-  clearInterval(miningInterval); // stop counter to sync with server
+  clearInterval(miningInterval);
   const res = await fetch(`${API_URL}/api/claim`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({userId})});
   const data = await res.json();
-  if(data.success) { 
-    userData.balance = data.balance; 
-    userData.earned = data.earned; 
-    userData.pending = 0; 
-    updateUI(); 
-    startLiveMining(); // restart counter
+  if(data.success) {
+    userData.balance = data.balance; userData.earned = data.earned; userData.pending = 0;
+    updateUI(); startLiveMining();
   }
   tg.showPopup({message: "Yield claimed!"});
 }
@@ -75,12 +70,10 @@ async function claim() {
 async function buyMiner(price, tier) {
   const res = await fetch(`${API_URL}/api/buy`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({userId, price})});
   const data = await res.json();
-  if(data.success) { 
-    userData.balance -= price; 
-    userData.miners += 1; 
-    updateUI(); 
-    startLiveMining(); // restart with new rate
-    tg.showPopup({message: `Tier ${tier} Miner Deployed!`}); 
+  if(data.success) {
+    userData.balance -= price; userData.miners += 1;
+    updateUI(); startLiveMining();
+    tg.showPopup({message: `Tier ${tier} Miner Deployed!`});
   }
   else { tg.showPopup({message: data.error}); }
 }
