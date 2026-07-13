@@ -6,16 +6,17 @@ body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 .page.active { display: block; }
 .header { text-align: center; padding: 10px 0 20px; }
 .logo { font-size: 22px; font-weight: 800; color: var(--accent); }
+.username { font-size: 12px; color: var(--subtext); margin-top: 4px; } /* NEW */
 .balance-card { background: linear-gradient(135deg, #1a1d24, #0f1116); border: 1px solid #2a2e38; border-radius: 20px; padding: 25px; text-align: center; margin-bottom: 20px; }
 .label { color: var(--subtext); font-size: 12px; letter-spacing: 1px; }
 .balance { font-size: 36px; font-weight: 800; margin: 10px 0; }
 .balance span { font-size: 18px; color: var(--accent); }
 .pending { color: var(--accent); font-size: 14px; margin-bottom: 15px; }
 .btn-claim,.btn-deposit,.btn-copy { width: 100%; padding: 14px; background: var(--accent); color: #000; border: none; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; }
-.stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; } /* CHANGED TO 3 COLS */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 .stat-box { background: var(--card); padding: 12px 8px; border-radius: 15px; text-align: center; }
-.stat-box .value { font-size: 20px; font-weight: 700; margin: 5px 0; }
-.stat-box .sub { font-size: 10px; color: var(--subtext); }
+.stat-box.value { font-size: 20px; font-weight: 700; margin: 5px 0; }
+.stat-box.sub { font-size: 10px; color: var(--subtext); }
 .miner-card { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 12px; cursor: pointer; border: 1px solid #2a2e38; }
 .miner-card h3 { margin: 0 0 5px; color: var(--accent); }
 .miner-card p { margin: 0; font-size: 18px; font-weight: 700; }
