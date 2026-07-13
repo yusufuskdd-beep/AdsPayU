@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v7.12.6</title>
+<title>AdsPayU v7.12.8</title>
 <link rel="stylesheet" href="style.css">
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -132,7 +132,18 @@ async function fetchTonPrice(){try{const res=await fetch('https://api.coingecko.
 
 function init(){if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}
 loadAdCounts();loadMinerData();updateUI();renderMiners();updateTotalIncome();checkDaily();initTonConnect();fetchTonPrice();renderHistory();
-setInterval(updateMiners, 1000);}
+setInterval(updateMiners, 1000);
+
+// Close modal on backdrop click
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('click', (e) => {
+        if(e.target === modal){
+            modal.classList.remove('active');
+            setTimeout(()=>modal.style.display='none',300)
+        }
+    })
+})
+}
 
 function initTonConnect(){
     tonConnectUI = new TON_CONNECT_UI.TonConnectUI({manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json', buttonRootId: 'connectBtn'});
@@ -232,12 +243,12 @@ function buyMiner(id){const m=MINERS.find(x=>x.id===id);if(usdt<m.cost)return sh
 function watchAdForMiner(id){if(Date.now()-lastAdTime<COOLDOWN_TIME)return showToast("Wait 5s",'error');minerData[id].adsWatched++;localStorage.setItem(`miner${id}_adsWatched`,minerData[id].adsWatched);lastAdTime=Date.now();renderMiners();showToast("Ad watched!")}
 function claimMiner(id){const m=MINERS.find(x=>x.id===id);const d=minerData[id];if(Date.now()-d.lastClaim<MINER_INTERVAL)return showToast("Not ready",'error');if(d.adsWatched<2)return showToast("Watch 2 ads",'error');coins+=m.reward;d.lastClaim=Date.now();d.adsWatched=0;localStorage.setItem('coins',coins);localStorage.setItem(`miner${id}_lastClaim`,d.lastClaim);localStorage.setItem(`miner${id}_adsWatched`,0);updateUI();renderMiners();updateTotalIncome();showToast(`+${m.reward} APU!`)}
 
-// SWAP FUNCTIONS FIXED
+// SWAP FUNCTIONS
 function openSwap(){const m=document.getElementById('swapModal');m.style.display='flex';setTimeout(()=>m.classList.add('active'),10)}
 function closeSwapModal(){const m=document.getElementById('swapModal');m.classList.remove('active');setTimeout(()=>m.style.display='none',300)}
 function confirmSwap(){let amount=parseInt(document.getElementById('swapAmount').value);closeSwapModal();if(amount>=400&&amount<=coins){coins-=amount;usdt+=amount*COIN_VALUE;localStorage.setItem('coins',coins);localStorage.setItem('usdt',usdt);updateUI();showToast(`Swapped ${amount} APU!`,'success')}else{showToast('Min 400 APU','error')}}
 
-// WITHDRAW FUNCTIONS FIXED
+// WITHDRAW FUNCTIONS
 function openWithdraw(){if(!walletConnected)return showToast("Connect TON first",'error');document.getElementById('withdrawInfo').innerText=`You have $${usdt.toFixed(2)}`;const m=document.getElementById('withdrawModal');m.style.display='flex';setTimeout(()=>m.classList.add('active'),10)}
 function closeWithdrawModal(){const m=document.getElementById('withdrawModal');m.classList.remove('active');setTimeout(()=>m.style.display='none',300)}
 function setMaxWithdraw(){document.getElementById('withdrawAmount').value=usdt.toFixed(2)}
