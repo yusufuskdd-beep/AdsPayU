@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v7.12.2</title>
+<title>AdsPayU v7.12.3</title>
 <link rel="stylesheet" href="style.css">
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -11,25 +11,19 @@
 <body>
 <script>
     // INSTANT LOAD - prevents old balance flash
-    let coins = parseFloat(localStorage.getItem('coins')) || 0;
-    let usdt = parseFloat(localStorage.getItem('usdt')) || 0.00;
+    let coins = parseFloat(localStorage.getItem('coins')) || 818;
+    let usdt = parseFloat(localStorage.getItem('usdt')) || 0.11;
     let totalAdsWatched = parseInt(localStorage.getItem('totalAdsWatched')) || 0;
     
-    function instantUpdate(){
-        document.addEventListener('DOMContentLoaded', ()=>{
-            const coinsHome = document.getElementById('coinsHome');
-            const usdtHome = document.getElementById('usdtHome');
-            const coinsWallet = document.getElementById('coinsWallet');
-            const usdtWallet = document.getElementById('usdtWallet');
-            const totalAds = document.getElementById('totalAds');
-            if(coinsHome) coinsHome.innerText = coins.toLocaleString()+' APU';
-            if(usdtHome) usdtHome.innerText = usdt.toFixed(2)+' USDT';
-            if(coinsWallet) coinsWallet.innerText = coins.toLocaleString()+' APU';
-            if(usdtWallet) usdtWallet.innerText = usdt.toFixed(2)+' USDT';
-            if(totalAds) totalAds.innerText = totalAdsWatched;
-        })
-    }
-    instantUpdate();
+    document.addEventListener('DOMContentLoaded', ()=>{
+        const update = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; }
+        update('coinsHome', coins.toLocaleString()+' APU');
+        update('usdtHome', usdt.toFixed(2)+' USDT');
+        update('coinsWallet', coins.toLocaleString()+' APU');
+        update('usdtWallet', usdt.toFixed(2)+' USDT');
+        update('totalAds', totalAdsWatched);
+        update('totalEarned', coins.toLocaleString());
+    })
 </script>
 
 <div id="toast" class="toast">Toast</div>
@@ -40,14 +34,14 @@
 <div class="topbar"><h1>AdsPayU</h1><div class="top-tabs"><button class="top-tab active" id="walletTab" onclick="showTopTab('wallet')">💰 Wallet</button><button class="top-tab" id="profileTab" onclick="showTopTab('profile')">👤 Profile</button></div></div>
 
 <div id="home" class="page active">
-<div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsHome">818 APU</div><div class="balance-usdt" id="usdtHome">0.11 USDT</div></div>
+<div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsHome">--- APU</div><div class="balance-usdt" id="usdtHome">--- USDT</div></div>
 <button class="daily-claim" id="dailyClaimBtn" onclick="claimDaily()">🎁 CLAIM DAILY 50 APU</button>
 <div class="card"><div class="card-header"><div class="card-icon">🎯</div><div class="card-info"><div class="card-title">GigaPub Ads</div><div class="card-sub"><span id="gigaCount">0</span>/100 today = 10 APU</div></div><button class="btn-get" id="gigaBtn" onclick="openAdConfirm('home')">Watch</button></div></div>
 <div class="card"><div class="card-header"><div class="card-icon">💰</div><div class="card-info"><div class="card-title">Monetag Ads</div><div class="card-sub"><span id="monetagCount">0</span>/100 today = 10 APU</div></div><button class="btn-get orange" id="monetagBtn" onclick="openAdConfirm('home')">Watch</button></div></div>
 </div>
 
 <div id="wallet" class="page">
-<div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsWallet">818 APU</div><div class="balance-usdt" id="usdtWallet">0.11 USDT</div></div>
+<div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsWallet">--- APU</div><div class="balance-usdt" id="usdtWallet">--- USDT</div></div>
 <div class="wallet-subtabs">
     <button class="wallet-subtab active" id="walletMainTab" onclick="showWalletSubTab('main')">Wallet</button>
     <button class="wallet-subtab" id="walletHistoryTab" onclick="showWalletSubTab('history')">History</button>
@@ -65,7 +59,7 @@
 </div>
 
 <div id="profile" class="page">
-<div class="card"><div class="card-title">👤 Your Profile</div><div class="card-sub">User ID: <span id="userId">Guest</span></div><div class="card-sub">Username: <span id="username">-</span></div><div class="card-sub">Total Earned: <span id="totalEarned">818</span> APU</div><div class="card-sub">Total Ads Watched: <span id="totalAds">0</span></div></div>
+<div class="card"><div class="card-title">👤 Your Profile</div><div class="card-sub">User ID: <span id="userId">Guest</span></div><div class="card-sub">Username: <span id="username">-</span></div><div class="card-sub">Total Earned: <span id="totalEarned">---</span> APU</div><div class="card-sub">Total Ads Watched: <span id="totalAds">0</span></div></div>
 <div class="card"><div class="card-title">🔗 Referral Link</div><div class="modal-info" id="refLink">Loading...</div><button class="btn btn-primary" onclick="copyRef()">COPY LINK</button><div class="card-sub">Earn 10% of your referral's earnings</div></div>
 </div>
 
@@ -88,7 +82,6 @@ const MIN_WITHDRAW = 0.50;
 const ADMIN_TELEGRAM_ID = 8954036308;
 const BOT_TOKEN = "8840764457:AAGWQMHVGG2ksMv-qr27D49Y3j_wYE4E8-4";
 
-// REMOVED DUPLICATE DECLARATIONS - we use the ones from top script now
 let gigaCount = 0, monetagCount = 0, lastAdTime = 0;
 let minerData = {}, currentAdType = 'home', currentAdMinerId = null;
 let userWalletAddress = localStorage.getItem('walletAddress') || null;
@@ -244,8 +237,8 @@ function openWithdraw(){
     if(amount>=MIN_WITHDRAW&&amount<=usdt){
         usdt-=amount;localStorage.setItem('usdt',usdt);addHistory('withdraw',{amount});updateUI();renderHistory();
         const user=window.Telegram?.WebApp?.initDataUnsafe?.user;
-        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:ADMIN_TELEGRAM_ID,text:`🔔 WITHDRAW\n@${user?.username}\nID:${user?.id}\n${amount} USDT\n${userWalletAddress}`})})
- .then(res=>res.json()).then(data=>{if(data.ok)showToast("Request Sent! 24h",'success')}).catch(()=>showToast("Network error",'error'));
+        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:ADMIN_TELEGRAM_ID,text:`🔔 WITHDRAW\n@${user?.username}\nID:${user?.id}\n${amount} USDT\n${userWalletAddress}`})
+.then(res=>res.json()).then(data=>{if(data.ok)showToast("Request Sent! 24h",'success')}).catch(()=>showToast("Network error",'error'));
     }else{showToast(`Min $${MIN_WITHDRAW}`,'error')}
 }
 
