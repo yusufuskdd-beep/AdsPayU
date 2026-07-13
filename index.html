@@ -1,9 +1,93 @@
 <!DOCTYPE html>
-<html><head><link rel="stylesheet" href="style.css"></head><body>
-<div style="padding:50px;text-align:center">
-<h1 style="color:#00D4AA">TEST v7.12.4</h1>
-<button onclick="alert('CLICK WORKS!')" style="padding:20px;font-size:20px;width:100%;margin:10px 0;background:#00D4AA;border:none;border-radius:15px;color:#fff">TEST BUTTON 1</button>
-<button onclick="document.getElementById('m').style.display='flex'" style="padding:20px;font-size:20px;width:100%;margin:10px 0;background:#FFA500;border:none;border-radius:15px;color:#fff">OPEN MODAL</button>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>AdsPayU v7.12.5 TEST</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+
+<div id="toast" class="toast">Toast</div>
+
+<div id="app">
+<div class="topbar"><h1>AdsPayU</h1><div class="top-tabs"><button class="top-tab active" id="walletTab" onclick="showTopTab('wallet')">💰 Wallet</button><button class="top-tab" id="profileTab" onclick="showTopTab('profile')">👤 Profile</button></div></div>
+
+<div id="home" class="page active">
+<div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsHome">818 APU</div><div class="balance-usdt" id="usdtHome">0.11 USDT</div></div>
+<button class="daily-claim" id="dailyClaimBtn" onclick="claimDaily()">🎁 CLAIM DAILY 50 APU</button>
+<div class="card"><div class="card-header"><div class="card-icon">🎯</div><div class="card-info"><div class="card-title">GigaPub Ads</div><div class="card-sub"><span id="gigaCount">0</span>/100 today = 10 APU</div></div><button class="btn-get" id="gigaBtn" onclick="showToast('Ads disabled for test')">Watch</button></div></div>
+<div class="card"><div class="card-header"><div class="card-icon">💰</div><div class="card-info"><div class="card-title">Monetag Ads</div><div class="card-sub"><span id="monetagCount">0</span>/100 today = 10 APU</div></div><button class="btn-get orange" id="monetagBtn" onclick="showToast('Ads disabled for test')">Watch</button></div></div>
 </div>
-<div id="m" class="modal" style="display:none"><div class="modal-content"><h2>Modal</h2><button onclick="document.getElementById('m').style.display='none'" class="modal-btn btn-confirm">CLOSE</button></div></div>
+
+<div id="wallet" class="page">
+<div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsWallet">818 APU</div><div class="balance-usdt" id="usdtWallet">0.11 USDT</div></div>
+<div class="btn-row" style="flex-direction:column">
+    <button class="btn btn-primary" onclick="showToast('TON disabled for test')">🔗 CONNECT TON</button>
+    <button class="btn btn-primary" onclick="openSwap()">SWAP APU → USDT</button>
+    <button class="btn btn-secondary" onclick="showToast('Deposit disabled for test')">DEPOSIT TON</button>
+    <button class="btn btn-danger" onclick="openWithdraw()">WITHDRAW USDT</button>
+</div>
+</div>
+
+<div id="profile" class="page">
+<div class="card"><div class="card-title">👤 Your Profile</div><div class="card-sub">User ID: <span id="userId">Guest</span></div></div>
+</div>
+
+<div id="miner" class="page">
+<div class="income-card"><div class="income-label">TOTAL HOURLY INCOME</div><div class="income-value" id="totalIncome">0 APU/h</div></div>
+<div id="minerList"></div>
+</div>
+
+<div class="bottom-nav">
+<button class="nav-item active" id="homeNav" onclick="showTab('home')"><span class="nav-icon">🏠</span>Home</button>
+<button class="nav-item" id="minerNav" onclick="showTab('miner')"><span class="nav-icon">⚡</span>Miner</button>
+</div>
+</div>
+
+<!-- SWAP MODAL -->
+<div class="modal" id="swapModal" style="display:none; pointer-events:none"><div class="modal-content"><div class="modal-title">🔄 Swap</div><div class="input-group"><label>APU Amount</label><input type="number" id="swapAmount" placeholder="400" min="400"></div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeSwapModal()">CANCEL</button><button class="modal-btn btn-confirm" onclick="confirmSwap()">SWAP</button></div></div></div>
+
+<!-- WITHDRAW MODAL -->
+<div class="modal" id="withdrawModal" style="display:none; pointer-events:none"><div class="modal-content"><div class="modal-title">💸 Withdraw</div><div class="modal-info" id="withdrawInfo">You have $0.11</div><div class="input-group"><label>USDT Amount <span style="color:#00D4AA;cursor:pointer;font-size:12px;float:right" onclick="setMaxWithdraw()">MAX</span></label><input type="number" id="withdrawAmount" placeholder="0.50" step="0.01" min="0.50"></div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeWithdrawModal()">CANCEL</button><button class="modal-btn btn-confirm" onclick="confirmWithdraw()">WITHDRAW</button></div></div></div>
+
+<script>
+let coins = 818;
+let usdt = 0.11;
+const MIN_WITHDRAW = 0.50;
+
+function showToast(msg, type='success'){
+    const t=document.getElementById('toast'); t.innerText=msg; t.className='toast show '+type;
+    setTimeout(()=>t.className='toast',3000)
+}
+
+function init(){if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();} updateUI();}
+function updateUI(){
+    document.getElementById('coinsHome').innerText=coins.toLocaleString()+' APU';
+    document.getElementById('usdtHome').innerText=usdt.toFixed(2)+' USDT';
+    document.getElementById('coinsWallet').innerText=coins.toLocaleString()+' APU';
+    document.getElementById('usdtWallet').innerText=usdt.toFixed(2)+' USDT';
+    const user=window.Telegram?.WebApp?.initDataUnsafe?.user;
+    document.getElementById('userId').innerText=user?.id||'Guest';
+}
+
+function showTab(tab){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById(tab).classList.add('active');document.getElementById(tab+'Nav').classList.add('active')}
+function showTopTab(tab){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.top-tab').forEach(n=>n.classList.remove('active'));document.getElementById(tab).classList.add('active');document.getElementById(tab+'Tab').classList.add('active')}
+
+function claimDaily(){coins+=50;updateUI();showToast("+50 APU!")}
+
+// SWAP
+function openSwap(){document.getElementById('swapModal').style.display='flex';document.getElementById('swapModal').style.pointerEvents='auto'}
+function closeSwapModal(){document.getElementById('swapModal').style.display='none';document.getElementById('swapModal').style.pointerEvents='none'}
+function confirmSwap(){let amount = parseInt(document.getElementById('swapAmount').value);closeSwapModal();if(amount>=400 && amount<=coins){coins-=amount;usdt+=amount*0.00025;updateUI();showToast(`Swapped ${amount} APU!`)}else{showToast('Min 400 APU','error')}}
+
+// WITHDRAW
+function openWithdraw(){document.getElementById('withdrawInfo').innerText = `You have $${usdt.toFixed(2)}`;document.getElementById('withdrawModal').style.display='flex';document.getElementById('withdrawModal').style.pointerEvents='auto'}
+function closeWithdrawModal(){document.getElementById('withdrawModal').style.display='none';document.getElementById('withdrawModal').style.pointerEvents='none'}
+function setMaxWithdraw(){document.getElementById('withdrawAmount').value = usdt.toFixed(2);}
+function confirmWithdraw(){let amount = parseFloat(document.getElementById('withdrawAmount').value);closeWithdrawModal();if(amount>=MIN_WITHDRAW && amount<=usdt){usdt-=amount;updateUI();showToast("Request Sent!")}else{showToast(`Min $${MIN_WITHDRAW}`,'error')}}
+
+window.onload=init;
+</script>
 </body></html>
