@@ -2,25 +2,26 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 tg.setHeaderColor('#0a0f1a');
 
-let user = tg.initDataUnsafe.user || { first_name: "Miner" };
-let balance = 10.0; // demo TON balance
+let user = tg.initDataUnsafe.user || { first_name: "Miner", id: "guest" };
+const SAVE_KEY = `minerads_save_${user.id}`;
+
+let balance = 10.0;
+let farmed = 0;
+let farmingRate = 0;
+let lastTick = Date.now();
+
+const miners = [
+  { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000000424, owned: 0, max: 3, img: "⛏️" },
+  { id: 2, name: "Basic Miner", cost: 3, bonus: 0.15, rate: 0.000001331, owned: 0, max: 3, img: "⚙️" },
+  { id: 3, name: "Pro Miner", cost: 5, bonus: 0.20, rate: 0.000002315, owned: 0, max: 3, img: "🚀" },
+  { id: 4, name: "GPU Rig", cost: 10, bonus: 0.25, rate: 0.000004823, owned: 0, max: 3, img: "🖥️" },
+  { id: 5, name: "ASIC Farm", cost: 25, bonus: 0.30, rate: 0.000012540, owned: 0, max: 3, img: "🏭" },
+  { id: 6, name: "Quantum Miner", cost: 50, bonus: 0.35, rate: 0.000026042, owned: 0, max: 3, img: "⚡" }
+];
+
 let tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
   manifestUrl: 'https://yourdomain.com/tonconnect-manifest.json'
 });
-
-// 6 miners: cost, 30d bonus, max 3 each
-const miners = [
-  { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000000424, owned: 0, max: 3, img: "⛏️" },
-  { id: 2, name: "Basic Miner", cost: 3, bonus: 0.15, rate: 0.00000133, owned: 0, max: 3, img: "⚙️" },
-  { id: 3, name: "Pro Miner", cost: 5, bonus: 0.20, rate: 0.00000231, owned: 0, max: 3, img: "🚀" },
-  { id: 4, name: "GPU Rig", cost: 10, bonus: 0.25, rate: 0.00000482, owned: 0, max: 3, img: "🖥️" },
-  { id: 5, name: "ASIC Farm", cost: 25, bonus: 0.30, rate: 0.00001254, owned: 0, max: 3, img: "🏭" },
-  { id: 6, name: "Quantum Miner", cost: 50, bonus: 0.35, rate: 0.00002604, owned: 0, max: 3, img: "⚡" }
-];
-
-let farmingRate = 0;
-let farmed = 0;
-let lastTick = Date.now();
 
 const tabs = {
   home: renderHome,
@@ -39,6 +40,37 @@ document.querySelectorAll('.tabbar button').forEach(btn => {
   }
 });
 
+// SAVE / LOAD SYSTEM
+function loadGame() {
+  const save = localStorage.getItem(SAVE_KEY);
+  if (save) {
+    const data = JSON.parse(save);
+    balance = data.balance || 10.0;
+    farmed = data.farmed || 0;
+    lastTick = data.lastTick || Date.now();
+    
+    data.miners.forEach((m, i) => {
+      miners[i].owned = m.owned;
+      farmingRate += miners[i].rate * miners[i].owned;
+    });
+
+    // offline earnings
+    const offlineSeconds = (Date.now() - lastTick) / 1000;
+    if (offlineSeconds > 0 && farmingRate > 0) {
+      farmed += farmingRate * offlineSeconds;
+    }
+  }
+}
+
+function saveGame() {
+  localStorage.setItem(SAVE_KEY, JSON.stringify({
+    balance,
+    farmed,
+    lastTick: Date.now(),
+    miners: miners.map(m => ({ owned: m.owned }))
+  }));
+}
+
 function updateBalance() {
   document.getElementById('balance').innerText = `${balance.toFixed(4)} TON`;
 }
@@ -51,7 +83,6 @@ function farmTick() {
   const el = document.getElementById('farmed');
   if (el) el.innerText = farmed.toFixed(6);
 }
-setInterval(farmTick, 1000);
 
 function buyMiner(id) {
   const m = miners.find(x => x.id === id);
@@ -61,6 +92,7 @@ function buyMiner(id) {
     m.owned += 1;
     farmingRate += m.rate;
     updateBalance();
+    saveGame();
     tg.showPopup({ title: "Purchased!", message: `You bought ${m.name} for ${m.cost} TON` });
     renderShop();
   } else {
@@ -69,7 +101,6 @@ function buyMiner(id) {
 }
 
 function renderHome() {
-  const roiDays = farmingRate > 0 ? (balance / (farmingRate * 86400)).toFixed(1) : '∞';
   document.getElementById('content').innerHTML = `
     <div class="card">
       <h2>Welcome, ${user.first_name}</h2>
@@ -155,9 +186,14 @@ function claim() {
   balance += farmed;
   farmed = 0;
   updateBalance();
+  saveGame();
   tg.showPopup({ title: "Claimed!", message: "TON added to balance" });
 }
 
+// INIT
+loadGame();
 updateBalance();
 renderHome();
 document.querySelector('.tabbar button[data-tab="home"]').classList.add('active');
+setInterval(farmTick, 1000);
+setInterval(saveGame, 3000); // auto save every 3s
