@@ -7,11 +7,11 @@ const SAVE_KEY = `minerads_save_${user.id}`;
 
 let balance = 10.0;
 let lastTick = Date.now();
-let minerInstances = []; // each miner is its own object
+let minerInstances = [];
 let nextInstanceId = 1;
 
 const minerTemplates = [
-  { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000424, img: "⛏️" },
+  { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000424, img: "⛏️" }, // FIXED rate
   { id: 2, name: "Basic Miner", cost: 3, bonus: 0.15, rate: 0.000001331, img: "⚙️" },
   { id: 3, name: "Pro Miner", cost: 5, bonus: 0.20, rate: 0.000002315, img: "🚀" },
   { id: 4, name: "GPU Rig", cost: 10, bonus: 0.25, rate: 0.000004823, img: "🖥️" },
@@ -19,17 +19,22 @@ const minerTemplates = [
   { id: 6, name: "Quantum Miner", cost: 50, bonus: 0.35, rate: 0.000026042, img: "⚡" }
 ];
 
-let tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-  manifestUrl: 'https://yourdomain.com/tonconnect-manifest.json'
-});
+let tonConnectUI;
+try {
+  tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+    manifestUrl: 'https://ton-connect.github.io/demo-dapp-with-react-ui/tonconnect-manifest.json'
+  });
+} catch(e){}
 
 const tabs = { home: renderHome, shop: renderShop, tasks: renderTasks, referral: renderReferral, wallet: renderWallet, profile: renderProfile };
-document.querySelectorAll('.tabbar button').forEach(btn => {
-  btn.onclick = () => {
-    document.querySelectorAll('.tabbar button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    tabs[btn.dataset.tab]();
-  }
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.tabbar button').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.tabbar button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      tabs[btn.dataset.tab]();
+    }
+  });
 });
 
 function getTotalRate() {
@@ -39,35 +44,52 @@ function getTotalFarmed() {
   return minerInstances.reduce((sum, m) => sum + m.farmed, 0);
 }
 
-// SAVE / LOAD
+// MIGRATION + SAVE / LOAD
 function loadGame() {
   const save = localStorage.getItem(SAVE_KEY);
   if (save) {
     const data = JSON.parse(save);
     balance = data.balance || 10.0;
     lastTick = data.lastTick || Date.now();
-    minerInstances = data.minerInstances || [];
-    nextInstanceId = data.nextInstanceId || 1;
-
-    // offline earnings per instance
+    if (data.minerInstances) {
+      minerInstances = data.minerInstances;
+      nextInstanceId = data.nextInstanceId || 1;
+    } else if (data.miners) { // migrate old
+      data.miners.forEach((m, i) => {
+        for(let j = 0; j < m.owned; j++) {
+          minerInstances.push({
+            instanceId: nextInstanceId++,
+            templateId: minerTemplates[i].id,
+            name: minerTemplates[i].name,
+            rate: minerTemplates[i].rate,
+            bonus: minerTemplates[i].bonus,
+            img: minerTemplates[i].img,
+            farmed: 0
+          });
+        }
+      });
+    }
     const offlineSeconds = (Date.now() - lastTick) / 1000;
-    minerInstances.forEach(m => {
-      m.farmed += m.rate * offlineSeconds;
-    });
+    minerInstances.forEach(m => { m.farmed += m.rate * offlineSeconds; });
   }
 }
 
 function saveGame() {
-  localStorage.setItem(SAVE_KEY, JSON.stringify({
-    balance,
-    lastTick: Date.now(),
-    minerInstances,
-    nextInstanceId
-  }));
+  localStorage.setItem(SAVE_KEY, JSON.stringify({ balance, lastTick: Date.now(), minerInstances, nextInstanceId }));
 }
 
 function updateBalance() {
-  document.getElementById('balance').innerText = `${balance.toFixed(4)} TON`;
+  const el = document.getElementById('balance');
+  if(el) el.innerText = `${balance.toFixed(4)} TON`;
+}
+
+// DEV CHEAT
+function addBalance() {
+  balance += 100;
+  updateBalance();
+  saveGame();
+  tg.showPopup({title: "Dev Cheat", message: "+100 TON added"});
+  renderShop();
 }
 
 // LIVE FARM TICK
@@ -75,14 +97,9 @@ function farmTick() {
   const now = Date.now();
   const delta = (now - lastTick) / 1000;
   lastTick = now;
-  
-  minerInstances.forEach(m => {
-    m.farmed += m.rate * delta;
-  });
-
+  minerInstances.forEach(m => { m.farmed += m.rate * delta; });
   const totalEl = document.getElementById('farmedTotal');
   if (totalEl) totalEl.innerText = getTotalFarmed().toFixed(6);
-  
   minerInstances.forEach(m => {
     const el = document.getElementById(`farmed-${m.instanceId}`);
     if (el) el.innerText = m.farmed.toFixed(6);
@@ -95,8 +112,6 @@ function buyMiner(templateId) {
   if (ownedCount >= 3) return tg.showAlert(`Max 3 ${template.name} reached`);
   if (balance >= template.cost) {
     balance -= template.cost;
-    
-    // create new instance
     minerInstances.push({
       instanceId: nextInstanceId++,
       templateId: template.id,
@@ -106,7 +121,6 @@ function buyMiner(templateId) {
       img: template.img,
       farmed: 0
     });
-
     updateBalance();
     saveGame();
     tg.showPopup({ title: "Purchased!", message: `You bought ${template.name} for ${template.cost} TON` });
@@ -125,6 +139,7 @@ function renderHome() {
     <div class="card">
       <h2>Welcome, ${user.first_name}</h2>
       <p style="color:var(--muted)">All miners ROI in 30 days + bonus</p>
+      <button class="btn" style="margin-top:8px;background:var(--gold)" onclick="addBalance()">+100 TON DEV</button>
     </div>
     <div class="card">
       <h3>⛏️ Farming</h3>
@@ -135,7 +150,7 @@ function renderHome() {
     </div>
     <div class="card">
       <h3>Your Miners</h3>
-      ${minerInstances.length > 0 ? minerInstances.map(m => `
+      ${minerInstances.length > 0? minerInstances.map(m => `
         <div class="miner-unit">
           <h4>${m.img} ${m.name} #${m.instanceId}</h4>
           <p style="color:var(--muted); font-size:12px">
@@ -153,29 +168,22 @@ function renderShop() {
     ${minerTemplates.map(t => {
       const ownedCount = minerInstances.filter(m => m.templateId === t.id).length;
       const payout = (t.cost * (1 + t.bonus)).toFixed(2);
-      const disabled = ownedCount >= 3 ? 'disabled' : '';
+      const disabled = ownedCount >= 3? 'disabled' : '';
       return `
       <div class="card miner">
         <div class="miner-info">
           <h3>${t.img} ${t.name}</h3>
           <p>${(t.rate*86400).toFixed(4)} TON/day • Owned: ${ownedCount}/3</p>
-          <p>30d Payout: <b>${payout} TON</b>  +${(t.bonus*100)}%</p>
+          <p>30d Payout: <b>${payout} TON</b> +${(t.bonus*100)}%</p>
           <p><b>${t.cost} TON</b></p>
         </div>
-        <button class="btn" ${disabled} onclick="buyMiner(${t.id})">${disabled ? 'MAX' : 'Buy'}</button>
+        <button class="btn" ${disabled} onclick="buyMiner(${t.id})">${disabled? 'MAX' : 'Buy'}</button>
       </div>
     `}).join('')}
   `;
 }
 
-function renderTasks() {
-  document.getElementById('content').innerHTML = `
-    <h2>Tasks</h2>
-    <div class="card"><p>Join Telegram Channel</p><button class="btn">+0.1 TON</button></div>
-    <div class="card"><p>Invite 3 Friends</p><button class="btn">+0.5 TON</button></div>
-  `;
-}
-
+function renderTasks() { document.getElementById('content').innerHTML = `<h2>Tasks</h2><div class="card"><p>Coming soon</p></div>`; }
 function renderReferral() {
   const refLink = `https://t.me/your_bot?start=${user.id}`;
   document.getElementById('content').innerHTML = `
@@ -187,7 +195,6 @@ function renderReferral() {
     </div>
   `;
 }
-
 function renderWallet() {
   document.getElementById('content').innerHTML = `
     <h2>Wallet</h2>
@@ -196,9 +203,8 @@ function renderWallet() {
       <div id="ton-connect-button"></div>
     </div>
   `;
-  tonConnectUI.mount('#ton-connect-button');
+  if(tonConnectUI) tonConnectUI.mount('#ton-connect-button');
 }
-
 function renderProfile() {
   document.getElementById('content').innerHTML = `
     <h2>Profile</h2>
@@ -206,7 +212,6 @@ function renderProfile() {
       <p><b>Name:</b> ${user.first_name}</p>
       <p><b>ID:</b> ${user.id}</p>
       <p><b>Total Mined:</b> ${getTotalFarmed().toFixed(4)} TON</p>
-      <p><b>Total Miners:</b> ${minerInstances.length}</p>
     </div>
   `;
 }
@@ -214,7 +219,7 @@ function renderProfile() {
 function claim() {
   const total = getTotalFarmed();
   balance += total;
-  minerInstances.forEach(m => m.farmed = 0); // reset each instance
+  minerInstances.forEach(m => m.farmed = 0);
   updateBalance();
   saveGame();
   tg.showPopup({ title: "Claimed!", message: `${total.toFixed(4)} TON added to balance` });
