@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v7.12.1</title>
+<title>AdsPayU v7.12.3</title>
 <link rel="stylesheet" href="style.css">
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -12,7 +12,40 @@
 
 <div id="toast" class="toast">Toast</div>
 
+<!-- AD CONFIRM MODAL -->
 <div class="modal" id="adConfirmModal" style="display:none"><div class="modal-content"><div class="modal-title">⚠️ Important</div><div class="modal-info">Watch the ad for at least <b>20 seconds</b> to get credit.</div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeAdConfirm()">CANCEL</button><button class="modal-btn btn-confirm" onclick="proceedAd()">WATCH AD</button></div></div></div>
+
+<!-- SWAP MODAL -->
+<div class="modal" id="swapModal" style="display:none">
+  <div class="modal-content">
+    <div class="modal-title">🔄 Swap APU → USDT</div>
+    <div class="modal-info">Min 400 APU. Rate: 1 APU = $0.00025</div>
+    <div class="input-group">
+      <label>APU Amount</label>
+      <input type="number" id="swapAmount" placeholder="400" min="400">
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn btn-cancel" onclick="closeSwapModal()">CANCEL</button>
+      <button class="modal-btn btn-confirm" onclick="confirmSwap()">SWAP</button>
+    </div>
+  </div>
+</div>
+
+<!-- WITHDRAW MODAL -->
+<div class="modal" id="withdrawModal" style="display:none">
+  <div class="modal-content">
+    <div class="modal-title">💸 Withdraw USDT</div>
+    <div class="modal-info" id="withdrawInfo">You have $0.11</div>
+    <div class="input-group">
+      <label>USDT Amount <span style="color:#00D4AA;cursor:pointer;font-size:12px;float:right" onclick="setMaxWithdraw()">MAX</span></label>
+      <input type="number" id="withdrawAmount" placeholder="0.50" step="0.01" min="0.50">
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn btn-cancel" onclick="closeWithdrawModal()">CANCEL</button>
+      <button class="modal-btn btn-confirm" onclick="confirmWithdraw()">WITHDRAW</button>
+    </div>
+  </div>
+</div>
 
 <div id="app">
 <div class="topbar"><h1>AdsPayU</h1><div class="top-tabs"><button class="top-tab active" id="walletTab" onclick="showTopTab('wallet')">💰 Wallet</button><button class="top-tab" id="profileTab" onclick="showTopTab('profile')">👤 Profile</button></div></div>
@@ -199,7 +232,58 @@ function buyMiner(id){const m=MINERS.find(x=>x.id===id);if(usdt<m.cost)return sh
 function watchAdForMiner(id){if(Date.now()-lastAdTime<COOLDOWN_TIME)return showToast("Wait 5s",'error');minerData[id].adsWatched++;localStorage.setItem(`miner${id}_adsWatched`,minerData[id].adsWatched);lastAdTime=Date.now();renderMiners();showToast("Ad watched!")}
 function claimMiner(id){const m=MINERS.find(x=>x.id===id);const d=minerData[id];if(Date.now()-d.lastClaim<MINER_INTERVAL)return showToast("Not ready",'error');if(d.adsWatched<2)return showToast("Watch 2 ads",'error');coins+=m.reward;d.lastClaim=Date.now();d.adsWatched=0;localStorage.setItem('coins',coins);localStorage.setItem(`miner${id}_lastClaim`,d.lastClaim);localStorage.setItem(`miner${id}_adsWatched`,0);updateUI();renderMiners();updateTotalIncome();showToast(`+${m.reward} APU!`)}
 
-function openSwap(){let amount=prompt("Swap APU. Min 400. Rate: 1 APU = $0.00025");amount=parseInt(amount);if(amount>=400&&amount<=coins){coins-=amount;usdt+=amount*COIN_VALUE;localStorage.setItem('coins',coins);localStorage.setItem('usdt',usdt);updateUI();showToast(`Swapped ${amount} APU!`)}}
+// SWAP FUNCTIONS
+function openSwap(){
+    document.getElementById('swapAmount').value = '';
+    document.getElementById('swapModal').style.display='flex';
+}
+function closeSwapModal(){
+    document.getElementById('swapModal').style.display='none';
+}
+function confirmSwap(){
+    let amount = parseInt(document.getElementById('swapAmount').value);
+    closeSwapModal();
+    if(amount>=400 && amount<=coins){
+        coins-=amount;
+        usdt+=amount*COIN_VALUE;
+        localStorage.setItem('coins',coins);
+        localStorage.setItem('usdt',usdt);
+        updateUI();
+        showToast(`Swapped ${amount} APU!`,'success')
+    }else{
+        showToast('Min 400 APU','error')
+    }
+}
+
+// WITHDRAW FUNCTIONS
+function openWithdraw(){
+    if(!walletConnected)return showToast("Connect TON first",'error');
+    document.getElementById('withdrawInfo').innerText = `You have $${usdt.toFixed(2)}`;
+    document.getElementById('withdrawAmount').value = '';
+    document.getElementById('withdrawModal').style.display='flex';
+}
+function closeWithdrawModal(){
+    document.getElementById('withdrawModal').style.display='none';
+}
+function setMaxWithdraw(){
+    document.getElementById('withdrawAmount').value = usdt.toFixed(2);
+}
+function confirmWithdraw(){
+    let amount = parseFloat(document.getElementById('withdrawAmount').value);
+    closeWithdrawModal();
+    if(amount>=MIN_WITHDRAW && amount<=usdt){
+        usdt-=amount;
+        localStorage.setItem('usdt',usdt);
+        addHistory('withdraw',{amount});
+        updateUI();
+        renderHistory();
+        const user=window.Telegram?.WebApp?.initDataUnsafe?.user;
+        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:ADMIN_TELEGRAM_ID,text:`🔔 WITHDRAW REQUEST\nUser: @${user?.username}\nID: ${user?.id}\nAmount: ${amount} USDT\nWallet: ${userWalletAddress}\nTime: ${new Date().toLocaleString()}`})
+  .then(res=>res.json()).then(data=>{if(data.ok)showToast("Request Sent! 24h",'success')}).catch(()=>showToast("Network error",'error'));
+    }else{
+        showToast(`Min $${MIN_WITHDRAW}`,'error')
+    }
+}
 
 function openDeposit(){
     if(!walletConnected)return showToast("Connect TON first",'error');if(isDepositing)return showToast("Deposit in progress",'warning');
@@ -216,17 +300,6 @@ async function confirmDeposit(){
     try{await tonConnectUI.sendTransaction(transaction);
         setTimeout(()=>{usdt+=parseFloat(usdtToReceive);localStorage.setItem('usdt',usdt);addHistory('deposit',{amountTON,amountUSDT:usdtToReceive});updateUI();renderHistory();showToast(`+$${usdtToReceive} Credited!`);isDepositing=false},20000)
     }catch(e){showToast("Cancelled",'error');isDepositing=false}
-}
-
-function openWithdraw(){
-    if(!walletConnected)return showToast("Connect TON first",'error');
-    let amount=prompt(`Withdraw USDT. You have $${usdt.toFixed(2)}`);amount=parseFloat(amount);
-    if(amount>=MIN_WITHDRAW&&amount<=usdt){
-        usdt-=amount;localStorage.setItem('usdt',usdt);addHistory('withdraw',{amount});updateUI();renderHistory();
-        const user=window.Telegram?.WebApp?.initDataUnsafe?.user;
-        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:ADMIN_TELEGRAM_ID,text:`🔔 WITHDRAW\n@${user?.username}\nID:${user?.id}\n${amount} USDT\n${userWalletAddress}`})})
-   .then(res=>res.json()).then(data=>{if(data.ok)showToast("Request Sent! 24h",'success')}).catch(()=>showToast("Network error",'error'));
-    }else{showToast(`Min $${MIN_WITHDRAW}`,'error')}
 }
 
 window.onload=init;
