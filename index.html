@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v7.12.20</title>
+<title>AdsPayU v7.12.21</title>
 <link rel="stylesheet" href="style.css">
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -14,12 +14,21 @@
 <div id="app">
 <div class="topbar"><h1>AdsPayU</h1></div>
 
+<!-- HOME -->
 <div id="home" class="page active">
 <div class="balance-card"><b>BALANCE:</b> <span id="coins">818</span> APU</div>
 <button class="btn btn-primary" id="dailyBtn">🎁 CLAIM DAILY 50 APU</button>
-<button class="btn btn-secondary" id="earnBtn">WATCH AD +10 APU</button>
+<button class="btn btn-secondary" id="earnBtn">📺 WATCH AD +10 APU</button>
 </div>
 
+<!-- EARN -->
+<div id="earn" class="page">
+<div class="balance-card"><b>EARN MORE</b></div>
+<button class="btn btn-primary" id="taskBtn">✅ COMPLETE TASK +25 APU</button>
+<button class="btn btn-secondary" id="referBtn">👥 INVITE FRIEND +100 APU</button>
+</div>
+
+<!-- WALLET -->
 <div id="wallet" class="page">
 <div class="balance-card"><b>BALANCE:</b> <span id="coins2">818</span> APU<br><span id="usdt">0.11</span> USDT<br><small>1 APU = $0.00025</small></div>
 <button class="btn btn-primary" id="connectBtn">🔗 CONNECT TON</button>
@@ -27,9 +36,17 @@
 <button class="btn btn-danger" id="withdrawBtn">WITHDRAW USDT</button>
 </div>
 
+<!-- PROFILE -->
+<div id="profile" class="page">
+<div class="balance-card"><b>PROFILE</b><br>@<span id="username">user</span></div>
+<button class="btn btn-secondary" id="refLinkBtn">📋 COPY REFERRAL LINK</button>
+</div>
+
 <div class="bottom-nav">
 <button class="nav-item active" id="homeNav">🏠 Home</button>
+<button class="nav-item" id="earnNav">💎 Earn</button>
 <button class="nav-item" id="walletNav">💰 Wallet</button>
+<button class="nav-item" id="profileNav">👤 Profile</button>
 </div>
 </div>
 
@@ -42,10 +59,11 @@ let walletAddress = localStorage.getItem('walletAddress') || null;
 const COIN_VALUE = 0.00025;
 const BOT_TOKEN = "8885882723:AAGM69BIEIUJleXR66SO76fk4LOU3LRSZ08";
 const CHAT_ID = "8954036308";
+const REF_BONUS = 100;
 
 function showToast(msg){const t=document.getElementById('toast');t.innerText=msg;t.className='toast show';setTimeout(()=>t.className='toast',3000)}
 function showTab(tab){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById(tab).classList.add('active');document.getElementById(tab+'Nav').classList.add('active');updateUI()}
-function updateUI(){document.getElementById('coins').innerText=coins;document.getElementById('coins2').innerText=coins;document.getElementById('usdt').innerText=usdt.toFixed(2);}
+function updateUI(){document.getElementById('coins').innerText=coins;document.getElementById('coins2').innerText=coins;document.getElementById('usdt').innerText=usdt.toFixed(2);document.getElementById('username').innerText=Telegram.WebApp.initDataUnsafe.user?.username || 'user';}
 
 function initTon(){
 try{
@@ -55,16 +73,12 @@ tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
 });
 tonConnectUI.onStatusChange(wallet => {
     if(wallet?.account){
-        walletConnected = true;
-        walletAddress = wallet.account.address;
-        localStorage.setItem('walletConnected','true');
-        localStorage.setItem('walletAddress',walletAddress);
+        walletConnected = true; walletAddress = wallet.account.address;
+        localStorage.setItem('walletConnected','true');localStorage.setItem('walletAddress',walletAddress);
         showToast("TON Connected!");
     } else {
-        walletConnected = false;
-        walletAddress = null;
-        localStorage.setItem('walletConnected','false');
-        localStorage.setItem('walletAddress','');
+        walletConnected = false; walletAddress = null;
+        localStorage.setItem('walletConnected','false');localStorage.setItem('walletAddress','');
         showToast("TON Disconnected");
     }
     updateConnectBtn();
@@ -78,60 +92,55 @@ function updateConnectBtn(){
     if(walletConnected && walletAddress){ 
         btn.innerText = `✅ ${walletAddress.slice(0,4)}...${walletAddress.slice(-4)}`; 
         btn.onclick = () => tonConnectUI.disconnect();
-    } 
-    else { 
+    } else { 
         btn.innerText = "🔗 CONNECT TON"; 
         btn.onclick = () => tonConnectUI.openModal();
     }
 }
 
+// NAV
 document.getElementById('homeNav').onclick=()=>showTab('home');
+document.getElementById('earnNav').onclick=()=>showTab('earn');
 document.getElementById('walletNav').onclick=()=>showTab('wallet');
+document.getElementById('profileNav').onclick=()=>showTab('profile');
 
+// HOME
 document.getElementById('dailyBtn').onclick=()=>{
-    let last = localStorage.getItem('lastDaily');
-    let today = new Date().toDateString();
+    let last = localStorage.getItem('lastDaily'); let today = new Date().toDateString();
     if(last === today){ showToast("Come back tomorrow"); return }
     coins+=50;localStorage.setItem('coins',coins);localStorage.setItem('lastDaily',today);updateUI();showToast("+50 APU")
 };
+document.getElementById('earnBtn').onclick=()=>{coins+=10;localStorage.setItem('coins',coins);updateUI();showToast("+10 APU Ad Watched")};
 
-document.getElementById('earnBtn').onclick=()=>{
-    coins+=10;localStorage.setItem('coins',coins);updateUI();showToast("+10 APU Ad Watched")
-};
+// EARN
+document.getElementById('taskBtn').onclick=()=>{coins+=25;localStorage.setItem('coins',coins);updateUI();showToast("+25 APU Task Done")};
+document.getElementById('referBtn').onclick=()=>{coins+=REF_BONUS;localStorage.setItem('coins',coins);updateUI();showToast(`+${REF_BONUS} APU Referral`)};
 
+// WALLET
 document.getElementById('swapBtn').onclick=()=>{
-    if(coins>=400){
-        coins-=400;
-        usdt+=400*COIN_VALUE;
-        localStorage.setItem('coins',coins);
-        localStorage.setItem('usdt',usdt);
-        updateUI();
-        showToast("Swapped 400 APU → $0.10")
-    }else{ showToast("Min 400 APU") }
+    if(coins>=400){coins-=400;usdt+=400*COIN_VALUE;localStorage.setItem('coins',coins);localStorage.setItem('usdt',usdt);updateUI();showToast("Swapped 400 APU → $0.10")}
+    else{ showToast("Min 400 APU") }
 };
-
 document.getElementById('withdrawBtn').onclick=()=>{
     if(!walletConnected){ showToast("Connect TON first"); return }
     if(usdt>=0.50){ 
         let username = Telegram.WebApp.initDataUnsafe.user?.username || 'no_username';
         let userId = Telegram.WebApp.initDataUnsafe.user?.id || 'no_id';
         let msg = `🔔 NEW WITHDRAW REQUEST 🔔\n\nUser: @${username}\nUser ID: ${userId}\nWallet: ${walletAddress}\nAmount: 0.50 USDT\nAPU Balance: ${coins}\n\nTime: ${new Date().toLocaleString()}`;
-        
-        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({chat_id:CHAT_ID, text:msg})
-        }).then(()=>showToast("Withdraw Request Sent! 24h")).catch(()=>showToast("Send Failed"));
-        
-        usdt-=0.50; 
-        localStorage.setItem('usdt',usdt); 
-        updateUI(); 
+        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:CHAT_ID, text:msg})}).then(()=>showToast("Withdraw Request Sent! 24h")).catch(()=>showToast("Send Failed"));
+        usdt-=0.50; localStorage.setItem('usdt',usdt); updateUI(); 
     } else { showToast("Min 0.50 USDT") }
+};
+
+// PROFILE
+document.getElementById('refLinkBtn').onclick=()=>{
+    let userId = Telegram.WebApp.initDataUnsafe.user?.id || 'guest';
+    let link = `https://t.me/YOUR_BOT_USERNAME?start=ref${userId}`;
+    navigator.clipboard.writeText(link); showToast("Referral Link Copied!")
 }
 
 if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}
-initTon();
-updateUI();
+initTon(); updateUI();
 </script>
 </body>
 </html>
