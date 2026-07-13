@@ -442,3 +442,14 @@ body {
     background: linear-gradient(135deg, #00D4AA, #00A8FF);
     color: #fff;
 }
+/* KILL GHOST CLICKS */
+.modal {
+    pointer-events: none !important;
+    transition: opacity 0.3s ease;
+    opacity: 0;
+}
+.modal.active { 
+    display: flex !important; 
+    pointer-events: auto !important;
+    opacity: 1;
+}
