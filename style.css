@@ -358,6 +358,7 @@ body {
     align-items: center;
     gap: 10px;
     max-width: 90%;
+    pointer-events: none;
 }
 .toast.show {
     opacity: 1;
@@ -370,7 +371,7 @@ body {
 .toast.warning { border-left: 4px solid #FFA500; }
 .toast.warning::before { content: "⚠️"; }
 
-/* ===== BEAUTIFUL MODAL POPUP ===== */
+/* ===== BEAUTIFUL MODAL POPUP - FIXED ===== */
 .modal {
     position: fixed;
     top: 0;
@@ -385,7 +386,9 @@ body {
     z-index: 9998;
     animation: fadeIn 0.3s ease;
 }
-.modal.active { display: flex; }
+.modal.active { 
+    display: flex !important; /* THIS WAS MISSING */
+}
 .modal-content {
     background: linear-gradient(145deg, #1e1e28, #2a2a38);
     padding: 25px;
