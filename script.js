@@ -19,7 +19,8 @@ async function init() {
     });
     userData = await res.json();
     userId = userData.id;
-    document.getElementById('refLink').value = `https://t.me/CryptoMineBot?start=ref_${userId}`; // DYNAMIC LINK
+    document.getElementById('username').textContent = '@' + (userData.username || 'user'); // SHOW USERNAME
+    document.getElementById('refLink').value = `https://t.me/CryptoMineBot?start=ref_${userId}`;
     updateUI();
     startLiveMining();
   } catch(e) {
@@ -34,7 +35,7 @@ function updateUI() {
   document.getElementById('pendingYield').textContent = '+' + userData.pending.toFixed(6);
   document.getElementById('activeMiners').textContent = userData.miners;
   document.getElementById('totalEarned').textContent = userData.earned.toFixed(2);
-  document.getElementById('refEarnings').textContent = (userData.ref_earnings || 0).toFixed(2); // NEW
+  document.getElementById('refEarnings').textContent = (userData.ref_earnings || 0).toFixed(2);
 
   const ratePerMin = RATES_PER_MIN[userData.miners] || RATES_PER_MIN[1];
   const dailyEarn = ratePerMin * userData.miners * 60 * 24;
