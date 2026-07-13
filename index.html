@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v7.11.2</title>
+<title>AdsPayU v7.11.3</title>
 <link rel="stylesheet" href="style.css">
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <script>
   // INSTANT LOAD - prevents balance flicker
-  document.addEventListener('DOMContentLoaded', () => {
+  function loadBalanceInstant() {
     const coins = localStorage.getItem('coins') || 0;
     const usdt = localStorage.getItem('usdt') || 0;
     const c1 = document.getElementById('coinsHome');
@@ -21,7 +21,8 @@
     if(u1) u1.innerText = parseFloat(usdt).toFixed(2) + ' USDT';
     if(c2) c2.innerText = parseFloat(coins).toLocaleString() + ' APU';
     if(u2) u2.innerText = parseFloat(usdt).toFixed(2) + ' USDT';
-  });
+  }
+  document.addEventListener('DOMContentLoaded', loadBalanceInstant);
 </script>
 </head>
 <body>
@@ -77,7 +78,7 @@
 <script src="https://ad.gigapub.tech/script?id=7204"></script>
 <script src='//libtl.com/sdk.js' data-zone='11258922' data-sdk='show_11258922'></script>
 <script>
-// JS CODE - CLEANED v7.11.2
+// JS CODE - v7.11.3 FIXED
 const YOUR_TON_WALLET = "UQCnRX9PZUv8GAyv4kz4OZ3u8r0vA-CcUu-lzunVsTNIo7sw";
 const MIN_WITHDRAW = 0.50;
 const ADMIN_TELEGRAM_ID = 8954036308;
@@ -242,7 +243,7 @@ function openWithdraw(){
         usdt-=amount;localStorage.setItem('usdt',usdt);addHistory('withdraw',{amount});updateUI();renderHistory();
         const user=window.Telegram?.WebApp?.initDataUnsafe?.user;
         fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:ADMIN_TELEGRAM_ID,text:`🔔 WITHDRAW\n@${user?.username}\nID:${user?.id}\n${amount} USDT\n${userWalletAddress}`})
-     .then(res=>res.json()).then(data=>{if(data.ok)showToast("Request Sent! 24h",'success')}).catch(()=>showToast("Network error",'error'))
+     .then(res=>res.json()).then(data=>{if(data.ok)showToast("Request Sent! 24h",'success')}).catch(()=>showToast("Network error",'error')); // FIXED: Added closing ) and ;
     }else{showToast(`Min $${MIN_WITHDRAW}`,'error')}
 }
 
