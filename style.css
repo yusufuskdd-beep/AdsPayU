@@ -14,7 +14,7 @@ body { background: var(--bg); color: var(--text); padding-bottom: 80px; }
 
 header {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 16px; background: var(--bg);
+  padding: 16px; background: var(--bg); position: sticky; top: 0; z-index: 10;
 }
 .logo { display: flex; gap: 10px; align-items: center; }
 .logo-icon { background: #0f172a; padding: 8px; border-radius: 12px; color: var(--cyan); font-size: 20px; }
@@ -44,8 +44,9 @@ main { padding: 16px; }
 .btn.cyan {
   width: 100%; background: var(--cyan); color: #000; border: none;
   padding: 14px; border-radius: 12px; font-weight: 600; font-size: 15px;
-  box-shadow: 0 0 20px rgba(0,240,255,0.3); cursor: pointer;
+  box-shadow: 0 0 20px rgba(0,240,255,0.3); cursor: pointer; transition: 0.2s;
 }
+.btn.cyan:active { transform: scale(0.98); }
 
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
 .mini-card { background: var(--card); padding: 12px; border-radius: 12px; display: flex; gap: 10px; align-items: center; }
@@ -71,7 +72,7 @@ main { padding: 16px; }
 .stats-row { display: flex; justify-content: space-between; margin: 12px 0; }
 
 .tabs { display: flex; background: #1a1d24; border-radius: 10px; padding: 4px; margin: 12px 0; }
-.tab { flex: 1; background: transparent; border: none; color: var(--muted); padding: 8px; border-radius: 8px; }
+.tab { flex: 1; background: transparent; border: none; color: var(--muted); padding: 8px; border-radius: 8px; cursor: pointer; }
 .tab.active { background: #000; color: #fff; }
 
 .input-box { display: flex; align-items: center; background: #1a1d24; border: 1px solid var(--cyan); border-radius: 10px; padding: 10px; margin: 8px 0 16px; }
@@ -79,7 +80,7 @@ main { padding: 16px; }
 
 .link-box { display: flex; background: #1a1d24; border-radius: 10px; padding: 8px; margin: 8px 0 16px; }
 .link-box input { background: transparent; border: none; color: #fff; width: 100%; }
-.link-box button { background: var(--cyan); border: none; padding: 8px; border-radius: 8px; }
+.link-box button { background: var(--cyan); border: none; padding: 8px; border-radius: 8px; cursor: pointer; }
 
 .gift-box { background: #1a1d24; width: 60px; height: 60px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; border-radius: 16px; font-size: 28px; }
 
@@ -88,6 +89,6 @@ nav {
   display: flex; justify-content: space-around; background: #0f1116;
   border-top: 1px solid #1f2330; padding: 8px 0;
 }
-.nav-btn { background: none; border: none; color: var(--muted); display: flex; flex-direction: column; align-items: center; font-size: 10px; gap: 4px; }
+.nav-btn { background: none; border: none; color: var(--muted); display: flex; flex-direction: column; align-items: center; font-size: 10px; gap: 4px; cursor: pointer; }
 .nav-btn.active { color: var(--cyan); }
 .empty { text-align: center; color: var(--muted); padding: 40px 0; }
