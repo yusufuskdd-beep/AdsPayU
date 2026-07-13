@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AdsPayU v7.12.18</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>AdsPayU v7.12.19</title>
 <link rel="stylesheet" href="style.css">
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -16,7 +16,7 @@
 
 <div id="home" class="page active">
 <div class="balance-card"><b>BALANCE:</b> <span id="coins">818</span> APU</div>
-<button class="btn btn-primary" id="dailyBtn">CLAIM DAILY 50 APU</button>
+<button class="btn btn-primary" id="dailyBtn">🎁 CLAIM DAILY 50 APU</button>
 </div>
 
 <div id="wallet" class="page">
@@ -37,8 +37,10 @@ let coins = parseFloat(localStorage.getItem('coins')) || 818;
 let usdt = parseFloat(localStorage.getItem('usdt')) || 0.11;
 let tonConnectUI;
 let walletConnected = localStorage.getItem('walletConnected') === 'true';
+let walletAddress = localStorage.getItem('walletAddress') || null;
+const COIN_VALUE = 0.00025;
 
-function showToast(msg){const t=document.getElementById('toast');t.innerText=msg;t.className='toast show';setTimeout(()=>t.className='toast',2000)}
+function showToast(msg){const t=document.getElementById('toast');t.innerText=msg;t.className='toast show';setTimeout(()=>t.className='toast',3000)}
 function showTab(tab){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById(tab).classList.add('active');document.getElementById(tab+'Nav').classList.add('active');updateUI()}
 function updateUI(){document.getElementById('coins').innerText=coins;document.getElementById('coins2').innerText=coins;document.getElementById('usdt').innerText=usdt.toFixed(2);}
 
@@ -51,11 +53,15 @@ tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
 tonConnectUI.onStatusChange(wallet => {
     if(wallet?.account){
         walletConnected = true;
+        walletAddress = wallet.account.address;
         localStorage.setItem('walletConnected','true');
+        localStorage.setItem('walletAddress',walletAddress);
         showToast("TON Connected!");
     } else {
         walletConnected = false;
+        walletAddress = null;
         localStorage.setItem('walletConnected','false');
+        localStorage.setItem('walletAddress','');
         showToast("TON Disconnected");
     }
     updateConnectBtn();
@@ -66,19 +72,39 @@ if(walletConnected){ tonConnectUI.restoreConnection(); }
 
 function updateConnectBtn(){
     const btn = document.getElementById('connectBtn');
-    if(walletConnected){ btn.innerText = "✅ TON CONNECTED" } 
-    else { btn.innerText = "🔗 CONNECT TON" }
+    if(walletConnected && walletAddress){ 
+        btn.innerText = `✅ ${walletAddress.slice(0,4)}...${walletAddress.slice(-4)}`; 
+        btn.onclick = () => tonConnectUI.disconnect();
+    } 
+    else { 
+        btn.innerText = "🔗 CONNECT TON"; 
+        btn.onclick = () => tonConnectUI.openModal();
+    }
 }
 
 document.getElementById('homeNav').onclick=()=>showTab('home');
 document.getElementById('walletNav').onclick=()=>showTab('wallet');
 document.getElementById('dailyBtn').onclick=()=>{coins+=50;localStorage.setItem('coins',coins);updateUI();showToast("+50 APU")};
-document.getElementById('swapBtn').onclick=()=>{if(coins>=400){coins-=400;usdt+=0.1;localStorage.setItem('coins',coins);localStorage.setItem('usdt',usdt);updateUI();showToast("Swapped 400 APU")}};
+
+document.getElementById('swapBtn').onclick=()=>{
+    if(coins>=400){
+        coins-=400;
+        usdt+=400*COIN_VALUE;
+        localStorage.setItem('coins',coins);
+        localStorage.setItem('usdt',usdt);
+        updateUI();
+        showToast("Swapped 400 APU → $0.10")
+    }else{ showToast("Min 400 APU") }
+};
 
 document.getElementById('withdrawBtn').onclick=()=>{
     if(!walletConnected){ showToast("Connect TON first"); return }
-    if(usdt>=0.5){ showToast("Withdraw Request Sent!") } 
-    else { showToast("Min 0.50 USDT") }
+    if(usdt>=0.50){ 
+        usdt-=0.50; 
+        localStorage.setItem('usdt',usdt); 
+        updateUI(); 
+        showToast("Withdraw Request Sent! 24h") 
+    } else { showToast("Min 0.50 USDT") }
 }
 
 if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}
