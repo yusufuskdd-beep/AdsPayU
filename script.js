@@ -1,4 +1,5 @@
 const tg = window.Telegram.WebApp;
+const API_URL = "https://adspayu-backend-5y7g.onrender.com"; // YOUR LIVE BACKEND
 let userId = null;
 let userData = {};
 
@@ -7,14 +8,18 @@ tg.setHeaderColor("#0a0b0f");
 tg.BackButton.show();
 
 async function init() {
-  const res = await fetch('/api/auth', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({initData: tg.initData})
-  });
-  userData = await res.json();
-  userId = userData.id;
-  updateUI();
+  try {
+    const res = await fetch(`${API_URL}/api/auth`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({initData: tg.initData})
+    });
+    userData = await res.json();
+    userId = userData.id;
+    updateUI();
+  } catch(e) {
+    tg.showPopup({message: "Backend Error: " + e.message});
+  }
 }
 init();
 
@@ -34,14 +39,14 @@ function showPage(id, el) {
 }
 
 async function claim() {
-  const res = await fetch('/api/claim', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({userId})});
+  const res = await fetch(`${API_URL}/api/claim`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({userId})});
   const data = await res.json();
   if(data.success) { userData.balance = data.balance; userData.earned = data.earned; userData.pending = 0; updateUI(); }
   tg.showPopup({message: "Yield claimed!"});
 }
 
 async function buyMiner(price, tier) {
-  const res = await fetch('/api/buy', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({userId, price})});
+  const res = await fetch(`${API_URL}/api/buy`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({userId, price})});
   const data = await res.json();
   if(data.success) { userData.balance -= price; userData.miners += 1; updateUI(); tg.showPopup({message: `Tier ${tier} Miner Deployed!`}); }
   else { tg.showPopup({message: data.error}); }
@@ -50,7 +55,7 @@ async function buyMiner(price, tier) {
 async function deposit() {
   let amount = parseFloat(document.getElementById('depositAmount').value);
   if(amount <= 0) return tg.showPopup({message: "Enter amount"});
-  await fetch('/api/deposit', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({userId, amount})});
+  await fetch(`${API_URL}/api/deposit`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({userId, amount})});
   userData.balance += amount; updateUI();
   document.getElementById('depositAmount').value = "0.00";
   tg.showPopup({message: `Deposited ${amount} MCT`});
