@@ -12,7 +12,7 @@
 
 <div id="toast" class="toast">Toast</div>
 
-<div class="modal" id="adConfirmModal" style="display:none"><div class="modal-content"><div class="modal-title">⚠️ Important</div><div class="modal-info">Watch the ad for at least <b>20 seconds</b> to get credit.</div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeAdConfirm()">CANCEL</button><button class="modal-btn btn-confirm" onclick="proceedAd()">WATCH AD</button></div></div></div>
+<div class="modal" id="adConfirmModal"><div class="modal-content"><div class="modal-title">⚠️ Important</div><div class="modal-info">Watch the ad for at least <b>20 seconds</b> to get credit.</div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeAdConfirm()">CANCEL</button><button class="modal-btn btn-confirm" onclick="proceedAd()">WATCH AD</button></div></div></div>
 
 <div id="app">
 <div class="topbar"><h1>AdsPayU</h1><div class="top-tabs"><button class="top-tab active" id="walletTab" onclick="showTopTab('wallet')">💰 Wallet</button><button class="top-tab" id="profileTab" onclick="showTopTab('profile')">👤 Profile</button></div></div>
@@ -30,7 +30,7 @@
     <button class="wallet-subtab active" id="walletMainTab" onclick="showWalletSubTab('main')">Wallet</button>
     <button class="wallet-subtab" id="walletHistoryTab" onclick="showWalletSubTab('history')">History</button>
 </div>
-<div id="walletMain" class="btn-row" style="flex-direction:column">
+<div id="walletMain" class="btn-row wallet-column">
     <button class="btn btn-primary" id="connectBtn">🔗 CONNECT TON</button>
     <button class="btn btn-primary" onclick="openSwap()">SWAP APU → USDT</button>
     <button class="btn btn-secondary" onclick="openDeposit()">DEPOSIT TON</button>
@@ -38,7 +38,7 @@
 </div>
 <div id="walletHistory" style="display:none">
     <div class="history-list" id="depositHistoryList"></div>
-    <div class="history-list" id="withdrawHistoryList" style="margin-top:15px"></div>
+    <div class="history-list" id="withdrawHistoryList"></div>
 </div>
 </div>
 
@@ -212,7 +212,7 @@ async function confirmDeposit(){
     const amountTON=parseFloat(document.getElementById('depositAmount').value);document.querySelector('.modal').remove();
     if(!amountTON||amountTON<0.1)return showToast("Min 0.1 TON",'error');isDepositing=true;
     await fetchTonPrice();const usdtToReceive=(amountTON*currentTonPrice).toFixed(2);showToast("Opening Tonkeeper...",'warning');
-    const transaction={validUntil:Math.floor(Date.now()/1000)+360,messages:[{address:YOUR_TON_WALLET,amount:(amountTON*1000000).toFixed(0)}]};
+    const transaction={validUntil:Math.floor(Date.now()/1000)+360,messages:[{address:YOUR_TON_WALLET,amount:(amountTON*1000000000).toFixed(0)}]};
     try{await tonConnectUI.sendTransaction(transaction);
         setTimeout(()=>{usdt+=parseFloat(usdtToReceive);localStorage.setItem('usdt',usdt);addHistory('deposit',{amountTON,amountUSDT:usdtToReceive});updateUI();renderHistory();showToast(`+$${usdtToReceive} Credited!`);isDepositing=false},20000)
     }catch(e){showToast("Cancelled",'error');isDepositing=false}
@@ -225,7 +225,7 @@ function openWithdraw(){
         usdt-=amount;localStorage.setItem('usdt',usdt);addHistory('withdraw',{amount});updateUI();renderHistory();
         const user=window.Telegram?.WebApp?.initDataUnsafe?.user;
         fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:ADMIN_TELEGRAM_ID,text:`🔔 WITHDRAW\n@${user?.username}\nID:${user?.id}\n${amount} USDT\n${userWalletAddress}`})})
-   .then(res=>res.json()).then(data=>{if(data.ok)showToast("Request Sent! 24h",'success')}).catch(()=>showToast("Network error",'error'));
+  .then(res=>res.json()).then(data=>{if(data.ok)showToast("Request Sent! 24h",'success')}).catch(()=>showToast("Network error",'error'));
     }else{showToast(`Min $${MIN_WITHDRAW}`,'error')}
 }
 
