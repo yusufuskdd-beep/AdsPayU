@@ -30,11 +30,11 @@
       <section class="page active" id="home">
         <div class="balance-card">
           <p>TOTAL BALANCE</p>
-          <h2>165.0479 <span>MCT</span></h2>
+          <h2 id="totalBalance">165.0479 <span>MCT</span></h2>
           <div class="yield-row">
             <div>
               <small>PENDING YIELD</small>
-              <p class="yellow">+0.209802</p>
+              <p class="yellow" id="pendingYield">+0.209802</p>
             </div>
             <button class="btn cyan" onclick="claim()">↗ CLAIM</button>
           </div>
@@ -42,11 +42,11 @@
         <div class="grid-2">
           <div class="mini-card">
             <span>📈</span>
-            <div><small>TOTAL EARNED</small><p>15.05</p></div>
+            <div><small>TOTAL EARNED</small><p id="totalEarned">15.05</p></div>
           </div>
           <div class="mini-card">
             <span>⛏️</span>
-            <div><small>ACTIVE MINERS</small><p>1</p></div>
+            <div><small>ACTIVE MINERS</small><p id="activeMiners">1</p></div>
           </div>
         </div>
         <div class="network-card">
@@ -83,7 +83,7 @@
             <div><small>ROI</small><p class="yellow">15% / mo</p></div>
             <div><small>DAILY RETURN</small><p class="cyan">7.5 MCT</p></div>
           </div>
-          <button class="btn cyan">⚡ DEPLOY HARDWARE</button>
+          <button class="btn cyan" onclick="buyMiner(50, 1)">⚡ DEPLOY HARDWARE</button>
         </div>
 
         <div class="miner-card">
@@ -98,7 +98,7 @@
             <div><small>ROI</small><p class="yellow">25% / mo</p></div>
             <div><small>DAILY RETURN</small><p class="cyan">50 MCT</p></div>
           </div>
-          <button class="btn cyan">⚡ DEPLOY HARDWARE</button>
+          <button class="btn cyan" onclick="buyMiner(200, 2)">⚡ DEPLOY HARDWARE</button>
         </div>
 
         <div class="miner-card">
@@ -113,7 +113,7 @@
             <div><small>ROI</small><p class="yellow">45% / mo</p></div>
             <div><small>DAILY RETURN</small><p class="cyan">450 MCT</p></div>
           </div>
-          <button class="btn cyan">⚡ DEPLOY HARDWARE</button>
+          <button class="btn cyan" onclick="buyMiner(1000, 4)">⚡ DEPLOY HARDWARE</button>
         </div>
 
         <div class="miner-card">
@@ -128,7 +128,7 @@
             <div><small>ROI</small><p class="yellow">55% / mo</p></div>
             <div><small>DAILY RETURN</small><p class="cyan">1375 MCT</p></div>
           </div>
-          <button class="btn cyan">⚡ DEPLOY HARDWARE</button>
+          <button class="btn cyan" onclick="buyMiner(2500, 5)">⚡ DEPLOY HARDWARE</button>
         </div>
       </section>
 
@@ -162,7 +162,7 @@
         <p class="subtitle">Manage your MCT balances and external transfers.</p>
         <div class="vault-card">
           <small>AVAILABLE BALANCE</small>
-          <h2>165.048 <span>MCT</span></h2>
+          <h2 id="vaultBalance">165.048 <span>MCT</span></h2>
           <div class="tabs">
             <button class="tab active">DEPOSIT</button>
             <button class="tab">WITHDRAW</button>
@@ -170,9 +170,9 @@
           <label>AMOUNT (MCT)</label>
           <div class="input-box">
             <span>↓</span>
-            <input type="number" value="0.00">
+            <input type="number" id="depositAmount" value="0.00">
           </div>
-          <button class="btn cyan">CONFIRM DEPOSIT</button>
+          <button class="btn cyan" onclick="deposit()">CONFIRM DEPOSIT</button>
         </div>
         <h3 class="history">🕒 TRANSACTION HISTORY</h3>
       </section>
@@ -180,11 +180,11 @@
 
     <!-- Bottom Nav -->
     <nav>
-      <button onclick="showPage('home')" class="nav-btn active">🏠<span>Home</span></button>
-      <button onclick="showPage('miners')" class="nav-btn">⛏️<span>Miners</span></button>
-      <button onclick="showPage('tasks')" class="nav-btn">✅<span>Tasks</span></button>
-      <button onclick="showPage('referral')" class="nav-btn">👥<span>Referral</span></button>
-      <button onclick="showPage('wallet')" class="nav-btn">💼<span>Wallet</span></button>
+      <button onclick="showPage('home', this)" class="nav-btn active">🏠<span>Home</span></button>
+      <button onclick="showPage('miners', this)" class="nav-btn">⛏️<span>Miners</span></button>
+      <button onclick="showPage('tasks', this)" class="nav-btn">✅<span>Tasks</span></button>
+      <button onclick="showPage('referral', this)" class="nav-btn">👥<span>Referral</span></button>
+      <button onclick="showPage('wallet', this)" class="nav-btn">💼<span>Wallet</span></button>
     </nav>
   </div>
   <script src="script.js"></script>
