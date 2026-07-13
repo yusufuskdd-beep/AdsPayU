@@ -4,7 +4,6 @@ let userId = null;
 let userData = {};
 let miningInterval = null;
 
-// Mining rates per MINER per MINUTE
 const RATES_PER_MIN = { 1: 0.005, 2: 0.035, 3: 0.150, 4: 0.312, 5: 0.957 };
 const RATES_PER_SEC = Object.fromEntries(Object.entries(RATES_PER_MIN).map(([k,v]) => [k, v/60]));
 
@@ -20,6 +19,7 @@ async function init() {
     });
     userData = await res.json();
     userId = userData.id;
+    document.getElementById('refLink').value = `https://t.me/CryptoMineBot?start=ref_${userId}`; // DYNAMIC LINK
     updateUI();
     startLiveMining();
   } catch(e) {
@@ -34,6 +34,7 @@ function updateUI() {
   document.getElementById('pendingYield').textContent = '+' + userData.pending.toFixed(6);
   document.getElementById('activeMiners').textContent = userData.miners;
   document.getElementById('totalEarned').textContent = userData.earned.toFixed(2);
+  document.getElementById('refEarnings').textContent = (userData.ref_earnings || 0).toFixed(2); // NEW
 
   const ratePerMin = RATES_PER_MIN[userData.miners] || RATES_PER_MIN[1];
   const dailyEarn = ratePerMin * userData.miners * 60 * 24;
@@ -64,7 +65,7 @@ async function claim() {
     userData.balance = data.balance; userData.earned = data.earned; userData.pending = 0;
     updateUI(); startLiveMining();
   }
-  tg.showPopup({message: "Yield claimed!"});
+  tg.showPopup({message: "Yield claimed! Referrer got 10% bonus"});
 }
 
 async function buyMiner(price, tier) {
@@ -89,5 +90,5 @@ async function deposit() {
 
 function copyLink() {
   navigator.clipboard.writeText(document.getElementById('refLink').value);
-  tg.showPopup({message: "Link copied!"});
+  tg.showPopup({message: "Referral link copied!"});
 }
