@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v8.0.4</title>
+<title>AdsPayU v8.0.2</title>
 <link rel="stylesheet" href="style.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -11,7 +11,7 @@
 
 <div id="toast" class="toast">Toast</div>
 
-<div class="modal" id="adConfirmModal"><div class="modal-content"><div class="modal-title">⚠️ Important</div><div class="modal-info">Watch the ad for at least <b>20 seconds</b> to get credit.</div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeAdConfirm()">CANCEL</button><button class="modal-btn btn-confirm" id="adWatchBtn" onclick="proceedAd()">WATCH AD</button></div></div></div>
+<div class="modal" id="adConfirmModal"><div class="modal-content"><div class="modal-title">⚠️ Important</div><div class="modal-info">Watch the ad for at least <b>20 seconds</b> to get credit.</div><div class="modal-btns"><button class="modal-btn btn-cancel" onclick="closeAdConfirm()">CANCEL</button><button class="modal-btn btn-confirm" onclick="proceedAd()">WATCH AD</button></div></div></div>
 
 <div id="app">
 <div class="topbar"><h1>AdsPayU</h1><div class="top-tabs"><button class="top-tab active" id="walletTab" onclick="showTopTab('wallet')">💰 Wallet</button><button class="top-tab" id="profileTab" onclick="showTopTab('profile')">👤 Profile</button></div></div>
@@ -56,7 +56,6 @@ let userId = 'guest';
 let userData = {coins: 0, usdt: 0};
 let gigaCount = 0, monetagCount = 0, lastAdTime = 0;
 let minerData = {}, totalAdsWatched = 0;
-let adRunning = false;
 
 const MINER_INTERVAL = 3600000, COOLDOWN_TIME = 5000;
 const COIN_VALUE = 0.00025, MAX_DAILY_ADS = 100;
@@ -75,7 +74,7 @@ async function api(path, method='GET', body=null){
     try{
         const res = await fetch(API_URL + path, {method, headers: {'Content-Type':'application/json'}, body: body? JSON.stringify(body) : null});
         return await res.json();
-    }catch(e){console.log("API Error", e); return {success: false}}
+    }catch(e){showToast("Server Error",'error'); return {success: false}}
 }
 
 async function init(){
@@ -123,15 +122,10 @@ function loadMinerData(){MINERS.forEach(m=>{minerData[m.id]={owned:localStorage.
 function copyRef(){navigator.clipboard.writeText(document.getElementById('refLink').innerText);showToast("Copied!")}
 
 async function claimDaily(){
-    if(localStorage.getItem('lastDailyClaim')===new Date().toDateString())return showToast("Already claimed",'error');
-    // 1. INSTANT
-    userData.coins += 50;
-    localStorage.setItem('lastDailyClaim', new Date().toDateString());
-    updateUI(); checkDaily(); showToast("+50 APU!")
-    // 2. BACKGROUND SYNC
-    api('/api/daily-claim', 'POST', {userId})
+    const res = await api('/api/daily-claim', 'POST', {userId});
+    if(res.success){userData.coins = res.newCoins; updateUI(); checkDaily(); showToast("+50 APU!")}
+    else{showToast("Already claimed",'error')}
 }
-
 function checkDaily(){if(localStorage.getItem('lastDailyClaim')===new Date().toDateString()){document.getElementById('dailyClaimBtn').disabled=true;document.getElementById('dailyClaimBtn').innerText="✅ CLAIMED TODAY"}}
 
 function openAdConfirm(type){document.getElementById('adConfirmModal').style.display='flex'}
@@ -139,57 +133,20 @@ function closeAdConfirm(){document.getElementById('adConfirmModal').style.displa
 function proceedAd(){closeAdConfirm(); watchHomeAd()}
 
 async function watchHomeAd(){
-    if(adRunning) return showToast("Ad already running",'error');
     if(Date.now()-lastAdTime<COOLDOWN_TIME)return showToast("Wait 5s",'error');
     if(gigaCount>=MAX_DAILY_ADS&&monetagCount>=MAX_DAILY_ADS)return showToast("Daily limit",'error');
-
-    adRunning = true;
-    document.getElementById('adWatchBtn').disabled = true;
     lastAdTime=Date.now(); const adId = 'ad_' + Date.now();
-    showToast("Loading ad...",'warning');
-
-    let adShown = false;
-    let adTimeout = setTimeout(()=>{
-        if(!adShown){
-            adRunning = false;
-            document.getElementById('adWatchBtn').disabled = false;
-            showToast("Ad failed to load. Try again",'error');
-        }
-    }, 3000);
-
-    try{
-        if(typeof show_11258922==='function'){
-            await show_11258922();
-            adShown = true;
-            clearTimeout(adTimeout);
-            showToast("Watching ad...20s",'warning');
-
-            setTimeout(async ()=>{
-                // 1. INSTANT UPDATE
-                userData.coins += 10;
-                totalAdsWatched++;
-                gigaCount<=monetagCount?gigaCount++:monetagCount++;
-                localStorage.setItem('gigaCount',gigaCount);localStorage.setItem('monetagCount',monetagCount);
-                updateUI(); showToast("+10 APU!")
-
-                // 2. BACKGROUND SYNC
-                api('/api/watch-ad', 'POST', {userId, adId, duration: 20}).then(res=>{
-                    if(!res.success)console.log("Backend sync failed:", res.error)
-                });
-
-                adRunning = false;
-                document.getElementById('adWatchBtn').disabled = false;
-            },20000);
-        } else {
-            throw new Error("Ad SDK not loaded")
-        }
-    }catch(e){
-        clearTimeout(adTimeout);
-        adRunning = false;
-        document.getElementById('adWatchBtn').disabled = false;
-        showToast("Ad error. Reload app",'error');
-        console.log(e)
-    }
+    showToast("Watching ad...20s",'warning');
+    try{if(typeof show_11258922==='function'){show_11258922()}}catch(e){}
+    setTimeout(async ()=>{
+        const res = await api('/api/watch-ad', 'POST', {userId, adId, duration: 20});
+        if(res.success){
+            userData.coins = res.newBalance; totalAdsWatched++;
+            gigaCount<=monetagCount?gigaCount++:monetagCount++;
+            localStorage.setItem('gigaCount',gigaCount);localStorage.setItem('monetagCount',monetagCount);
+            updateUI(); showToast("+10 APU!")
+        } else{showToast(res.error,'error')}
+    },20000);
 }
 
 function updateTotalIncome(){let total=0;MINERS.forEach(m=>{if(minerData[m.id].owned)total+=m.reward});document.getElementById('totalIncome').innerText=total.toLocaleString()+' APU/h'}
@@ -212,63 +169,51 @@ function unlockStarter(){minerData[0].owned=true;minerData[0].lastClaim=Date.now
 
 async function buyMiner(id){
     const m=MINERS.find(x=>x.id===id);
-    // 1. INSTANT
-    userData.usdt -= m.cost;
-    minerData[id].owned=true; minerData[id].lastClaim=Date.now();
+    const res = await api('/api/buy-miner', 'POST', {userId, cost: m.cost});
+    if(res.success){userData.usdt = res.newUsdt; minerData[id].owned=true; minerData[id].lastClaim=Date.now();
     localStorage.setItem(`miner${id}_owned`,'true');localStorage.setItem(`miner${id}_lastClaim`,minerData[id].lastClaim);
-    updateUI();renderMiners();updateTotalIncome();showToast(`${m.name} Bought!`)
-    // 2. BACKGROUND SYNC
-    api('/api/buy-miner', 'POST', {userId, cost: m.cost})
+    updateUI();renderMiners();updateTotalIncome();showToast(`${m.name} Bought!`)}
+    else{showToast(res.error,'error')}
 }
 
-function watchAdForMiner(id){if(adRunning) return showToast("Finish current ad first",'error'); if(Date.now()-lastAdTime<COOLDOWN_TIME)return showToast("Wait 5s",'error');minerData[id].adsWatched++;localStorage.setItem(`miner${id}_adsWatched`,minerData[id].adsWatched);lastAdTime=Date.now();renderMiners();showToast("Ad watched!")}
+function watchAdForMiner(id){if(Date.now()-lastAdTime<COOLDOWN_TIME)return showToast("Wait 5s",'error');minerData[id].adsWatched++;localStorage.setItem(`miner${id}_adsWatched`,minerData[id].adsWatched);lastAdTime=Date.now();renderMiners();showToast("Ad watched!")}
 
 async function claimMiner(id){
     const m=MINERS.find(x=>x.id===id);const d=minerData[id];
     if(Date.now()-d.lastClaim<MINER_INTERVAL)return showToast("Not ready",'error');
     if(d.adsWatched<2)return showToast("Watch 2 ads",'error');
-    // 1. INSTANT
-    userData.coins += m.reward;
-    d.lastClaim=Date.now();d.adsWatched=0;
-    localStorage.setItem(`miner${id}_lastClaim`,d.lastClaim);localStorage.setItem(`miner${id}_adsWatched`,0);
-    updateUI();renderMiners();updateTotalIncome();showToast(`+${m.reward} APU!`)
-    // 2. BACKGROUND SYNC
-    api('/api/claim-miner', 'POST', {userId, reward: m.reward})
+    const res = await api('/api/claim-miner', 'POST', {userId, reward: m.reward});
+    if(res.success){
+        userData.coins = res.newCoins; d.lastClaim=Date.now();d.adsWatched=0;
+        localStorage.setItem(`miner${id}_lastClaim`,d.lastClaim);localStorage.setItem(`miner${id}_adsWatched`,0);
+        updateUI();renderMiners();updateTotalIncome();showToast(`+${m.reward} APU!`)
+    }
 }
 
 async function openSwap(){
     let amount=parseInt(prompt("Swap APU. Min 400. Rate: 1 APU = $0.00025"));
-    if(amount>=400 && amount<=userData.coins){
-        // 1. INSTANT
-        const usdtReceived = amount * COIN_VALUE;
-        userData.coins -= amount;
-        userData.usdt += usdtReceived;
-        updateUI(); showToast(`Swapped ${amount} APU!`)
-        // 2. BACKGROUND SYNC
-        api('/api/swap', 'POST', {userId, amount})
+    if(amount>=400){
+        const res = await api('/api/swap', 'POST', {userId, amount});
+        if(res.success){userData = {coins: res.newCoins, usdt: res.newUsdt}; updateUI(); showToast(`Swapped! +$${res.usdtReceived.toFixed(2)}`)}
+        else{showToast(res.error,'error')}
     }
 }
 
 async function openDeposit(){
     let amount=parseFloat(prompt("Enter USDT to deposit"));
     if(amount>0){
-        // 1. INSTANT
-        userData.usdt += amount;
-        updateUI(); showToast(`+$${amount} Credited!`)
-        // 2. BACKGROUND SYNC
-        api('/api/deposit', 'POST', {userId, amount})
+        const res = await api('/api/deposit', 'POST', {userId, amount});
+        if(res.success){userData.usdt = res.newBalance; updateUI(); showToast(`+$${amount} Credited!`)}
     }
 }
 
 async function openWithdraw(){
     let amount=parseFloat(prompt(`Withdraw USDT. You have $${userData.usdt.toFixed(2)}`));
     let wallet=prompt("Enter your USDT wallet address");
-    if(amount>=0.5 && wallet && amount<=userData.usdt){
-        // 1. INSTANT
-        userData.usdt -= amount;
-        updateUI(); showToast(`Request Sent! You will receive $${(amount*0.95).toFixed(2)}`)
-        // 2. BACKGROUND SYNC
-        api('/api/withdraw-request', 'POST', {userId, amount, wallet})
+    if(amount>=0.5 && wallet){
+        const res = await api('/api/withdraw-request', 'POST', {userId, amount, wallet});
+        if(res.success){userData.usdt = res.newBalance; updateUI(); showToast(`Request Sent! You will receive $${res.receive.toFixed(2)}`)}
+        else{showToast(res.error,'error')}
     }
 }
 
