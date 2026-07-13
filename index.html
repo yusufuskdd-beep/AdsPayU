@@ -2,101 +2,38 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AdsPayU v7.12.14 WORKING</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TEST</title>
 <link rel="stylesheet" href="style.css">
-<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-
 <div id="toast" class="toast">Toast</div>
 
-<div class="modal" id="swapModal"><div class="modal-content"><div class="modal-title">🔄 Swap APU → USDT</div><div class="modal-info">Min 400 APU. Rate: 1 APU = $0.00025</div><div class="input-group"><label>APU Amount</label><input type="number" id="swapAmount" placeholder="400" min="400"></div><div class="modal-btns"><button class="modal-btn btn-cancel" id="cancelSwapBtn">CANCEL</button><button class="modal-btn btn-confirm" id="confirmSwapBtn">SWAP</button></div></div></div>
-
-<div class="modal" id="withdrawModal"><div class="modal-content"><div class="modal-title">💸 Withdraw USDT</div><div class="modal-info" id="withdrawInfo">You have $0.11</div><div class="input-group"><label>USDT Amount <span style="color:#00D4AA;cursor:pointer;font-size:12px;float:right" id="maxWithdrawBtn">MAX</span></label><input type="number" id="withdrawAmount" placeholder="0.50" step="0.01" min="0.50"></div><div class="modal-btns"><button class="modal-btn btn-cancel" id="cancelWithdrawBtn">CANCEL</button><button class="modal-btn btn-confirm" id="confirmWithdrawBtn">WITHDRAW</button></div></div></div>
-
 <div id="app">
-<div class="topbar"><h1>AdsPayU</h1><div class="top-tabs"><button class="top-tab active" id="walletTab">💰 Wallet</button><button class="top-tab" id="profileTab">👤 Profile</button></div></div>
+<div class="topbar"><h1>TEST APP</h1></div>
 
 <div id="home" class="page active">
-<div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsHome">818 APU</div><div class="balance-usdt" id="usdtHome">0.11 USDT</div></div>
-<button class="daily-claim" id="dailyClaimBtn">🎁 CLAIM DAILY 50 APU</button>
-<div class="card"><div class="card-header"><div class="card-icon">🎯</div><div class="card-info"><div class="card-title">GigaPub Ads</div><div class="card-sub">Coming Soon - Under Maintenance</div></div><button class="btn-get" disabled>Watch</button></div></div>
-<div class="card"><div class="card-header"><div class="card-icon">💰</div><div class="card-info"><div class="card-title">Monetag Ads</div><div class="card-sub">Coming Soon - Under Maintenance</div></div><button class="btn-get orange" disabled>Watch</button></div></div>
+<button class="btn btn-primary" id="test1">BUTTON 1: HOME</button>
 </div>
 
 <div id="wallet" class="page">
-<div class="balance-card"><div class="balance-label">YOUR BALANCE</div><div class="balance-apu" id="coinsWallet">818 APU</div><div class="balance-usdt" id="usdtWallet">0.11 USDT</div></div>
-<div class="btn-row" style="flex-direction:column">
-    <button class="btn btn-primary" id="connectBtn">🔗 CONNECT TON</button>
-    <button class="btn btn-primary" id="openSwapBtn">SWAP APU → USDT</button>
-    <button class="btn btn-secondary" id="openDepositBtn">DEPOSIT TON</button>
-    <button class="btn btn-danger" id="openWithdrawBtn">WITHDRAW USDT</button>
+<button class="btn btn-primary" id="test2">BUTTON 2: WALLET</button>
 </div>
-</div>
-
-<div id="profile" class="page">
-<div class="card"><div class="card-title">👤 Your Profile</div><div class="card-sub">User ID: <span id="userId">Guest</span></div><div class="card-sub">Username: <span id="username">-</span></div><div class="card-sub">Total Earned: <span id="totalEarned">818</span> APU</div></div>
-<div class="card"><div class="card-title">🔗 Referral Link</div><div class="modal-info" id="refLink">Loading...</div><button class="btn btn-primary" id="copyRefBtn">COPY LINK</button></div>
-</div>
-
-<div id="miner" class="page"><div class="income-card"><div class="income-label">TOTAL HOURLY INCOME</div><div class="income-value">0 APU/h</div></div><div class="card"><div class="card-title">Miners coming in v8.0</div></div></div>
 
 <div class="bottom-nav">
-<button class="nav-item active" id="homeNav"><span class="nav-icon">🏠</span>Home</button>
-<button class="nav-item" id="minerNav"><span class="nav-icon">⚡</span>Miner</button>
+<button class="nav-item active" id="homeNav">🏠 Home</button>
+<button class="nav-item" id="walletNav">💰 Wallet</button>
 </div>
 </div>
 
 <script>
-const YOUR_TON_WALLET="UQCnRX9PZUv8GAyv4kz4OZ3u8r0vA-CcUu-lzunVsTNIo7sw";const MIN_WITHDRAW=.50;const ADMIN_TELEGRAM_ID=8954036308;const BOT_TOKEN="8840764457:AAGWQMHVGG2ksMv-qr27D49Y3j_wYE4E8-4";
-let coins=parseFloat(localStorage.getItem('coins'))||818;let usdt=parseFloat(localStorage.getItem('usdt'))||.11;let userWalletAddress=localStorage.getItem('walletAddress')||null;let walletConnected=localStorage.getItem('walletConnected')==='true';let tonConnectUI;
-const COIN_VALUE=.00025;
-
-function showToast(msg,type='success'){const t=document.getElementById('toast');t.innerText=msg;t.className='toast show '+type;setTimeout(()=>t.className='toast',3000)}
-
-function init(){if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}updateUI();addAllListeners();initTonConnect();}
-
-function initTonConnect(){try{tonConnectUI=new TON_CONNECT_UI.TonConnectUI({manifestUrl:'https://adspayu.vercel.app/tonconnect-manifest.json',buttonRootId:'connectBtn'});tonConnectUI.onStatusChange(wallet=>{if(wallet?.account){userWalletAddress=wallet.account.address;walletConnected=true;localStorage.setItem('walletConnected','true');localStorage.setItem('walletAddress',userWalletAddress);showToast("TON Connected!",'success')}else{userWalletAddress=null;walletConnected=false;localStorage.setItem('walletConnected','false');localStorage.setItem('walletAddress','');showToast("TON Disconnected",'warning')}updateConnectBtn();});if(walletConnected){tonConnectUI.restoreConnection();}}catch(e){showToast("TonConnect Error",'error')}}
-function updateConnectBtn(){const btn=document.getElementById('connectBtn');if(walletConnected&&userWalletAddress){btn.innerText=`✅ ${userWalletAddress.slice(0,4)}...${userWalletAddress.slice(-4)}`;btn.onclick=()=>tonConnectUI.disconnect()}else{btn.innerText="🔗 CONNECT TON";btn.onclick=()=>tonConnectUI.openModal()}}
-
-function addAllListeners(){
-    document.getElementById('walletTab').onclick=()=>showTopTab('wallet');
-    document.getElementById('profileTab').onclick=()=>showTopTab('profile');
-    document.getElementById('homeNav').onclick=()=>showTab('home');
-    document.getElementById('minerNav').onclick=()=>showTab('miner');
-    document.getElementById('dailyClaimBtn').onclick=claimDaily;
-    document.getElementById('openSwapBtn').onclick=openSwap;
-    document.getElementById('openDepositBtn').onclick=openDeposit;
-    document.getElementById('openWithdrawBtn').onclick=openWithdraw;
-    document.getElementById('copyRefBtn').onclick=copyRef;
-    document.getElementById('cancelSwapBtn').onclick=closeSwapModal;
-    document.getElementById('confirmSwapBtn').onclick=confirmSwap;
-    document.getElementById('cancelWithdrawBtn').onclick=closeWithdrawModal;
-    document.getElementById('confirmWithdrawBtn').onclick=confirmWithdraw;
-    document.getElementById('maxWithdrawBtn').onclick=setMaxWithdraw;
-    document.querySelectorAll('.modal').forEach(modal=>{modal.addEventListener('click',(e)=>{if(e.target===modal){modal.classList.remove('active');setTimeout(()=>modal.style.display='none',300)}})})
-}
-
-function updateUI(){document.getElementById('coinsHome').innerText=coins.toLocaleString()+' APU';document.getElementById('usdtHome').innerText=usdt.toFixed(2)+' USDT';document.getElementById('coinsWallet').innerText=coins.toLocaleString()+' APU';document.getElementById('usdtWallet').innerText=usdt.toFixed(2)+' USDT';const user=window.Telegram?.WebApp?.initDataUnsafe?.user;document.getElementById('userId').innerText=user?.id||'Guest';document.getElementById('username').innerText=user?.username||'-';document.getElementById('totalEarned').innerText=coins.toLocaleString();document.getElementById('refLink').innerText=`https://t.me/AdsPayUBot?start=ref${user?.id||''}`;}
-function copyRef(){navigator.clipboard.writeText(document.getElementById('refLink').innerText);showToast("Copied!")}
+function showToast(msg){const t=document.getElementById('toast');t.innerText=msg;t.className='toast show';setTimeout(()=>t.className='toast',2000)}
 function showTab(tab){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById(tab).classList.add('active');document.getElementById(tab+'Nav').classList.add('active')}
-function showTopTab(tab){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.top-tab').forEach(n=>n.classList.remove('active'));document.getElementById(tab).classList.add('active');document.getElementById(tab+'Tab').classList.add('active')}
-function claimDaily(){if(localStorage.getItem('lastDailyClaim')===new Date().toDateString())return showToast("Already claimed",'error');coins+=50;localStorage.setItem('coins',coins);localStorage.setItem('lastDailyClaim',new Date().toDateString());updateUI();document.getElementById('dailyClaimBtn').disabled=true;document.getElementById('dailyClaimBtn').innerText="✅ CLAIMED TODAY";showToast("+50 APU!")}
 
-function openSwap(){const m=document.getElementById('swapModal');m.style.display='flex';setTimeout(()=>m.classList.add('active'),10)}
-function closeSwapModal(){const m=document.getElementById('swapModal');m.classList.remove('active');setTimeout(()=>m.style.display='none',300)}
-function confirmSwap(){let amount=parseInt(document.getElementById('swapAmount').value);closeSwapModal();if(amount>=400&&amount<=coins){coins-=amount;usdt+=amount*COIN_VALUE;localStorage.setItem('coins',coins);localStorage.setItem('usdt',usdt);updateUI();showToast(`Swapped ${amount} APU!`,'success')}else{showToast('Min 400 APU','error')}}
-
-function openWithdraw(){if(!walletConnected)return showToast("Connect TON first",'error');document.getElementById('withdrawInfo').innerText=`You have $${usdt.toFixed(2)}`;const m=document.getElementById('withdrawModal');m.style.display='flex';setTimeout(()=>m.classList.add('active'),10)}
-function closeWithdrawModal(){const m=document.getElementById('withdrawModal');m.classList.remove('active');setTimeout(()=>m.style.display='none',300)}
-function setMaxWithdraw(){document.getElementById('withdrawAmount').value=usdt.toFixed(2)}
-function confirmWithdraw(){let amount=parseFloat(document.getElementById('withdrawAmount').value);closeWithdrawModal();if(amount>=MIN_WITHDRAW&&amount<=usdt){usdt-=amount;localStorage.setItem('usdt',usdt);updateUI();const user=window.Telegram?.WebApp?.initDataUnsafe?.user;fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:ADMIN_TELEGRAM_ID,text:`🔔 WITHDRAW REQUEST\nUser: @${user?.username}\nID: ${user?.id}\nAmount: ${amount} USDT\nWallet: ${userWalletAddress}\nTime: ${new Date().toLocaleString()}`})).then(res=>res.json()).then(data=>{if(data.ok)showToast("Request Sent! 24h",'success')}).catch(()=>showToast("Network error",'error'))}else{showToast(`Min $${MIN_WITHDRAW}`,'error')}}
-
-function openDeposit(){if(!walletConnected)return showToast("Connect TON first",'error');showToast("Deposit - Coming Soon",'warning')}
-
-window.onload=init;
+document.getElementById('test1').onclick=()=>showToast("Button 1 Works");
+document.getElementById('test2').onclick=()=>showToast("Button 2 Works");
+document.getElementById('homeNav').onclick=()=>showTab('home');
+document.getElementById('walletNav').onclick=()=>showTab('wallet');
 </script>
 </body>
 </html>
