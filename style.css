@@ -1,3 +1,7 @@
+* { pointer-events: auto !important; }
+body { pointer-events: auto !important; }
+.modal { pointer-events: none !important; }
+.modal.active { pointer-events: auto !important; }
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 * {
