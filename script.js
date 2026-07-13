@@ -1,83 +1,90 @@
-let balance = 165.048;
-let miners = 1;
-let earned = 15.05;
-let pending = 0.209802;
+const express = require('express');
+const cors = require('cors');
+const crypto = require('crypto');
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
 
-const tg = window.Telegram?.WebApp;
+const app = express();
+const PORT = 3000;
+const BOT_TOKEN = process.env.BOT_TOKEN || 'YOUR_BOT_TOKEN_HERE'; // from @BotFather
 
-// Init Telegram if available
-if (tg) {
-  tg.expand();
-  tg.setHeaderColor("#0a0b0f");
-  tg.BackButton.show();
-  tg.BackButton.onClick(() => tg.close());
+app.use(cors());
+app.use(express.json());
+app.use(express.static('public')); // serve your 3 frontend files
+
+// DB setup
+const db = new sqlite3.Database('./users.db');
+db.run(`CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY,
+  username TEXT,
+  balance REAL DEFAULT 165.048,
+  miners INTEGER DEFAULT 1,
+  earned REAL DEFAULT 15.05,
+  pending REAL DEFAULT 0.209802
+)`);
+
+// Verify Telegram initData
+function verifyTelegramData(initData) {
+  const urlParams = new URLSearchParams(initData);
+  const hash = urlParams.get('hash');
+  urlParams.delete('hash');
+
+  const dataCheckArr = [];
+  urlParams.sort();
+  urlParams.forEach((val, key) => dataCheckArr.push(`${key}=${val}`));
+  const dataCheckString = dataCheckArr.join('\n');
+
+  const secretKey = crypto.createHmac('sha256', 'WebAppData').update(BOT_TOKEN).digest();
+  const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+
+  return calculatedHash === hash;
 }
 
-function updateUI() {
-  document.getElementById('totalBalance').innerHTML = balance.toFixed(4) + ' <span>MCT</span>';
-  document.getElementById('vaultBalance').innerHTML = balance.toFixed(3) + ' <span>MCT</span>';
-  document.getElementById('pendingYield').textContent = '+' + pending.toFixed(6);
-  document.getElementById('activeMiners').textContent = miners;
-  document.getElementById('totalEarned').textContent = earned.toFixed(2);
-}
+// API: Get user data
+app.post('/api/auth', (req, res) => {
+  const { initData } = req.body;
+  if (!verifyTelegramData(initData)) return res.status(403).json({error: 'Invalid data'});
 
-function showPage(id, el) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  el.classList.add('active');
-}
+  const urlParams = new URLSearchParams(initData);
+  const user = JSON.parse(urlParams.get('user'));
 
-function copyLink() {
-  const link = document.getElementById('refLink');
-  navigator.clipboard.writeText(link.value);
-  showMsg("Link copied!");
-}
+  db.get('SELECT * FROM users WHERE id =?', [user.id], (err, row) => {
+    if (!row) {
+      db.run('INSERT INTO users (id, username) VALUES (?,?)', [user.id, user.username]);
+      row = {id: user.id, balance: 165.048, miners: 1, earned: 15.05, pending: 0.209802};
+    }
+    res.json(row);
+  });
+});
 
-function shareLink() {
-  if (tg && tg.shareUrl) {
-    tg.shareUrl(document.getElementById('refLink').value);
-  } else if (navigator.share) {
-    navigator.share({url: document.getElementById('refLink').value});
-  } else {
-    showMsg("Share: " + document.getElementById('refLink').value);
-  }
-}
+// API: Claim yield
+app.post('/api/claim', (req, res) => {
+  const { userId } = req.body;
+  db.get('SELECT * FROM users WHERE id =?', [userId], (err, user) => {
+    const newBalance = user.balance + user.pending;
+    const newEarned = user.earned + user.pending;
+    db.run('UPDATE users SET balance =?, earned =?, pending = 0 WHERE id =?',
+      [newBalance, newEarned, userId]);
+    res.json({success: true, balance: newBalance});
+  });
+});
 
-function claim() {
-  balance += pending;
-  earned += pending;
-  pending = 0;
-  updateUI();
-  showMsg("Yield claimed!");
-}
+// API: Buy miner
+app.post('/api/buy', (req, res) => {
+  const { userId, price } = req.body;
+  db.get('SELECT * FROM users WHERE id =?', [userId], (err, user) => {
+    if (user.balance < price) return res.json({success: false, error: 'Not enough MCT'});
+    db.run('UPDATE users SET balance = balance -?, miners = miners + 1 WHERE id =?',
+      [price, userId]);
+    res.json({success: true});
+  });
+});
 
-function buyMiner(price, tier) {
-  if (balance >= price) {
-    balance -= price;
-    miners += 1;
-    updateUI();
-    showMsg(`Tier ${tier} Miner Deployed! -${price} MCT`);
-  } else {
-    showMsg("Not enough MCT");
-  }
-}
+// API: Deposit
+app.post('/api/deposit', (req, res) => {
+  const { userId, amount } = req.body;
+  db.run('UPDATE users SET balance = balance +? WHERE id =?', [amount, userId]);
+  res.json({success: true});
+});
 
-function deposit() {
-  let amount = parseFloat(document.getElementById('depositAmount').value);
-  if (amount > 0) {
-    balance += amount;
-    updateUI();
-    document.getElementById('depositAmount').value = "0.00";
-    showMsg(`Deposited ${amount} MCT`);
-  } else {
-    showMsg("Enter amount");
-  }
-}
-
-function showMsg(msg) {
-  if (tg) tg.showPopup({message: msg});
-  else alert(msg);
-}
-
-updateUI();
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
