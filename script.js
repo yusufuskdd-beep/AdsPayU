@@ -10,7 +10,7 @@ let tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
 
 // 6 miners: cost, 30d bonus, max 3 each
 const miners = [
-  { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000424, owned: 0, max: 3, img: "⛏️" },
+  { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000000424, owned: 0, max: 3, img: "⛏️" },
   { id: 2, name: "Basic Miner", cost: 3, bonus: 0.15, rate: 0.00000133, owned: 0, max: 3, img: "⚙️" },
   { id: 3, name: "Pro Miner", cost: 5, bonus: 0.20, rate: 0.00000231, owned: 0, max: 3, img: "🚀" },
   { id: 4, name: "GPU Rig", cost: 10, bonus: 0.25, rate: 0.00000482, owned: 0, max: 3, img: "🖥️" },
