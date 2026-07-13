@@ -79,6 +79,14 @@ main { padding: 16px; }
 .miner-info h3 { color: var(--gold); font-size: 16px; }
 .miner-info p { color: var(--muted); font-size: 12px; }
 
+.miner-unit {
+  background: #0f1524;
+  border: 1px solid rgba(255,200,87,0.1);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
 .btn {
   background: linear-gradient(135deg, var(--accent), #00a86b);
   border: none;
