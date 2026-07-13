@@ -9,15 +9,12 @@
 </head>
 <body>
     <div id="app">
-        <!-- HOME PAGE -->
         <div id="home" class="page active">
-            <div class="header">
-                <div class="logo">⛏️ CRYPTOMINE</div>
-            </div>
+            <div class="header"><div class="logo">⛏️ CRYPTOMINE</div></div>
             <div class="balance-card">
                 <div class="label">TOTAL BALANCE</div>
                 <div class="balance" id="totalBalance">165.048 <span>MCT</span></div>
-                <div class="pending">PENDING YIELD: <span id="pendingYield">+0.000000</span></div>
+                <div class="pending">PENDING YIELD: <span id="pendingYield">+0.000</span></div>
                 <button class="btn-claim" onclick="claim()">CLAIM YIELD</button>
             </div>
             <div class="stats-grid">
@@ -27,50 +24,33 @@
                     <div class="sub" id="dailyEstimate">Est. 24h: +0.0000 MCT</div>
                 </div>
                 <div class="stat-box">
-                    <div class="label">TOTAL EARNED</div>
-                    <div class="value" id="totalEarned">15.05</div>
+                    <div class="label">REF EARNINGS</div> <!-- NEW -->
+                    <div class="value" id="refEarnings">0.00</div>
                     <div class="sub">MCT</div>
                 </div>
             </div>
         </div>
 
-        <!-- MINE PAGE -->
-        <div id="mine" class="page">
-            <h2>DEPLOY HARDWARE</h2>
-            <div class="miner-card" onclick="buyMiner(100, 1)">
-                <h3>TIER 1: STARTER</h3><p>100 MCT</p><span>0.005 MCT/min</span>
-            </div>
-            <div class="miner-card" onclick="buyMiner(500, 2)">
-                <h3>TIER 2: SILVER</h3><p>500 MCT</p><span>0.035 MCT/min</span>
-            </div>
-            <div class="miner-card" onclick="buyMiner(2000, 3)">
-                <h3>TIER 3: GOLD</h3><p>2000 MCT</p><span>0.150 MCT/min</span>
-            </div>
-            <div class="miner-card" onclick="buyMiner(5000, 4)">
-                <h3>TIER 4: PLATINUM</h3><p>5000 MCT</p><span>0.312 MCT/min</span>
-            </div>
-            <div class="miner-card" onclick="buyMiner(15000, 5)">
-                <h3>TIER 5: DIAMOND</h3><p>15000 MCT</p><span>0.957 MCT/min</span>
-            </div>
+        <div id="mine" class="page"><h2>DEPLOY HARDWARE</h2>
+            <div class="miner-card" onclick="buyMiner(100, 1)"><h3>TIER 1: STARTER</h3><p>100 MCT</p><span>0.005 MCT/min</span></div>
+            <div class="miner-card" onclick="buyMiner(500, 2)"><h3>TIER 2: SILVER</h3><p>500 MCT</p><span>0.035 MCT/min</span></div>
+            <div class="miner-card" onclick="buyMiner(2000, 3)"><h3>TIER 3: GOLD</h3><p>2000 MCT</p><span>0.150 MCT/min</span></div>
+            <div class="miner-card" onclick="buyMiner(5000, 4)"><h3>TIER 4: PLATINUM</h3><p>5000 MCT</p><span>0.312 MCT/min</span></div>
+            <div class="miner-card" onclick="buyMiner(15000, 5)"><h3>TIER 5: DIAMOND</h3><p>15000 MCT</p><span>0.957 MCT/min</span></div>
         </div>
 
-        <!-- VAULT PAGE -->
-        <div id="vault" class="page">
-            <h2>VAULT</h2>
+        <div id="vault" class="page"><h2>VAULT</h2>
             <div class="vault-balance">Balance: <span id="vaultBalance">165.048 MCT</span></div>
             <input type="number" id="depositAmount" placeholder="0.00" value="0.00">
             <button class="btn-deposit" onclick="deposit()">DEPOSIT MCT</button>
         </div>
 
-        <!-- FRIENDS PAGE -->
-        <div id="friends" class="page">
-            <h2>REFERRALS</h2>
+        <div id="friends" class="page"><h2>REFERRALS</h2>
             <p>Earn 10% of your friends' mining yield forever.</p>
-            <input type="text" id="refLink" value="t.me/CryptoMineBot?start=ref_12345" readonly>
+            <input type="text" id="refLink" readonly>
             <button class="btn-copy" onclick="copyLink()">COPY LINK</button>
         </div>
 
-        <!-- NAV BAR -->
         <div class="nav-bar">
             <button class="nav-btn active" onclick="showPage('home', this)">Home</button>
             <button class="nav-btn" onclick="showPage('mine', this)">Mine</button>
