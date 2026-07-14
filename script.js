@@ -13,6 +13,7 @@ let minerInstances = [];
 let nextInstanceId = 1;
 let completedTasks = [];
 let activeTaskTab = 'oneTime';
+let taskProgress = {}; // Track progress like joined, deposited amount
 
 const minerTemplates = [
   { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000000424, img: "micro.png" },
@@ -25,22 +26,22 @@ const minerTemplates = [
 
 const tasksData = {
   oneTime: [
-    { id: 'join_channel', title: "Join Telegram Channel", reward: 0.1, link: "https://t.me/MinerAAds" },
-    { id: 'join_chat', title: "Join Telegram Chat", reward: 0.1, link: "https://t.me/+EiLZpWqcoA8zYjU0" },
-    { id: 'invite_3', title: "Invite 3 Friends", reward: 0.5 },
-    { id: 'deposit_1', title: "Deposit 1 TON", reward: 0.05, minDeposit: 1 },
-    { id: 'deposit_5', title: "Deposit 5 TON", reward: 0.5, minDeposit: 5 },
-    { id: 'deposit_20', title: "Deposit 20 TON", reward: 1.5, minDeposit: 20 },
-    { id: 'deposit_50', title: "Deposit 50 TON", reward: 3, minDeposit: 50 }
+    { id: 'join_channel', title: "Join Telegram Channel", reward: 0.1, link: "https://t.me/MinerAAds", type: "join" },
+    { id: 'join_chat', title: "Join Telegram Chat", reward: 0.1, link: "https://t.me/+EiLZpWqcoA8zYjU0", type: "join" },
+    { id: 'invite_3', title: "Invite 3 Friends", reward: 0.5, type: "referral", target: 3 },
+    { id: 'deposit_1', title: "Deposit 1 TON", reward: 0.05, type: "deposit", target: 1 },
+    { id: 'deposit_5', title: "Deposit 5 TON", reward: 0.5, type: "deposit", target: 5 },
+    { id: 'deposit_20', title: "Deposit 20 TON", reward: 1.5, type: "deposit", target: 20 },
+    { id: 'deposit_50', title: "Deposit 50 TON", reward: 3, type: "deposit", target: 50 }
   ],
   ads: [
-    { id: 'watch_ad_1', title: "Watch Ad #1", reward: 0.01 },
-    { id: 'watch_ad_2', title: "Watch Ad #2", reward: 0.01 },
-    { id: 'watch_ad_3', title: "Watch Ad #3", reward: 0.01 }
+    { id: 'watch_ad_1', title: "Watch Ad #1", reward: 0.01, type: "ad" },
+    { id: 'watch_ad_2', title: "Watch Ad #2", reward: 0.01, type: "ad" },
+    { id: 'watch_ad_3', title: "Watch Ad #3", reward: 0.01, type: "ad" }
   ],
   partnership: [
-    { id: 'partner_dex', title: "Trade on Partner DEX", reward: 0.3 },
-    { id: 'partner_nft', title: "Mint Partner NFT", reward: 0.2 }
+    { id: 'partner_dex', title: "Trade on Partner DEX", reward: 0.3, type: "manual" },
+    { id: 'partner_nft', title: "Mint Partner NFT", reward: 0.2, type: "manual" }
   ]
 };
 
@@ -94,12 +95,10 @@ function loadGame() {
     lastTick = data.lastTick || Date.now();
     minerInstances = data.minerInstances || [];
     nextInstanceId = data.nextInstanceId || 1;
+    taskProgress = data.taskProgress || {};
     minerInstances.forEach(m => {
       const template = minerTemplates.find(t => t.id === m.templateId);
-      if (template) {
-        m.img = template.img;
-        m.rate = template.rate;
-      }
+      if (template) { m.img = template.img; m.rate = template.rate; }
     });
     const offlineSeconds = (Date.now() - lastTick) / 1000;
     minerInstances.forEach(m => { m.farmed += m.rate * offlineSeconds; });
@@ -109,7 +108,7 @@ function loadGame() {
 }
 
 function saveGame() {
-  localStorage.setItem(SAVE_KEY, JSON.stringify({ balance, lastTick: Date.now(), minerInstances, nextInstanceId }));
+  localStorage.setItem(SAVE_KEY, JSON.stringify({ balance, lastTick: Date.now(), minerInstances, nextInstanceId, taskProgress }));
   localStorage.setItem(TASK_KEY, JSON.stringify(completedTasks));
 }
 
@@ -118,14 +117,21 @@ function updateBalance() {
   if(el) el.innerText = `${balance.toFixed(4)} TON`;
 }
 
-function completeTask(taskId, reward, minDeposit) {
+// CHECK IF TASK IS COMPLETED
+function isTaskComplete(task) {
+  if(task.type === "join") return taskProgress[task.id] === true;
+  if(task.type === "deposit") return (taskProgress.totalDeposited || 0) >= task.target;
+  if(task.type === "referral") return (taskProgress.referrals || 0) >= task.target;
+  if(task.type === "ad") return taskProgress[task.id] === true;
+  return false;
+}
+
+function completeTask(taskId, reward) {
   if(completedTasks.includes(taskId)) return showPopup('alert', 'Already Done', 'Task already completed');
-  
-  // Check if deposit task
-  if(minDeposit && balance < minDeposit) {
-    return showPopup('error', 'Not Eligible', `You need to deposit at least ${minDeposit} TON first. Go to Wallet tab.`);
-  }
-  
+
+  const task = Object.values(tasksData).flat().find(t => t.id === taskId);
+  if(!isTaskComplete(task)) return showPopup('error', 'Not Done Yet', 'Please complete the task first');
+
   completedTasks.push(taskId);
   balance += reward;
   updateBalance();
@@ -133,6 +139,11 @@ function completeTask(taskId, reward, minDeposit) {
   tg.HapticFeedback.impactOccurred('light');
   showPopup('success', 'Task Completed!', `+${reward} TON added to balance`);
   renderTasks();
+}
+
+function markTaskProgress(taskId) {
+  taskProgress[taskId] = true;
+  saveGame();
 }
 
 function renderTasks() {
@@ -144,18 +155,25 @@ function renderTasks() {
 
   const tasks = tasksData[activeTaskTab].map(t => {
     const done = completedTasks.includes(t.id);
-    const joinBtn = t.link ? `<button class="btn" style="width:80px; background:#1e2a40; margin-right:8px" onclick="tg.openTelegramLink('${t.link}')">Join</button>` : '';
-    const depositBtn = t.minDeposit ? `<button class="btn" style="width:80px; background:#1e2a40; margin-right:8px" onclick="document.querySelector('[data-tab=wallet]').click()">Deposit</button>` : '';
-    
+    const canClaim = isTaskComplete(t);
+
+    let actionBtn = '';
+    if(t.type === "join") {
+      actionBtn = `<button class="btn" style="width:80px; background:#1e2a40; margin-right:8px" onclick="tg.openTelegramLink('${t.link}'); setTimeout(() => markTaskProgress('${t.id}'), 1000)">Join</button>`;
+    }
+    if(t.type === "deposit") {
+      actionBtn = `<button class="btn" style="width:80px; background:#1e2a40; margin-right:8px" onclick="document.querySelector('[data-tab=wallet]').click()">Deposit</button>`;
+    }
+
     return `<div class="card miner">
       <div class="miner-info">
         <h3>${t.title}</h3>
-        <p>Reward: <b>${t.reward} TON</b> ${t.minDeposit ? `• Min: ${t.minDeposit} TON` : ''}</p>
+        <p>Reward: <b>${t.reward} TON</b> ${t.target? `• Target: ${t.target}` : ''}</p>
+        <p style="font-size:11px; color:${canClaim? 'var(--accent)' : 'var(--muted)'}">${canClaim? 'Ready to claim' : 'Incomplete'}</p>
       </div>
       <div style="display:flex">
-        ${joinBtn}
-        ${depositBtn}
-        <button class="btn" style="width:80px" ${done? 'disabled' : ''} onclick="completeTask('${t.id}', ${t.reward}, ${t.minDeposit || 'null'})">
+        ${actionBtn}
+        <button class="btn" style="width:80px; opacity:${canClaim? 1 : 0.4}" ${done ||!canClaim? 'disabled' : ''} onclick="completeTask('${t.id}', ${t.reward})">
           ${done? 'DONE' : 'Claim'}
         </button>
       </div>
@@ -200,7 +218,9 @@ async function deposit() {
   try {
     const transaction = { validUntil: Math.floor(Date.now() / 1000) + 600, messages: [{ address: YOUR_WALLET_ADDRESS, amount: (amount * 1e9).toString() }] };
     await tonConnectUI.sendTransaction(transaction);
-    balance += amount; updateBalance(); saveGame();
+    balance += amount;
+    taskProgress.totalDeposited = (taskProgress.totalDeposited || 0) + amount; // Track deposits
+    updateBalance(); saveGame();
     showPopup('success', 'Deposit Successful!', `${amount} TON added to your balance`);
     document.getElementById('depositAmount').value = '';
   } catch(e) { showPopup('error', 'Failed', 'Transaction cancelled or failed'); }
@@ -224,7 +244,7 @@ function buyMiner(templateId) {
   if (balance >= template.cost) {
     balance -= template.cost;
     minerInstances.push({ instanceId: nextInstanceId++, templateId: template.id, name: template.name, rate: template.rate, bonus: template.bonus, img: template.img, farmed: 0 });
-    updateBalance(); saveGame(); 
+    updateBalance(); saveGame();
     showPopup('success', 'Purchased!', `You bought ${template.name} for ${template.cost} TON`);
     renderShop(); renderHome();
   } else { showPopup('error', 'Not Enough TON', 'Not enough TON') }
@@ -254,7 +274,7 @@ function renderReferral() {
 }
 
 function renderProfile() {
-  document.getElementById('content').innerHTML = `<h2>Profile</h2><div class="card"><p><b>Name:</b> ${user.first_name}</p><p><b>ID:</b> ${user.id}</p><p><b>Total Mined:</b> ${getTotalFarmed().toFixed(4)} TON</p><p><b>Total Miners:</b> ${minerInstances.length}</p></div>`;
+  document.getElementById('content').innerHTML = `<h2>Profile</h2><div class="card"><p><b>Name:</b> ${user.first_name}</p><p><b>ID:</b> ${user.id}</p><p><b>Total Deposited:</b> ${(taskProgress.totalDeposited || 0).toFixed(2)} TON</p><p><b>Total Mined:</b> ${getTotalFarmed().toFixed(4)} TON</p></div>`;
 }
 
 function claim() {
