@@ -27,7 +27,11 @@ const tasksData = {
   oneTime: [
     { id: 'join_channel', title: "Join Telegram Channel", reward: 0.1, link: "https://t.me/MinerAAds" },
     { id: 'join_chat', title: "Join Telegram Chat", reward: 0.1, link: "https://t.me/+EiLZpWqcoA8zYjU0" },
-    { id: 'invite_3', title: "Invite 3 Friends", reward: 0.5 }
+    { id: 'invite_3', title: "Invite 3 Friends", reward: 0.5 },
+    { id: 'deposit_1', title: "Deposit 1 TON", reward: 0.05, minDeposit: 1 },
+    { id: 'deposit_5', title: "Deposit 5 TON", reward: 0.5, minDeposit: 5 },
+    { id: 'deposit_20', title: "Deposit 20 TON", reward: 1.5, minDeposit: 20 },
+    { id: 'deposit_50', title: "Deposit 50 TON", reward: 3, minDeposit: 50 }
   ],
   ads: [
     { id: 'watch_ad_1', title: "Watch Ad #1", reward: 0.01 },
@@ -114,8 +118,14 @@ function updateBalance() {
   if(el) el.innerText = `${balance.toFixed(4)} TON`;
 }
 
-function completeTask(taskId, reward) {
+function completeTask(taskId, reward, minDeposit) {
   if(completedTasks.includes(taskId)) return showPopup('alert', 'Already Done', 'Task already completed');
+  
+  // Check if deposit task
+  if(minDeposit && balance < minDeposit) {
+    return showPopup('error', 'Not Eligible', `You need to deposit at least ${minDeposit} TON first. Go to Wallet tab.`);
+  }
+  
   completedTasks.push(taskId);
   balance += reward;
   updateBalance();
@@ -134,16 +144,18 @@ function renderTasks() {
 
   const tasks = tasksData[activeTaskTab].map(t => {
     const done = completedTasks.includes(t.id);
-    const joinBtn = t.link? `<button class="btn" style="width:80px; background:#1e2a40; margin-right:8px" onclick="tg.openTelegramLink('${t.link}')">Join</button>` : '';
+    const joinBtn = t.link ? `<button class="btn" style="width:80px; background:#1e2a40; margin-right:8px" onclick="tg.openTelegramLink('${t.link}')">Join</button>` : '';
+    const depositBtn = t.minDeposit ? `<button class="btn" style="width:80px; background:#1e2a40; margin-right:8px" onclick="document.querySelector('[data-tab=wallet]').click()">Deposit</button>` : '';
     
     return `<div class="card miner">
       <div class="miner-info">
         <h3>${t.title}</h3>
-        <p>Reward: <b>${t.reward} TON</b></p>
+        <p>Reward: <b>${t.reward} TON</b> ${t.minDeposit ? `• Min: ${t.minDeposit} TON` : ''}</p>
       </div>
       <div style="display:flex">
         ${joinBtn}
-        <button class="btn" style="width:80px" ${done? 'disabled' : ''} onclick="completeTask('${t.id}', ${t.reward})">
+        ${depositBtn}
+        <button class="btn" style="width:80px" ${done? 'disabled' : ''} onclick="completeTask('${t.id}', ${t.reward}, ${t.minDeposit || 'null'})">
           ${done? 'DONE' : 'Claim'}
         </button>
       </div>
