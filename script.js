@@ -10,13 +10,14 @@ let lastTick = Date.now();
 let minerInstances = [];
 let nextInstanceId = 1;
 
+// CORRECTED RATES - 30 day ROI + bonus
 const minerTemplates = [
-  { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000000424, img: "⛏️" }, // FIXED rate
-  { id: 2, name: "Basic Miner", cost: 3, bonus: 0.15, rate: 0.000001331, img: "⚙️" },
-  { id: 3, name: "Pro Miner", cost: 5, bonus: 0.20, rate: 0.000002315, img: "🚀" },
-  { id: 4, name: "GPU Rig", cost: 10, bonus: 0.25, rate: 0.000004823, img: "🖥️" },
-  { id: 5, name: "ASIC Farm", cost: 25, bonus: 0.30, rate: 0.000012540, img: "🏭" },
-  { id: 6, name: "Quantum Miner", cost: 50, bonus: 0.35, rate: 0.000026042, img: "⚡" }
+  { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000000424, img: "⛏️" },   // 0.0366 TON/day
+  { id: 2, name: "Basic Miner", cost: 3, bonus: 0.15, rate: 0.000001331, img: "⚙️" },    // 0.1150 TON/day
+  { id: 3, name: "Pro Miner", cost: 5, bonus: 0.20, rate: 0.000002315, img: "🚀" },      // 0.2000 TON/day
+  { id: 4, name: "GPU Rig", cost: 10, bonus: 0.25, rate: 0.000004823, img: "🖥️" },       // 0.4167 TON/day
+  { id: 5, name: "ASIC Farm", cost: 25, bonus: 0.30, rate: 0.000012540, img: "🏭" },      // 1.0835 TON/day
+  { id: 6, name: "Quantum Miner", cost: 50, bonus: 0.35, rate: 0.000026042, img: "⚡" }   // 2.2500 TON/day
 ];
 
 let tonConnectUI;
@@ -44,31 +45,27 @@ function getTotalFarmed() {
   return minerInstances.reduce((sum, m) => sum + m.farmed, 0);
 }
 
-// MIGRATION + SAVE / LOAD
+// MIGRATION + FIX BROKEN RATES
 function loadGame() {
   const save = localStorage.getItem(SAVE_KEY);
   if (save) {
     const data = JSON.parse(save);
     balance = data.balance || 10.0;
     lastTick = data.lastTick || Date.now();
-    if (data.minerInstances) {
-      minerInstances = data.minerInstances;
-      nextInstanceId = data.nextInstanceId || 1;
-    } else if (data.miners) { // migrate old
-      data.miners.forEach((m, i) => {
-        for(let j = 0; j < m.owned; j++) {
-          minerInstances.push({
-            instanceId: nextInstanceId++,
-            templateId: minerTemplates[i].id,
-            name: minerTemplates[i].name,
-            rate: minerTemplates[i].rate,
-            bonus: minerTemplates[i].bonus,
-            img: minerTemplates[i].img,
-            farmed: 0
-          });
-        }
-      });
-    }
+    minerInstances = data.minerInstances || [];
+    nextInstanceId = data.nextInstanceId || 1;
+
+    // FIX: Update rate for any old miners with wrong rate
+    let fixed = false;
+    minerInstances.forEach(m => {
+      const template = minerTemplates.find(t => t.id === m.templateId);
+      if (template && m.rate !== template.rate) {
+        m.rate = template.rate; // fix the rate
+        fixed = true;
+      }
+    });
+    if(fixed) tg.showPopup({title: "Rates Fixed", message: "Your old miners have been updated to correct rates"});
+
     const offlineSeconds = (Date.now() - lastTick) / 1000;
     minerInstances.forEach(m => { m.farmed += m.rate * offlineSeconds; });
   }
@@ -90,6 +87,23 @@ function addBalance() {
   saveGame();
   tg.showPopup({title: "Dev Cheat", message: "+100 TON added"});
   renderShop();
+}
+
+// RESET ALL MINERS - use if rates still broken
+function resetMiners() {
+  if(confirm("Reset all miners? This will refund 50%")) {
+    const refund = minerInstances.reduce((sum, m) => {
+      const t = minerTemplates.find(x => x.id === m.templateId);
+      return sum + t.cost * 0.5;
+    }, 0);
+    balance += refund;
+    minerInstances = [];
+    nextInstanceId = 1;
+    saveGame();
+    updateBalance();
+    renderHome();
+    tg.showPopup({title: "Reset", message: `${refund.toFixed(2)} TON refunded`});
+  }
 }
 
 // LIVE FARM TICK
@@ -140,6 +154,7 @@ function renderHome() {
       <h2>Welcome, ${user.first_name}</h2>
       <p style="color:var(--muted)">All miners ROI in 30 days + bonus</p>
       <button class="btn" style="margin-top:8px;background:var(--gold)" onclick="addBalance()">+100 TON DEV</button>
+      <button class="btn" style="margin-top:8px;background:var(--danger)" onclick="resetMiners()">Reset Miners</button>
     </div>
     <div class="card">
       <h3>⛏️ Farming</h3>
