@@ -49,7 +49,7 @@ try {
     const currentTab = document.querySelector('.tabbar button.active')?.dataset.tab;
     if(currentTab === 'wallet') renderWallet();
   });
-} catch(e){}
+} catch(e){ console.error("TonConnect init error", e) }
 
 const tabs = { home: renderHome, shop: renderShop, tasks: renderTasks, referral: renderReferral, wallet: renderWallet, profile: renderProfile };
 document.addEventListener('DOMContentLoaded', () => {
@@ -129,6 +129,7 @@ function renderWallet() {
       <h3>Wallet Status</h3>
       <p style="color:var(--muted); font-size:12px">Connected: <b>${walletAddr}</b></p>
       <div id="ton-connect-button" style="margin-bottom:8px"></div>
+      ${!isConnected ? `<button class="btn" onclick="connectWallet()">Connect Wallet</button>` : ''}
       ${isConnected ? `<button class="btn" style="background:var(--danger)" onclick="disconnectWallet()">Disconnect</button>` : ''}
     </div>
 
@@ -140,10 +141,13 @@ function renderWallet() {
     </div>
   `;
   
-  // FIX: wait for DOM before mounting tonconnect button
   setTimeout(() => {
     if(tonConnectUI) tonConnectUI.mount('#ton-connect-button');
-  }, 50);
+  }, 100);
+}
+
+async function connectWallet() {
+  if(tonConnectUI) await tonConnectUI.connectWallet();
 }
 
 async function disconnectWallet() {
@@ -155,7 +159,7 @@ async function disconnectWallet() {
 async function deposit() {
   const amount = parseFloat(document.getElementById('depositAmount').value);
   if(!amount || amount < 0.1) return tg.showAlert("Min deposit 0.1 TON");
-  if(!tonConnectUI.connected) return tg.showAlert("Please connect wallet first");
+  if(!tonConnectUI || !tonConnectUI.connected) return tg.showAlert("Please connect wallet first");
   try {
     const transaction = {
       validUntil: Math.floor(Date.now() / 1000) + 600,
