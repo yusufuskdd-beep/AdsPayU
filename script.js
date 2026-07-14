@@ -5,13 +5,14 @@ tg.setHeaderColor('#0a0f1a');
 let user = tg.initDataUnsafe.user || { first_name: "Miner", id: "guest" };
 const SAVE_KEY = `minerads_save_${user.id}`;
 const TASK_KEY = `minerads_tasks_${user.id}`;
+const YOUR_WALLET_ADDRESS = "UQD63olQ9L4WryJy8YJ9kEfO4gaen-GkbtvLy5-co2hkI4kv"; // <-- YOUR WALLET
 
 let balance = 10.0;
 let lastTick = Date.now();
 let minerInstances = [];
 let nextInstanceId = 1;
-let completedTasks = []; // track completed tasks
-let activeTaskTab = 'oneTime'; // current task subtab
+let completedTasks = [];
+let activeTaskTab = 'oneTime';
 
 // PRODUCTION RATES
 const minerTemplates = [
@@ -45,6 +46,12 @@ try {
   tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
     manifestUrl: 'https://ton-connect.github.io/demo-dapp-with-react-ui/tonconnect-manifest.json'
   });
+  
+  tonConnectUI.onStatusChange(() => {
+    const currentTab = document.querySelector('.tabbar button.active')?.dataset.tab;
+    if(currentTab === 'wallet') renderWallet();
+  });
+  
 } catch(e){}
 
 const tabs = { home: renderHome, shop: renderShop, tasks: renderTasks, referral: renderReferral, wallet: renderWallet, profile: renderProfile };
@@ -135,6 +142,61 @@ function renderTasks() {
 function switchTaskTab(tab) {
   activeTaskTab = tab;
   renderTasks();
+}
+
+// WALLET WITH DEPOSIT ONLY
+function renderWallet() {
+  const isConnected = tonConnectUI && tonConnectUI.connected;
+  const walletAddr = isConnected ? tonConnectUI.account.address.slice(0,6) + "..." + tonConnectUI.account.address.slice(-4) : "Not Connected";
+
+  document.getElementById('content').innerHTML = `
+    <h2>Wallet</h2>
+    <div class="card">
+      <h3>Wallet Status</h3>
+      <p style="color:var(--muted); font-size:12px">Connected: <b>${walletAddr}</b></p>
+      <div id="ton-connect-button"></div>
+    </div>
+
+    <div class="card">
+      <h3>Deposit TON</h3>
+      <p style="color:var(--muted); font-size:12px">Send TON to: <b>${YOUR_WALLET_ADDRESS.slice(0,6)}...${YOUR_WALLET_ADDRESS.slice(-4)}</b></p>
+      <input id="depositAmount" type="number" placeholder="Amount in TON" step="0.1" min="0.1" 
+        style="width:100%;padding:12px;border-radius:8px;background:#1e2a40;border:1px solid #333;color:var(--text);margin:8px 0"/>
+      <button class="btn" onclick="deposit()">Deposit Now</button>
+    </div>
+  `;
+  if(tonConnectUI) tonConnectUI.mount('#ton-connect-button');
+}
+
+// DEPOSIT FUNCTION
+async function deposit() {
+  const amount = parseFloat(document.getElementById('depositAmount').value);
+  if(!amount || amount < 0.1) return tg.showAlert("Min deposit 0.1 TON");
+  
+  if(!tonConnectUI.connected) return tg.showAlert("Please connect wallet first");
+
+  try {
+    const transaction = {
+      validUntil: Math.floor(Date.now() / 1000) + 600,
+      messages: [
+        {
+          address: YOUR_WALLET_ADDRESS,
+          amount: (amount * 1e9).toString()
+        }
+      ]
+    };
+    
+    await tonConnectUI.sendTransaction(transaction);
+    
+    balance += amount;
+    updateBalance();
+    saveGame();
+    tg.showPopup({title: "Deposit Successful!", message: `${amount} TON added to your balance`});
+    document.getElementById('depositAmount').value = '';
+  } catch(e) {
+    console.log(e);
+    tg.showAlert("Transaction cancelled or failed");
+  }
 }
 
 // LIVE FARM TICK
@@ -237,16 +299,7 @@ function renderReferral() {
     </div>
   `;
 }
-function renderWallet() {
-  document.getElementById('content').innerHTML = `
-    <h2>Wallet</h2>
-    <div class="card">
-      <p>Connect your TON wallet to withdraw</p>
-      <div id="ton-connect-button"></div>
-    </div>
-  `;
-  if(tonConnectUI) tonConnectUI.mount('#ton-connect-button');
-}
+
 function renderProfile() {
   document.getElementById('content').innerHTML = `
     <h2>Profile</h2>
