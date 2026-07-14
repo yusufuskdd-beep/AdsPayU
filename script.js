@@ -73,10 +73,16 @@ function loadGame() {
     lastTick = data.lastTick || Date.now();
     minerInstances = data.minerInstances || [];
     nextInstanceId = data.nextInstanceId || 1;
+
+    // FIX: Add img property to old miners
     minerInstances.forEach(m => {
       const template = minerTemplates.find(t => t.id === m.templateId);
-      if (template && m.rate !== template.rate) m.rate = template.rate;
+      if (template) {
+        m.img = template.img;
+        m.rate = template.rate;
+      }
     });
+
     const offlineSeconds = (Date.now() - lastTick) / 1000;
     minerInstances.forEach(m => { m.farmed += m.rate * offlineSeconds; });
   }
