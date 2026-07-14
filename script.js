@@ -15,12 +15,12 @@ let completedTasks = [];
 let activeTaskTab = 'oneTime';
 
 const minerTemplates = [
-  { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000000424, img: "⛏️" }, // Slow starter
-  { id: 2, name: "Basic Miner", cost: 3, bonus: 0.15, rate: 0.000001331, img: "⚙️" },
-  { id: 3, name: "Pro Miner", cost: 5, bonus: 0.20, rate: 0.000002315, img: "🚀" },
-  { id: 4, name: "GPU Rig", cost: 10, bonus: 0.25, rate: 0.000004823, img: "🖥️" },
-  { id: 5, name: "ASIC Farm", cost: 25, bonus: 0.30, rate: 0.000012540, img: "🏭" },
-  { id: 6, name: "Quantum Miner", cost: 50, bonus: 0.35, rate: 0.000026042, img: "⚡" }
+  { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000000424, img: "micro.png" },
+  { id: 2, name: "Basic Miner", cost: 3, bonus: 0.15, rate: 0.000001331, img: "basic.png" },
+  { id: 3, name: "Pro Miner", cost: 5, bonus: 0.20, rate: 0.000002315, img: "pro.png" },
+  { id: 4, name: "GPU Rig", cost: 10, bonus: 0.25, rate: 0.000004823, img: "gpu.png" },
+  { id: 5, name: "ASIC Farm", cost: 25, bonus: 0.30, rate: 0.000012540, img: "asic.png" },
+  { id: 6, name: "Quantum Miner", cost: 50, bonus: 0.35, rate: 0.000026042, img: "quantum.png" }
 ];
 
 const tasksData = {
@@ -132,7 +132,6 @@ function renderWallet() {
       ${!isConnected ? `<button class="btn" onclick="connectWallet()">Connect Wallet</button>` : ''}
       ${isConnected ? `<button class="btn" style="background:var(--danger)" onclick="disconnectWallet()">Disconnect</button>` : ''}
     </div>
-
     <div class="card">
       <h3>Deposit TON</h3>
       <p style="color:var(--muted); font-size:12px">Send to: <b>${YOUR_WALLET_ADDRESS.slice(0,6)}...${YOUR_WALLET_ADDRESS.slice(-4)}</b></p>
@@ -140,44 +139,27 @@ function renderWallet() {
       <button class="btn" onclick="deposit()">Deposit Now</button>
     </div>
   `;
-  
-  setTimeout(() => {
-    if(tonConnectUI) tonConnectUI.mount('#ton-connect-button');
-  }, 100);
+  setTimeout(() => { if(tonConnectUI) tonConnectUI.mount('#ton-connect-button'); }, 100);
 }
 
-async function connectWallet() {
-  if(tonConnectUI) await tonConnectUI.connectWallet();
-}
-
-async function disconnectWallet() {
-  await tonConnectUI.disconnect();
-  tg.showPopup({title: "Disconnected", message: "Wallet disconnected"});
-  renderWallet();
-}
+async function connectWallet() { if(tonConnectUI) await tonConnectUI.connectWallet(); }
+async function disconnectWallet() { await tonConnectUI.disconnect(); tg.showPopup({title: "Disconnected", message: "Wallet disconnected"}); renderWallet(); }
 
 async function deposit() {
   const amount = parseFloat(document.getElementById('depositAmount').value);
   if(!amount || amount < 0.1) return tg.showAlert("Min deposit 0.1 TON");
   if(!tonConnectUI || !tonConnectUI.connected) return tg.showAlert("Please connect wallet first");
   try {
-    const transaction = {
-      validUntil: Math.floor(Date.now() / 1000) + 600,
-      messages: [{ address: YOUR_WALLET_ADDRESS, amount: (amount * 1e9).toString() }]
-    };
+    const transaction = { validUntil: Math.floor(Date.now() / 1000) + 600, messages: [{ address: YOUR_WALLET_ADDRESS, amount: (amount * 1e9).toString() }] };
     await tonConnectUI.sendTransaction(transaction);
-    balance += amount;
-    updateBalance();
-    saveGame();
+    balance += amount; updateBalance(); saveGame();
     tg.showPopup({title: "Deposit Successful!", message: `${amount} TON added to your balance`});
     document.getElementById('depositAmount').value = '';
   } catch(e) { tg.showAlert("Transaction cancelled or failed"); }
 }
 
 function farmTick() {
-  const now = Date.now();
-  const delta = (now - lastTick) / 1000;
-  lastTick = now;
+  const now = Date.now(); const delta = (now - lastTick) / 1000; lastTick = now;
   minerInstances.forEach(m => { m.farmed += m.rate * delta; });
   const totalEl = document.getElementById('farmedTotal');
   if (totalEl) totalEl.innerText = getTotalFarmed().toFixed(6);
@@ -200,12 +182,11 @@ function buyMiner(templateId) {
 }
 
 function renderHome() {
-  const totalRate = getTotalRate();
-  const totalFarmed = getTotalFarmed();
+  const totalRate = getTotalRate(); const totalFarmed = getTotalFarmed();
   document.getElementById('content').innerHTML = `
     <div class="card"><h2>Welcome, ${user.first_name}</h2><p style="color:var(--muted)">All miners ROI in 30 days + bonus</p></div>
     <div class="card"><h3>⛏️ Farming</h3><p>Rate: <b>${(totalRate*86400).toFixed(4)} TON/day</b></p><p>Farmed: <b id="farmedTotal">${totalFarmed.toFixed(6)}</b> TON</p><div class="progress"><div class="progress-bar" style="width:100%"></div></div><button class="btn" style="margin-top:12px" onclick="claim()">Claim</button></div>
-    <div class="card"><h3>Your Miners</h3>${minerInstances.length > 0? minerInstances.map(m => `<div class="miner-unit"><h4>${m.img} ${m.name} #${m.instanceId}</h4><p style="color:var(--muted); font-size:12px">${(m.rate*86400).toFixed(4)} TON/day • Farmed: <span id="farmed-${m.instanceId}">${m.farmed.toFixed(6)}</span> TON</p></div>`).join('') : '<p style="color:var(--muted)">No miners yet</p>'}</div>
+    <div class="card"><h3>Your Miners</h3>${minerInstances.length > 0? minerInstances.map(m => `<div class="miner-unit"><img src="${m.img}" class="miner-img" style="width:40px; height:40px"/><div><h4>${m.name} #${m.instanceId}</h4><p style="color:var(--muted); font-size:12px">${(m.rate*86400).toFixed(4)} TON/day • Farmed: <span id="farmed-${m.instanceId}">${m.farmed.toFixed(6)}</span> TON</p></div></div>`).join('') : '<p style="color:var(--muted)">No miners yet</p>'}</div>
   `;
 }
 
@@ -214,12 +195,12 @@ function renderShop() {
     const ownedCount = minerInstances.filter(m => m.templateId === t.id).length;
     const payout = (t.cost * (1 + t.bonus)).toFixed(2);
     const disabled = ownedCount >= 3? 'disabled' : '';
-    return `<div class="card miner"><div class="miner-info"><h3>${t.img} ${t.name}</h3><p>${(t.rate*86400).toFixed(4)} TON/day • Owned: ${ownedCount}/3</p><p>30d Payout: <b>${payout} TON</b> +${(t.bonus*100)}%</p><p><b>${t.cost} TON</b></p></div><button class="btn" ${disabled} onclick="buyMiner(${t.id})">${disabled? 'MAX' : 'Buy'}</button></div>`
+    return `<div class="card miner"><img src="${t.img}" class="miner-img" /><div class="miner-info"><h3>${t.name}</h3><p>${(t.rate*86400).toFixed(4)} TON/day • Owned: ${ownedCount}/3</p><p>30d Payout: <b>${payout} TON</b> +${(t.bonus*100)}%</p><p><b>${t.cost} TON</b></p></div><button class="btn" style="width:80px" ${disabled} onclick="buyMiner(${t.id})">${disabled? 'MAX' : 'Buy'}</button></div>`
   }).join('')}`;
 }
 
 function renderReferral() {
-  const refLink = `https://t.me/AdsPayU_bot?start=${user.id}`; // <-- UPDATED
+  const refLink = `https://t.me/AdsPayU_bot?start=${user.id}`;
   document.getElementById('content').innerHTML = `<h2>Referral</h2><div class="card"><p>Earn 10% from friends mining</p><input value="${refLink}" readonly style="width:100%;padding:8px;border-radius:8px;background:#1e2a40;border:1px solid #333;color:var(--text)"/><button class="btn" onclick="navigator.clipboard.writeText('${refLink}')">Copy Link</button></div>`;
 }
 
@@ -229,8 +210,7 @@ function renderProfile() {
 
 function claim() {
   const total = getTotalFarmed();
-  balance += total;
-  minerInstances.forEach(m => m.farmed = 0);
+  balance += total; minerInstances.forEach(m => m.farmed = 0);
   updateBalance(); saveGame();
   tg.showPopup({ title: "Claimed!", message: `${total.toFixed(4)} TON added to balance` });
   renderHome();
