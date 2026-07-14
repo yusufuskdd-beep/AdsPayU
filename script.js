@@ -10,9 +10,9 @@ let lastTick = Date.now();
 let minerInstances = [];
 let nextInstanceId = 1;
 
-// CORRECTED RATES - 30 day ROI + bonus
+// PRODUCTION RATES - 30 day ROI + bonus
 const minerTemplates = [
-  { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000000424, img: "⛏️" },   // 0.0366 TON/day
+  { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000424, img: "⛏️" },   // 0.0366 TON/day
   { id: 2, name: "Basic Miner", cost: 3, bonus: 0.15, rate: 0.000001331, img: "⚙️" },    // 0.1150 TON/day
   { id: 3, name: "Pro Miner", cost: 5, bonus: 0.20, rate: 0.000002315, img: "🚀" },      // 0.2000 TON/day
   { id: 4, name: "GPU Rig", cost: 10, bonus: 0.25, rate: 0.000004823, img: "🖥️" },       // 0.4167 TON/day
@@ -45,7 +45,7 @@ function getTotalFarmed() {
   return minerInstances.reduce((sum, m) => sum + m.farmed, 0);
 }
 
-// MIGRATION + FIX BROKEN RATES
+// SAVE / LOAD + SILENT RATE FIX
 function loadGame() {
   const save = localStorage.getItem(SAVE_KEY);
   if (save) {
@@ -55,16 +55,13 @@ function loadGame() {
     minerInstances = data.minerInstances || [];
     nextInstanceId = data.nextInstanceId || 1;
 
-    // FIX: Update rate for any old miners with wrong rate
-    let fixed = false;
+    // SILENT FIX: Update rate for any old miners with wrong rate
     minerInstances.forEach(m => {
       const template = minerTemplates.find(t => t.id === m.templateId);
       if (template && m.rate !== template.rate) {
-        m.rate = template.rate; // fix the rate
-        fixed = true;
+        m.rate = template.rate;
       }
     });
-    if(fixed) tg.showPopup({title: "Rates Fixed", message: "Your old miners have been updated to correct rates"});
 
     const offlineSeconds = (Date.now() - lastTick) / 1000;
     minerInstances.forEach(m => { m.farmed += m.rate * offlineSeconds; });
@@ -78,32 +75,6 @@ function saveGame() {
 function updateBalance() {
   const el = document.getElementById('balance');
   if(el) el.innerText = `${balance.toFixed(4)} TON`;
-}
-
-// DEV CHEAT
-function addBalance() {
-  balance += 100;
-  updateBalance();
-  saveGame();
-  tg.showPopup({title: "Dev Cheat", message: "+100 TON added"});
-  renderShop();
-}
-
-// RESET ALL MINERS - use if rates still broken
-function resetMiners() {
-  if(confirm("Reset all miners? This will refund 50%")) {
-    const refund = minerInstances.reduce((sum, m) => {
-      const t = minerTemplates.find(x => x.id === m.templateId);
-      return sum + t.cost * 0.5;
-    }, 0);
-    balance += refund;
-    minerInstances = [];
-    nextInstanceId = 1;
-    saveGame();
-    updateBalance();
-    renderHome();
-    tg.showPopup({title: "Reset", message: `${refund.toFixed(2)} TON refunded`});
-  }
 }
 
 // LIVE FARM TICK
@@ -153,8 +124,6 @@ function renderHome() {
     <div class="card">
       <h2>Welcome, ${user.first_name}</h2>
       <p style="color:var(--muted)">All miners ROI in 30 days + bonus</p>
-      <button class="btn" style="margin-top:8px;background:var(--gold)" onclick="addBalance()">+100 TON DEV</button>
-      <button class="btn" style="margin-top:8px;background:var(--danger)" onclick="resetMiners()">Reset Miners</button>
     </div>
     <div class="card">
       <h3>⛏️ Farming</h3>
@@ -227,6 +196,7 @@ function renderProfile() {
       <p><b>Name:</b> ${user.first_name}</p>
       <p><b>ID:</b> ${user.id}</p>
       <p><b>Total Mined:</b> ${getTotalFarmed().toFixed(4)} TON</p>
+      <p><b>Total Miners:</b> ${minerInstances.length}</p>
     </div>
   `;
 }
