@@ -105,6 +105,14 @@ function loadGame() {
   }
   const taskSave = localStorage.getItem(TASK_KEY);
   if(taskSave) completedTasks = JSON.parse(taskSave);
+
+  // MIGRATION: Auto-mark old join tasks as done for existing users
+  ['join_channel', 'join_chat'].forEach(id => {
+    if(completedTasks.includes(id) &&!taskProgress[id]) {
+      taskProgress[id] = true;
+    }
+  });
+  saveGame();
 }
 
 function saveGame() {
@@ -144,6 +152,8 @@ function completeTask(taskId, reward) {
 function markTaskProgress(taskId) {
   taskProgress[taskId] = true;
   saveGame();
+  showPopup('success', 'Verified!', 'You can now claim the reward');
+  renderTasks();
 }
 
 function renderTasks() {
@@ -159,7 +169,8 @@ function renderTasks() {
 
     let actionBtn = '';
     if(t.type === "join") {
-      actionBtn = `<button class="btn" style="width:80px; background:#1e2a40; margin-right:8px" onclick="tg.openTelegramLink('${t.link}'); setTimeout(() => markTaskProgress('${t.id}'), 1000)">Join</button>`;
+      const verifyBtn =!taskProgress[t.id]? `<button class="btn" style="width:80px; background:#fbbf24; color:#000; margin-right:8px" onclick="markTaskProgress('${t.id}')">Verify</button>` : '';
+      actionBtn = `<button class="btn" style="width:70px; background:#1e2a40; margin-right:8px" onclick="tg.openTelegramLink('${t.link}'); setTimeout(() => markTaskProgress('${t.id}'), 1000)">Join</button>${verifyBtn}`;
     }
     if(t.type === "deposit") {
       actionBtn = `<button class="btn" style="width:80px; background:#1e2a40; margin-right:8px" onclick="document.querySelector('[data-tab=wallet]').click()">Deposit</button>`;
@@ -169,7 +180,7 @@ function renderTasks() {
       <div class="miner-info">
         <h3>${t.title}</h3>
         <p>Reward: <b>${t.reward} TON</b> ${t.target? `• Target: ${t.target}` : ''}</p>
-        <p style="font-size:11px; color:${canClaim? 'var(--accent)' : 'var(--muted)'}">${canClaim? 'Ready to claim' : 'Incomplete'}</p>
+        <p style="font-size:11px; color:${done? 'var(--accent)' : canClaim? '#fbbf24' : 'var(--muted)'}">${done? 'Completed' : canClaim? 'Ready to claim' : 'Incomplete'}</p>
       </div>
       <div style="display:flex">
         ${actionBtn}
