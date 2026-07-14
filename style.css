@@ -33,8 +33,18 @@ body { background: var(--bg); color: var(--text); padding-bottom: 80px; }
   line-height: 1.4;
 }
 .tabbar button.active { color: var(--gold); }
-.tabbar button::first-line { font-size: 20px; } /* makes emoji bigger */
+.tabbar button::first-line { font-size: 20px; }
 .subtabs { display: flex; gap: 8px; margin-bottom: 16px; }
 .subtab-btn { flex: 1; padding: 10px; background: #1e2a40; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: var(--muted); font-weight: 600; cursor: pointer; transition: all 0.2s; }
 .subtab-btn.active { background: linear-gradient(135deg, var(--gold), var(--accent)); color: #000; border: none; }
 input:focus { outline: 2px solid var(--accent); }
+
+/* CUSTOM POPUPS */
+.popup-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 999; animation: fadeIn 0.2s; }
+.popup { background: var(--card); border: 1px solid rgba(255,215,0,0.3); border-radius: 20px; padding: 20px; width: 90%; max-width: 320px; text-align: center; animation: scaleIn 0.25s; }
+.popup-icon { font-size: 40px; margin-bottom: 10px; }
+.popup h3 { color: var(--gold); margin-bottom: 8px; font-size: 18px; }
+.popup p { color: var(--muted); font-size: 14px; margin-bottom: 16px; }
+.popup-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--gold), var(--accent)); border: none; border-radius: 12px; color: #000; font-weight: 700; font-size: 16px; cursor: pointer; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleIn { from { transform: scale(0.8); } to { transform: scale(1); } }
