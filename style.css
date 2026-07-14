@@ -22,8 +22,18 @@ body { background: var(--bg); color: var(--text); padding-bottom: 80px; }
 .progress { height: 8px; background: #1e2a40; border-radius: 4px; overflow: hidden; margin: 8px 0; }
 .progress-bar { height: 100%; background: var(--accent); }
 .tabbar { position: fixed; bottom: 0; left: 0; right: 0; display: flex; background: var(--card); border-top: 1px solid rgba(255,255,255,0.1); }
-.tabbar button { flex: 1; padding: 12px 4px; background: none; border: none; color: var(--muted); font-size: 11px; transition: color 0.2s; }
+.tabbar button { 
+  flex: 1; 
+  padding: 8px 4px; 
+  background: none; 
+  border: none; 
+  color: var(--muted); 
+  font-size: 10px; 
+  transition: color 0.2s; 
+  line-height: 1.4;
+}
 .tabbar button.active { color: var(--gold); }
+.tabbar button::first-line { font-size: 20px; } /* makes emoji bigger */
 .subtabs { display: flex; gap: 8px; margin-bottom: 16px; }
 .subtab-btn { flex: 1; padding: 10px; background: #1e2a40; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: var(--muted); font-weight: 600; cursor: pointer; transition: all 0.2s; }
 .subtab-btn.active { background: linear-gradient(135deg, var(--gold), var(--accent)); color: #000; border: none; }
