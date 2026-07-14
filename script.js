@@ -11,9 +11,9 @@ let balance = 10.0;
 let lastTick = Date.now();
 let minerInstances = [];
 let nextInstanceId = 1;
-let completedTasks = [];
+let completedTasks = []; // tasks that were CLAIMED
 let activeTaskTab = 'oneTime';
-let taskProgress = {}; // Track progress like joined, deposited amount
+let taskProgress = {}; // progress to check eligibility
 
 const minerTemplates = [
   { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000000424, img: "micro.png" },
@@ -45,7 +45,7 @@ const tasksData = {
   ]
 };
 
-// CUSTOM POPUP FUNCTION
+// CUSTOM POPUP
 function showPopup(type, title, message) {
   const icons = { success: "✅", error: "❌", info: "💰", alert: "⚠️" };
   const popup = document.createElement('div');
@@ -105,13 +105,6 @@ function loadGame() {
   }
   const taskSave = localStorage.getItem(TASK_KEY);
   if(taskSave) completedTasks = JSON.parse(taskSave);
-
-  // MIGRATION: Auto-mark old join tasks as done for existing users
-  ['join_channel', 'join_chat'].forEach(id => {
-    if(completedTasks.includes(id) &&!taskProgress[id]) {
-      taskProgress[id] = true;
-    }
-  });
   saveGame();
 }
 
@@ -125,7 +118,7 @@ function updateBalance() {
   if(el) el.innerText = `${balance.toFixed(4)} TON`;
 }
 
-// CHECK IF TASK IS COMPLETED
+// CHECK ELIGIBILITY
 function isTaskComplete(task) {
   if(task.type === "join") return taskProgress[task.id] === true;
   if(task.type === "deposit") return (taskProgress.totalDeposited || 0) >= task.target;
@@ -135,7 +128,7 @@ function isTaskComplete(task) {
 }
 
 function completeTask(taskId, reward) {
-  if(completedTasks.includes(taskId)) return showPopup('alert', 'Already Done', 'Task already completed');
+  if(completedTasks.includes(taskId)) return showPopup('alert', 'Already Claimed', 'You already claimed this reward');
 
   const task = Object.values(tasksData).flat().find(t => t.id === taskId);
   if(!isTaskComplete(task)) return showPopup('error', 'Not Done Yet', 'Please complete the task first');
@@ -145,7 +138,7 @@ function completeTask(taskId, reward) {
   updateBalance();
   saveGame();
   tg.HapticFeedback.impactOccurred('light');
-  showPopup('success', 'Task Completed!', `+${reward} TON added to balance`);
+  showPopup('success', 'Reward Claimed!', `+${reward} TON added to balance`);
   renderTasks();
 }
 
@@ -164,28 +157,38 @@ function renderTasks() {
   }).join('');
 
   const tasks = tasksData[activeTaskTab].map(t => {
-    const done = completedTasks.includes(t.id);
-    const canClaim = isTaskComplete(t);
+    const claimed = completedTasks.includes(t.id); // already got reward
+    const canClaim = isTaskComplete(t); // eligible to claim
 
     let actionBtn = '';
     if(t.type === "join") {
-      const verifyBtn =!taskProgress[t.id]? `<button class="btn" style="width:80px; background:#fbbf24; color:#000; margin-right:8px" onclick="markTaskProgress('${t.id}')">Verify</button>` : '';
+      const verifyBtn =!taskProgress[t.id] &&!claimed? `<button class="btn" style="width:80px; background:#fbbf24; color:#000; margin-right:8px" onclick="markTaskProgress('${t.id}')">Verify</button>` : '';
       actionBtn = `<button class="btn" style="width:70px; background:#1e2a40; margin-right:8px" onclick="tg.openTelegramLink('${t.link}'); setTimeout(() => markTaskProgress('${t.id}'), 1000)">Join</button>${verifyBtn}`;
     }
     if(t.type === "deposit") {
       actionBtn = `<button class="btn" style="width:80px; background:#1e2a40; margin-right:8px" onclick="document.querySelector('[data-tab=wallet]').click()">Deposit</button>`;
     }
 
+    let claimBtnText = 'Claim';
+    let claimBtnDisabled =!canClaim;
+    let claimBtnStyle = canClaim? '' : 'opacity:0.4';
+
+    if(claimed) {
+      claimBtnText = 'DONE';
+      claimBtnDisabled = true;
+      claimBtnStyle = 'background:linear-gradient(90deg,#22c55e,#16a34a); opacity:1';
+    }
+
     return `<div class="card miner">
       <div class="miner-info">
         <h3>${t.title}</h3>
         <p>Reward: <b>${t.reward} TON</b> ${t.target? `• Target: ${t.target}` : ''}</p>
-        <p style="font-size:11px; color:${done? 'var(--accent)' : canClaim? '#fbbf24' : 'var(--muted)'}">${done? 'Completed' : canClaim? 'Ready to claim' : 'Incomplete'}</p>
+        <p style="font-size:11px; color:${claimed? '#22c55e' : canClaim? '#fbbf24' : 'var(--muted)'}">${claimed? 'Completed' : canClaim? 'Ready to claim' : 'Incomplete'}</p>
       </div>
       <div style="display:flex">
         ${actionBtn}
-        <button class="btn" style="width:80px; opacity:${canClaim? 1 : 0.4}" ${done ||!canClaim? 'disabled' : ''} onclick="completeTask('${t.id}', ${t.reward})">
-          ${done? 'DONE' : 'Claim'}
+        <button class="btn" style="width:80px; ${claimBtnStyle}" ${claimBtnDisabled? 'disabled' : ''} onclick="completeTask('${t.id}', ${t.reward})">
+          ${claimBtnText}
         </button>
       </div>
     </div>`
@@ -230,7 +233,7 @@ async function deposit() {
     const transaction = { validUntil: Math.floor(Date.now() / 1000) + 600, messages: [{ address: YOUR_WALLET_ADDRESS, amount: (amount * 1e9).toString() }] };
     await tonConnectUI.sendTransaction(transaction);
     balance += amount;
-    taskProgress.totalDeposited = (taskProgress.totalDeposited || 0) + amount; // Track deposits
+    taskProgress.totalDeposited = (taskProgress.totalDeposited || 0) + amount;
     updateBalance(); saveGame();
     showPopup('success', 'Deposit Successful!', `${amount} TON added to your balance`);
     document.getElementById('depositAmount').value = '';
