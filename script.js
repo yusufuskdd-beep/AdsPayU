@@ -11,9 +11,9 @@ let balance = 10.0;
 let lastTick = Date.now();
 let minerInstances = [];
 let nextInstanceId = 1;
-let completedTasks = []; // tasks that were CLAIMED
+let completedTasks = [];
 let activeTaskTab = 'oneTime';
-let taskProgress = {}; // progress to check eligibility
+let taskProgress = {};
 
 const minerTemplates = [
   { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000000424, img: "micro.png" },
@@ -45,7 +45,6 @@ const tasksData = {
   ]
 };
 
-// CUSTOM POPUP
 function showPopup(type, title, message) {
   const icons = { success: "✅", error: "❌", info: "💰", alert: "⚠️" };
   const popup = document.createElement('div');
@@ -118,7 +117,16 @@ function updateBalance() {
   if(el) el.innerText = `${balance.toFixed(4)} TON`;
 }
 
-// CHECK ELIGIBILITY
+function resetTasks() {
+  if(confirm("Reset all tasks? You will lose task progress but keep TON balance")) {
+    completedTasks = [];
+    taskProgress = {};
+    saveGame();
+    showPopup('success', 'Reset Done', 'All tasks reset. You can claim again now');
+    renderProfile();
+  }
+}
+
 function isTaskComplete(task) {
   if(task.type === "join") return taskProgress[task.id] === true;
   if(task.type === "deposit") return (taskProgress.totalDeposited || 0) >= task.target;
@@ -129,10 +137,8 @@ function isTaskComplete(task) {
 
 function completeTask(taskId, reward) {
   if(completedTasks.includes(taskId)) return showPopup('alert', 'Already Claimed', 'You already claimed this reward');
-
   const task = Object.values(tasksData).flat().find(t => t.id === taskId);
   if(!isTaskComplete(task)) return showPopup('error', 'Not Done Yet', 'Please complete the task first');
-
   completedTasks.push(taskId);
   balance += reward;
   updateBalance();
@@ -157,8 +163,8 @@ function renderTasks() {
   }).join('');
 
   const tasks = tasksData[activeTaskTab].map(t => {
-    const claimed = completedTasks.includes(t.id); // already got reward
-    const canClaim = isTaskComplete(t); // eligible to claim
+    const claimed = completedTasks.includes(t.id);
+    const canClaim = isTaskComplete(t);
 
     let actionBtn = '';
     if(t.type === "join") {
@@ -202,7 +208,6 @@ function switchTaskTab(tab) { activeTaskTab = tab; renderTasks(); }
 function renderWallet() {
   const isConnected = tonConnectUI && tonConnectUI.connected;
   const walletAddr = isConnected? tonConnectUI.account.address.slice(0,6) + "..." + tonConnectUI.account.address.slice(-4) : "Not Connected";
-
   document.getElementById('content').innerHTML = `
     <h2>Wallet</h2>
     <div class="card">
@@ -288,7 +293,18 @@ function renderReferral() {
 }
 
 function renderProfile() {
-  document.getElementById('content').innerHTML = `<h2>Profile</h2><div class="card"><p><b>Name:</b> ${user.first_name}</p><p><b>ID:</b> ${user.id}</p><p><b>Total Deposited:</b> ${(taskProgress.totalDeposited || 0).toFixed(2)} TON</p><p><b>Total Mined:</b> ${getTotalFarmed().toFixed(4)} TON</p></div>`;
+  document.getElementById('content').innerHTML = `<h2>Profile</h2>
+  <div class="card">
+    <p><b>Name:</b> ${user.first_name}</p>
+    <p><b>ID:</b> ${user.id}</p>
+    <p><b>Total Deposited:</b> ${(taskProgress.totalDeposited || 0).toFixed(2)} TON</p>
+    <p><b>Total Mined:</b> ${getTotalFarmed().toFixed(4)} TON</p>
+  </div>
+  <div class="card">
+    <h3>Developer Tools</h3>
+    <button class="btn" style="background:var(--danger)" onclick="resetTasks()">Reset All Tasks</button>
+    <p style="font-size:11px; color:var(--muted); margin-top:8px">Use this to test tasks again</p>
+  </div>`;
 }
 
 function claim() {
