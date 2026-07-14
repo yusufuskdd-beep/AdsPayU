@@ -15,7 +15,7 @@ let completedTasks = [];
 let activeTaskTab = 'oneTime';
 
 const minerTemplates = [
-  { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000000424, img: "⛏️" },
+  { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000000424, img: "⛏️" }, // Slow starter
   { id: 2, name: "Basic Miner", cost: 3, bonus: 0.15, rate: 0.000001331, img: "⚙️" },
   { id: 3, name: "Pro Miner", cost: 5, bonus: 0.20, rate: 0.000002315, img: "🚀" },
   { id: 4, name: "GPU Rig", cost: 10, bonus: 0.25, rate: 0.000004823, img: "🖥️" },
@@ -219,7 +219,7 @@ function renderShop() {
 }
 
 function renderReferral() {
-  const refLink = `https://t.me/your_bot?start=${user.id}`;
+  const refLink = `https://t.me/AdsPayU_bot?start=${user.id}`; // <-- UPDATED
   document.getElementById('content').innerHTML = `<h2>Referral</h2><div class="card"><p>Earn 10% from friends mining</p><input value="${refLink}" readonly style="width:100%;padding:8px;border-radius:8px;background:#1e2a40;border:1px solid #333;color:var(--text)"/><button class="btn" onclick="navigator.clipboard.writeText('${refLink}')">Copy Link</button></div>`;
 }
 
