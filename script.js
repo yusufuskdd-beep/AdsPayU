@@ -15,7 +15,7 @@ let completedTasks = [];
 let activeTaskTab = 'oneTime';
 
 const minerTemplates = [
-  { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000424, img: "micro.png" },
+  { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000000424, img: "micro.png" },
   { id: 2, name: "Basic Miner", cost: 3, bonus: 0.15, rate: 0.000001331, img: "basic.png" },
   { id: 3, name: "Pro Miner", cost: 5, bonus: 0.20, rate: 0.000002315, img: "pro.png" },
   { id: 4, name: "GPU Rig", cost: 10, bonus: 0.25, rate: 0.000004823, img: "gpu.png" },
