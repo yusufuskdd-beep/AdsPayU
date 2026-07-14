@@ -24,24 +24,17 @@ const minerTemplates = [
   { id: 6, name: "Quantum Miner", cost: 50, bonus: 0.35, rate: 0.000026042, img: "quantum.png" }
 ];
 
+// ONLY JOIN TASKS LEFT. You can add more here later
 const tasksData = {
   oneTime: [
     { id: 'join_channel', title: "Join Telegram Channel", reward: 0.1, link: "https://t.me/MinerAAds", type: "join" },
-    { id: 'join_chat', title: "Join Telegram Chat", reward: 0.1, link: "https://t.me/+EiLZpWqcoA8zYjU0", type: "join" },
-    { id: 'invite_3', title: "Invite 3 Friends", reward: 0.5, type: "referral", target: 3 },
-    { id: 'deposit_1', title: "Deposit 1 TON", reward: 0.05, type: "deposit", target: 1 },
-    { id: 'deposit_5', title: "Deposit 5 TON", reward: 0.5, type: "deposit", target: 5 },
-    { id: 'deposit_20', title: "Deposit 20 TON", reward: 1.5, type: "deposit", target: 20 },
-    { id: 'deposit_50', title: "Deposit 50 TON", reward: 3, type: "deposit", target: 50 }
+    { id: 'join_chat', title: "Join Telegram Chat", reward: 0.1, link: "https://t.me/+EiLZpWqcoA8zYjU0", type: "join" }
   ],
   ads: [
-    { id: 'watch_ad_1', title: "Watch Ad #1", reward: 0.01, type: "ad" },
-    { id: 'watch_ad_2', title: "Watch Ad #2", reward: 0.01, type: "ad" },
-    { id: 'watch_ad_3', title: "Watch Ad #3", reward: 0.01, type: "ad" }
+    // Add ad tasks here later
   ],
   partnership: [
-    { id: 'partner_dex', title: "Trade on Partner DEX", reward: 0.3, type: "manual" },
-    { id: 'partner_nft', title: "Mint Partner NFT", reward: 0.2, type: "manual" }
+    // Add partnership tasks here later
   ]
 };
 
@@ -129,9 +122,6 @@ function resetTasks() {
 
 function isTaskComplete(task) {
   if(task.type === "join") return taskProgress[task.id] === true;
-  if(task.type === "deposit") return (taskProgress.totalDeposited || 0) >= task.target;
-  if(task.type === "referral") return (taskProgress.referrals || 0) >= task.target;
-  if(task.type === "ad") return taskProgress[task.id] === true;
   return false;
 }
 
@@ -162,45 +152,49 @@ function renderTasks() {
     return `<button class="subtab-btn ${active}" onclick="switchTaskTab('${tab}')">${label}</button>`
   }).join('');
 
-  const tasks = tasksData[activeTaskTab].map(t => {
-    const claimed = completedTasks.includes(t.id);
-    const canClaim = isTaskComplete(t);
+  const tasks = tasksData[activeTaskTab];
 
-    let actionBtn = '';
-    if(t.type === "join") {
-      const verifyBtn =!taskProgress[t.id] &&!claimed? `<button class="btn" style="width:80px; background:#fbbf24; color:#000; margin-right:8px" onclick="markTaskProgress('${t.id}')">Verify</button>` : '';
-      actionBtn = `<button class="btn" style="width:70px; background:#1e2a40; margin-right:8px" onclick="tg.openTelegramLink('${t.link}'); setTimeout(() => markTaskProgress('${t.id}'), 1000)">Join</button>${verifyBtn}`;
-    }
-    if(t.type === "deposit") {
-      actionBtn = `<button class="btn" style="width:80px; background:#1e2a40; margin-right:8px" onclick="document.querySelector('[data-tab=wallet]').click()">Deposit</button>`;
-    }
+  let tasksHtml = '';
+  if(tasks.length === 0) {
+    tasksHtml = `<div class="card"><p style="text-align:center; color:var(--muted)">No tasks here yet. Add some in script.js</p></div>`;
+  } else {
+    tasksHtml = tasks.map(t => {
+      const claimed = completedTasks.includes(t.id);
+      const canClaim = isTaskComplete(t);
 
-    let claimBtnText = 'Claim';
-    let claimBtnDisabled =!canClaim;
-    let claimBtnStyle = canClaim? '' : 'opacity:0.4';
+      let actionBtn = '';
+      if(t.type === "join") {
+        const verifyBtn =!taskProgress[t.id] &&!claimed? `<button class="btn" style="width:80px; background:#fbbf24; color:#000; margin-right:8px" onclick="markTaskProgress('${t.id}')">Verify</button>` : '';
+        actionBtn = `<button class="btn" style="width:70px; background:#1e2a40; margin-right:8px" onclick="tg.openTelegramLink('${t.link}'); setTimeout(() => markTaskProgress('${t.id}'), 1000)">Join</button>${verifyBtn}`;
+      }
 
-    if(claimed) {
-      claimBtnText = 'DONE';
-      claimBtnDisabled = true;
-      claimBtnStyle = 'background:linear-gradient(90deg,#22c55e,#16a34a); opacity:1';
-    }
+      let claimBtnText = 'Claim';
+      let claimBtnDisabled =!canClaim;
+      let claimBtnStyle = canClaim? '' : 'opacity:0.4';
 
-    return `<div class="card miner">
-      <div class="miner-info">
-        <h3>${t.title}</h3>
-        <p>Reward: <b>${t.reward} TON</b> ${t.target? `• Target: ${t.target}` : ''}</p>
-        <p style="font-size:11px; color:${claimed? '#22c55e' : canClaim? '#fbbf24' : 'var(--muted)'}">${claimed? 'Completed' : canClaim? 'Ready to claim' : 'Incomplete'}</p>
-      </div>
-      <div style="display:flex">
-        ${actionBtn}
-        <button class="btn" style="width:80px; ${claimBtnStyle}" ${claimBtnDisabled? 'disabled' : ''} onclick="completeTask('${t.id}', ${t.reward})">
-          ${claimBtnText}
-        </button>
-      </div>
-    </div>`
-  }).join('');
+      if(claimed) {
+        claimBtnText = 'DONE';
+        claimBtnDisabled = true;
+        claimBtnStyle = 'background:linear-gradient(90deg,#22c55e,#16a34a); opacity:1';
+      }
 
-  document.getElementById('content').innerHTML = `<h2>Tasks</h2><div class="subtabs">${tabsHtml}</div>${tasks}`;
+      return `<div class="card miner">
+        <div class="miner-info">
+          <h3>${t.title}</h3>
+          <p>Reward: <b>${t.reward} TON</b></p>
+          <p style="font-size:11px; color:${claimed? '#22c55e' : canClaim? '#fbbf24' : 'var(--muted)'}">${claimed? 'Completed' : canClaim? 'Ready to claim' : 'Incomplete'}</p>
+        </div>
+        <div style="display:flex">
+          ${actionBtn}
+          <button class="btn" style="width:80px; ${claimBtnStyle}" ${claimBtnDisabled? 'disabled' : ''} onclick="completeTask('${t.id}', ${t.reward})">
+            ${claimBtnText}
+          </button>
+        </div>
+      </div>`
+    }).join('');
+  }
+
+  document.getElementById('content').innerHTML = `<h2>Tasks</h2><div class="subtabs">${tabsHtml}</div>${tasksHtml}`;
 }
 
 function switchTaskTab(tab) { activeTaskTab = tab; renderTasks(); }
@@ -238,7 +232,6 @@ async function deposit() {
     const transaction = { validUntil: Math.floor(Date.now() / 1000) + 600, messages: [{ address: YOUR_WALLET_ADDRESS, amount: (amount * 1e9).toString() }] };
     await tonConnectUI.sendTransaction(transaction);
     balance += amount;
-    taskProgress.totalDeposited = (taskProgress.totalDeposited || 0) + amount;
     updateBalance(); saveGame();
     showPopup('success', 'Deposit Successful!', `${amount} TON added to your balance`);
     document.getElementById('depositAmount').value = '';
@@ -297,13 +290,11 @@ function renderProfile() {
   <div class="card">
     <p><b>Name:</b> ${user.first_name}</p>
     <p><b>ID:</b> ${user.id}</p>
-    <p><b>Total Deposited:</b> ${(taskProgress.totalDeposited || 0).toFixed(2)} TON</p>
     <p><b>Total Mined:</b> ${getTotalFarmed().toFixed(4)} TON</p>
   </div>
   <div class="card">
     <h3>Developer Tools</h3>
     <button class="btn" style="background:var(--danger)" onclick="resetTasks()">Reset All Tasks</button>
-    <p style="font-size:11px; color:var(--muted); margin-top:8px">Use this to test tasks again</p>
   </div>`;
 }
 
