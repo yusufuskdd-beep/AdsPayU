@@ -139,7 +139,11 @@ function renderWallet() {
       <button class="btn" onclick="deposit()">Deposit Now</button>
     </div>
   `;
-  if(tonConnectUI) tonConnectUI.mount('#ton-connect-button');
+  
+  // FIX: wait for DOM before mounting tonconnect button
+  setTimeout(() => {
+    if(tonConnectUI) tonConnectUI.mount('#ton-connect-button');
+  }, 50);
 }
 
 async function disconnectWallet() {
