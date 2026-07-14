@@ -25,8 +25,8 @@ const minerTemplates = [
 
 const tasksData = {
   oneTime: [
-    { id: 'join_channel', title: "Join Telegram Channel", reward: 0.1 },
-    { id: 'follow_twitter', title: "Follow on Twitter", reward: 0.1 },
+    { id: 'join_channel', title: "Join Telegram Channel", reward: 0.1, link: "https://t.me/MinerAAds" },
+    { id: 'join_chat', title: "Join Telegram Chat", reward: 0.1, link: "https://t.me/+EiLZpWqcoA8zYjU0" },
     { id: 'invite_3', title: "Invite 3 Friends", reward: 0.5 }
   ],
   ads: [
@@ -120,6 +120,7 @@ function completeTask(taskId, reward) {
   balance += reward;
   updateBalance();
   saveGame();
+  tg.HapticFeedback.impactOccurred('light');
   showPopup('success', 'Task Completed!', `+${reward} TON added to balance`);
   renderTasks();
 }
@@ -130,10 +131,25 @@ function renderTasks() {
     const active = activeTaskTab === tab? 'active' : '';
     return `<button class="subtab-btn ${active}" onclick="switchTaskTab('${tab}')">${label}</button>`
   }).join('');
+
   const tasks = tasksData[activeTaskTab].map(t => {
     const done = completedTasks.includes(t.id);
-    return `<div class="card miner"><div class="miner-info"><h3>${t.title}</h3><p>Reward: <b>${t.reward} TON</b></p></div><button class="btn" ${done? 'disabled' : ''} onclick="completeTask('${t.id}', ${t.reward})">${done? 'DONE' : 'Claim'}</button></div>`
+    const joinBtn = t.link? `<button class="btn" style="width:80px; background:#1e2a40; margin-right:8px" onclick="tg.openTelegramLink('${t.link}')">Join</button>` : '';
+    
+    return `<div class="card miner">
+      <div class="miner-info">
+        <h3>${t.title}</h3>
+        <p>Reward: <b>${t.reward} TON</b></p>
+      </div>
+      <div style="display:flex">
+        ${joinBtn}
+        <button class="btn" style="width:80px" ${done? 'disabled' : ''} onclick="completeTask('${t.id}', ${t.reward})">
+          ${done? 'DONE' : 'Claim'}
+        </button>
+      </div>
+    </div>`
   }).join('');
+
   document.getElementById('content').innerHTML = `<h2>Tasks</h2><div class="subtabs">${tabsHtml}</div>${tasks}`;
 }
 
@@ -233,6 +249,7 @@ function claim() {
   const total = getTotalFarmed();
   balance += total; minerInstances.forEach(m => m.farmed = 0);
   updateBalance(); saveGame();
+  tg.HapticFeedback.impactOccurred('medium');
   showPopup('info', 'Claimed!', `${total.toFixed(4)} TON added to balance`);
   renderHome();
 }
