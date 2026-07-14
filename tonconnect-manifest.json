@@ -1,7 +1,5 @@
 {
-  "url": "https://yourdomain.com",
+  "url": "https://adspayu.vercel.app/",
   "name": "MinerAds",
-  "iconUrl": "https://yourdomain.com/icon.png",
-  "termsOfUseUrl": "https://yourdomain.com/terms",
-  "privacyPolicyUrl": "https://yourdomain.com/privacy"
+  "iconUrl": "https://adspayu.vercel.app/icon.png"
 }
