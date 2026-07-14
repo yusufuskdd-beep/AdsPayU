@@ -122,13 +122,16 @@ function switchTaskTab(tab) { activeTaskTab = tab; renderTasks(); }
 function renderWallet() {
   const isConnected = tonConnectUI && tonConnectUI.connected;
   const walletAddr = isConnected ? tonConnectUI.account.address.slice(0,6) + "..." + tonConnectUI.account.address.slice(-4) : "Not Connected";
+
   document.getElementById('content').innerHTML = `
     <h2>Wallet</h2>
     <div class="card">
       <h3>Wallet Status</h3>
       <p style="color:var(--muted); font-size:12px">Connected: <b>${walletAddr}</b></p>
-      <div id="ton-connect-button"></div>
+      <div id="ton-connect-button" style="margin-bottom:8px"></div>
+      ${isConnected ? `<button class="btn" style="background:var(--danger)" onclick="disconnectWallet()">Disconnect</button>` : ''}
     </div>
+
     <div class="card">
       <h3>Deposit TON</h3>
       <p style="color:var(--muted); font-size:12px">Send to: <b>${YOUR_WALLET_ADDRESS.slice(0,6)}...${YOUR_WALLET_ADDRESS.slice(-4)}</b></p>
@@ -137,6 +140,12 @@ function renderWallet() {
     </div>
   `;
   if(tonConnectUI) tonConnectUI.mount('#ton-connect-button');
+}
+
+async function disconnectWallet() {
+  await tonConnectUI.disconnect();
+  tg.showPopup({title: "Disconnected", message: "Wallet disconnected"});
+  renderWallet();
 }
 
 async function deposit() {
