@@ -1,30 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
   <title>MinerAds</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="style.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 </head>
 <body>
   <div class="header">
     <h1>MinerAds</h1>
-    <div class="balance" id="balance">0.0000 TON</div>
+    <div class="balance"><span id="balance">0.0000</span> TON</div>
   </div>
 
   <div id="content"></div>
 
   <div class="tabbar">
-    <button data-tab="home" class="active">Home</button>
-    <button data-tab="shop">Shop</button>
-    <button data-tab="tasks">Tasks</button>
-    <button data-tab="referral">Referral</button>
-    <button data-tab="wallet">Wallet</button>
-    <button data-tab="profile">Profile</button>
+    <button data-tab="home">🏠<br>Home</button>
+    <button data-tab="shop">🛒<br>Shop</button>
+    <button data-tab="tasks">📋<br>Tasks</button>
+    <button data-tab="referral">👥<br>Referral</button>
+    <button data-tab="wallet">💰<br>Wallet</button>
+    <button data-tab="profile">👤<br>Profile</button>
   </div>
 
-  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
