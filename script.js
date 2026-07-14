@@ -44,7 +44,7 @@ const tasksData = {
 let tonConnectUI;
 try {
   tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-    manifestUrl: 'https://ton-connect.github.io/demo-dapp-with-react-ui/tonconnect-manifest.json'
+    manifestUrl: 'https://https://adspayu.vercel.app/demo-dapp-with-react-ui/tonconnect-manifest.json'
   });
   
   tonConnectUI.onStatusChange(() => {
