@@ -2,9 +2,6 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 tg.setHeaderColor('#0a0f1a');
 
-// ADD GIGAPUB SDK
-const GIGAPUB_TOKEN = "YOUR_GIGAPUB_TOKEN_HERE"; // <-- put your token from gigapub.tech
-
 let user = tg.initDataUnsafe.user || { first_name: "Miner", id: "guest" };
 const SAVE_KEY = `minerads_save_${user.id}`;
 const TASK_KEY = `minerads_tasks_${user.id}`;
@@ -37,40 +34,26 @@ function showPopup(type, title, message) {
 // GIGAPUB REWARDED AD
 function showRewardedAd() {
   return new Promise((resolve, reject) => {
-    if(typeof window.showGigaPubAd!== 'function') {
-      showPopup('error', 'Ad Error', 'Ad network not loaded');
+    if(typeof window.showGiga!== 'function') {
+      showPopup('error', 'Ad Error', 'Ad network not loaded. Refresh.');
       return reject(false);
     }
-
-    window.showGigaPubAd({
-      token: GIGAPUB_TOKEN,
-      type: 'rewarded', // rewarded ad
-      onReward: () => {
+    window.showGiga()
+     .then(() => {
         showPopup('success', 'Ad Completed', 'Thanks for watching!');
         resolve(true);
-      },
-      onError: (err) => {
-        showPopup('error', 'Ad Failed', 'Please try again');
+      })
+     .catch(e => {
+        showPopup('error', 'Ad Skipped', 'You must watch the full ad to claim');
         reject(false);
-      },
-      onClose: () => {
-        reject(false);
-      }
-    });
+      });
   });
 }
 
 let tonConnectUI; try { tonConnectUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json' }); tonConnectUI.onStatusChange(() => { if(document.querySelector('.tabbar button.active')?.dataset.tab === 'wallet') renderWallet(); }); } catch(e){ console.error("TonConnect init error", e) }
 
 const tabs = { home: renderHome, shop: renderShop, tasks: renderTasks, referral: renderReferral, wallet: renderWallet, profile: renderProfile };
-document.addEventListener('DOMContentLoaded', () => { document.querySelectorAll('.tabbar button').forEach(btn => { btn.onclick = () => { document.querySelectorAll('.tabbar button').forEach(b => b.classList.remove('active')); btn.classList.add('active'); tabs[btn.dataset.tab](); } }); loadGigaPub(); });
-
-function loadGigaPub() {
-  const script = document.createElement('script');
-  script.src = 'https://cdn.gigapub.tech/sdk.js';
-  script.async = true;
-  document.head.appendChild(script);
-}
+document.addEventListener('DOMContentLoaded', () => { document.querySelectorAll('.tabbar button').forEach(btn => { btn.onclick = () => { document.querySelectorAll('.tabbar button').forEach(b => b.classList.remove('active')); btn.classList.add('active'); tabs[btn.dataset.tab](); } }); });
 
 function getTotalRate() { return minerInstances.reduce((sum, m) => sum + m.rate, 0); }
 function getTotalFarmed() { return minerInstances.reduce((sum, m) => sum + m.farmed, 0); }
@@ -117,6 +100,8 @@ async function claimMiner() {
   const total = getTotalFarmed();
   if(total < 0.000001) return showPopup('alert', 'Nothing to Claim', 'Your miners haven\'t mined anything yet');
 
+  showPopup('info', 'Loading Ad', 'Please watch the ad to claim your rewards');
+
   try {
     await showRewardedAd(); // Must watch GigaPub ad first
     balance += total;
@@ -126,7 +111,7 @@ async function claimMiner() {
     showPopup('info', 'Claimed!', `${total.toFixed(6)} TON added to balance`);
     renderHome();
   } catch {
-    showPopup('error', 'Ad Skipped', 'You must watch the full ad to claim');
+    // Ad was skipped
   }
 }
 
