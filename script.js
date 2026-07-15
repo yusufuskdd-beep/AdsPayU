@@ -7,13 +7,13 @@ const SAVE_KEY = `minerads_save_${user.id}`;
 const TASK_KEY = `minerads_tasks_${user.id}`;
 const YOUR_WALLET_ADDRESS = "UQD63olQ9L4WryJy8YJ9kEfO4gaen-GkbtvLy5-co2hkI4kv";
 const CLAIM_COOLDOWN = 8 * 3600 * 1000; // 8 hours
-const MAX_ADS_PER_DAY = 50; // NEW
-const AD_REWARD = 0.002; // NEW: 0.002 TON per ad
+const MAX_ADS_PER_DAY = 50;
+const AD_REWARD = 0.0002; // CHANGED
 
 let balance = 10.0; let lastTick = Date.now(); let minerInstances = []; let nextInstanceId = 1;
 let completedTasks = []; let activeTaskTab = 'oneTime'; let taskProgress = {};
 let lastDailyClaim = 0; let dailyStreak = 0; let lastMinerClaim = 0;
-let adsWatchedToday = 0; let lastAdReset = 0; // NEW
+let adsWatchedToday = 0; let lastAdReset = 0;
 
 const minerTemplates = [
   { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000000424, img: "micro.png" },
@@ -30,7 +30,7 @@ const tasksData = {
     { id: 'join_chat', title: "Join Telegram Chat", reward: 0.1, link: "https://t.me/+EiLZpWqcoA8zYjU0", type: "join" }
   ],
   ads: [
-    { id: 'watch_ad', title: "Watch Rewarded Ad", reward: AD_REWARD, type: "ad" } // NEW
+    { id: 'watch_ad', title: "Watch Rewarded Ad", reward: AD_REWARD, type: "ad" }
   ],
   partnership: []
 };
@@ -51,12 +51,8 @@ function showRewardedAd() {
       return reject(false);
     }
     window.showGiga()
-    .then(() => {
-        resolve(true);
-      })
-    .catch(e => {
-        reject(false);
-      });
+  .then(() => { resolve(true); })
+  .catch(e => { reject(false); });
   });
 }
 
@@ -73,14 +69,11 @@ function loadGame() {
     const data = JSON.parse(save); balance = data.balance || 10.0; lastTick = data.lastTick || Date.now(); minerInstances = data.minerInstances || [];
     nextInstanceId = data.nextInstanceId || 1; taskProgress = data.taskProgress || {};
     lastDailyClaim = data.lastDailyClaim || 0; dailyStreak = data.dailyStreak || 0; lastMinerClaim = data.lastMinerClaim || 0;
-    adsWatchedToday = data.adsWatchedToday || 0; lastAdReset = data.lastAdReset || 0; // NEW
+    adsWatchedToday = data.adsWatchedToday || 0; lastAdReset = data.lastAdReset || 0;
     minerInstances.forEach(m => { const template = minerTemplates.find(t => t.id === m.templateId); if (template) { m.img = template.img; m.rate = template.rate; } });
     const offlineSeconds = (Date.now() - lastTick) / 1000; minerInstances.forEach(m => { m.farmed += m.rate * offlineSeconds; });
-
-    // Reset ad count daily
     const hoursSinceAdReset = (Date.now() - lastAdReset) / 1000 / 3600;
     if(hoursSinceAdReset >= 24) { adsWatchedToday = 0; lastAdReset = Date.now(); }
-
     const daysSinceLastClaim = (Date.now() - lastDailyClaim) / 1000 / 3600 / 24;
     if(daysSinceLastClaim > 1.5 && lastDailyClaim > 0) dailyStreak = 0;
   }
@@ -92,18 +85,33 @@ function updateBalance() { const el = document.getElementById('balance'); if(el)
 
 function getDailyReward() { return Math.min(0.001 + (dailyStreak * 0.007), 0.05); }
 
-function claimDaily() {
+// DAILY CLAIM WITH AD
+async function claimDaily() {
   const now = Date.now();
   const hoursSinceLastClaim = (now - lastDailyClaim) / 1000 / 3600;
   if(hoursSinceLastClaim < 20) { const hoursLeft = 20 - hoursSinceLastClaim; return showPopup('alert', 'Come Back Later', `Next claim in ${hoursLeft.toFixed(1)}h`); }
-  const daysSinceLastClaim = hoursSinceLastClaim / 24;
-  if(daysSinceLastClaim > 1.5) dailyStreak = 0;
-  dailyStreak = Math.min(dailyStreak + 1, 7); const reward = getDailyReward();
-  balance += reward; lastDailyClaim = now; updateBalance(); saveGame(); tg.HapticFeedback.impactOccurred('medium');
-  showPopup('success', 'Daily Reward!', `+${reward.toFixed(4)} TON\nStreak: ${dailyStreak} days 🔥`); renderHome();
+
+  showPopup('info', 'Loading Ad', 'Watch ad to claim daily reward');
+
+  try {
+    await showRewardedAd(); // MUST WATCH AD FIRST
+    const daysSinceLastClaim = hoursSinceLastClaim / 24;
+    if(daysSinceLastClaim > 1.5) dailyStreak = 0;
+    dailyStreak = Math.min(dailyStreak + 1, 7);
+    const reward = getDailyReward();
+    balance += reward;
+    lastDailyClaim = now;
+    updateBalance();
+    saveGame();
+    tg.HapticFeedback.impactOccurred('medium');
+    showPopup('success', 'Daily Reward!', `+${reward.toFixed(4)} TON\nStreak: ${dailyStreak} days 🔥`);
+    renderHome();
+  } catch {
+    showPopup('error', 'Ad Skipped', 'You must watch the full ad to claim');
+  }
 }
 
-// CLAIM WITH GIGAPUB AD
+// NORMAL CLAIM WITH AD
 async function claimMiner() {
   const now = Date.now();
   const timeLeft = CLAIM_COOLDOWN - (now - lastMinerClaim);
@@ -126,21 +134,19 @@ async function claimMiner() {
   } catch {}
 }
 
-// NEW: WATCH AD TASK
+// WATCH AD TASK
 async function watchAdTask() {
   if(adsWatchedToday >= MAX_ADS_PER_DAY) {
     return showPopup('alert', 'Daily Limit Reached', `You watched ${MAX_ADS_PER_DAY}/50 ads today. Come back tomorrow.`);
   }
-
   showPopup('info', 'Loading Ad', 'Please watch the ad to earn');
-
   try {
     await showRewardedAd();
     adsWatchedToday++;
     balance += AD_REWARD;
     updateBalance(); saveGame(); tg.HapticFeedback.impactOccurred('light');
     showPopup('success', 'Earned!', `+${AD_REWARD} TON\nProgress: ${adsWatchedToday}/${MAX_ADS_PER_DAY}`);
-    renderTasks(); // refresh progress bar
+    renderTasks();
   } catch {
     showPopup('error', 'Ad Skipped', 'You must watch the full ad to earn');
   }
@@ -174,11 +180,11 @@ function renderHome() {
     <div class="card"><h2>Welcome, ${user.first_name}</h2><p style="color:var(--muted)">All miners ROI in 30 days + bonus</p></div>
     <div class="card">
       <h3>🎁 Daily Reward</h3>
-      <p style="color:var(--muted)">Claim every 20 hours. Streak increases reward!</p>
+      <p style="color:var(--muted)">Claim every 20 hours. Watch ad to claim!</p>
       ${streakHtml}
       <p>Next Reward: <b>${reward.toFixed(4)} TON</b></p>
       <button class="btn" ${!canClaimDaily? 'disabled' : ''} onclick="claimDaily()">
-        ${canClaimDaily? `CLAIM ${reward.toFixed(4)} TON` : 'CLAIMED TODAY'}
+        ${canClaimDaily? `WATCH AD & CLAIM ${reward.toFixed(4)} TON` : 'CLAIMED TODAY'}
       </button>
     </div>
     <div class="card">
@@ -196,7 +202,7 @@ function renderHome() {
 }
 
 function resetTasks() { if(confirm("Reset all tasks?")) { completedTasks = []; taskProgress = {}; adsWatchedToday = 0; saveGame(); showPopup('success', 'Reset Done', 'All tasks reset'); renderProfile(); } }
-function isTaskComplete(task) { if(task.type === "join") return taskProgress[task.id] === true; if(task.type === "ad") return false; return false; } // ads never "complete"
+function isTaskComplete(task) { if(task.type === "join") return taskProgress[task.id] === true; if(task.type === "ad") return false; return false; }
 function completeTask(taskId, reward) {
   if(completedTasks.includes(taskId)) return showPopup('alert', 'Already Claimed', 'You already claimed this reward');
   const task = Object.values(tasksData).flat().find(t => t.id === taskId); if(!isTaskComplete(task)) return showPopup('error', 'Not Done Yet', 'Please complete the task first');
