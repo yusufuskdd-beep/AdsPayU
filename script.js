@@ -2,14 +2,18 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 tg.setHeaderColor('#0a0f1a');
 
+// ADD GIGAPUB SDK
+const GIGAPUB_TOKEN = "YOUR_GIGAPUB_TOKEN_HERE"; // <-- put your token from gigapub.tech
+
 let user = tg.initDataUnsafe.user || { first_name: "Miner", id: "guest" };
 const SAVE_KEY = `minerads_save_${user.id}`;
 const TASK_KEY = `minerads_tasks_${user.id}`;
 const YOUR_WALLET_ADDRESS = "UQD63olQ9L4WryJy8YJ9kEfO4gaen-GkbtvLy5-co2hkI4kv";
+const CLAIM_COOLDOWN = 8 * 3600 * 1000; // 8 hours
 
 let balance = 10.0; let lastTick = Date.now(); let minerInstances = []; let nextInstanceId = 1;
 let completedTasks = []; let activeTaskTab = 'oneTime'; let taskProgress = {};
-let lastDailyClaim = 0; let dailyStreak = 0; // NEW
+let lastDailyClaim = 0; let dailyStreak = 0; let lastMinerClaim = 0;
 
 const minerTemplates = [
   { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000000424, img: "micro.png" },
@@ -30,10 +34,43 @@ function showPopup(type, title, message) {
   document.body.appendChild(popup); setTimeout(() => { if(popup.parentNode) popup.remove() }, 3000);
 }
 
+// GIGAPUB REWARDED AD
+function showRewardedAd() {
+  return new Promise((resolve, reject) => {
+    if(typeof window.showGigaPubAd!== 'function') {
+      showPopup('error', 'Ad Error', 'Ad network not loaded');
+      return reject(false);
+    }
+
+    window.showGigaPubAd({
+      token: GIGAPUB_TOKEN,
+      type: 'rewarded', // rewarded ad
+      onReward: () => {
+        showPopup('success', 'Ad Completed', 'Thanks for watching!');
+        resolve(true);
+      },
+      onError: (err) => {
+        showPopup('error', 'Ad Failed', 'Please try again');
+        reject(false);
+      },
+      onClose: () => {
+        reject(false);
+      }
+    });
+  });
+}
+
 let tonConnectUI; try { tonConnectUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json' }); tonConnectUI.onStatusChange(() => { if(document.querySelector('.tabbar button.active')?.dataset.tab === 'wallet') renderWallet(); }); } catch(e){ console.error("TonConnect init error", e) }
 
 const tabs = { home: renderHome, shop: renderShop, tasks: renderTasks, referral: renderReferral, wallet: renderWallet, profile: renderProfile };
-document.addEventListener('DOMContentLoaded', () => { document.querySelectorAll('.tabbar button').forEach(btn => { btn.onclick = () => { document.querySelectorAll('.tabbar button').forEach(b => b.classList.remove('active')); btn.classList.add('active'); tabs[btn.dataset.tab](); } }); });
+document.addEventListener('DOMContentLoaded', () => { document.querySelectorAll('.tabbar button').forEach(btn => { btn.onclick = () => { document.querySelectorAll('.tabbar button').forEach(b => b.classList.remove('active')); btn.classList.add('active'); tabs[btn.dataset.tab](); } }); loadGigaPub(); });
+
+function loadGigaPub() {
+  const script = document.createElement('script');
+  script.src = 'https://cdn.gigapub.tech/sdk.js';
+  script.async = true;
+  document.head.appendChild(script);
+}
 
 function getTotalRate() { return minerInstances.reduce((sum, m) => sum + m.rate, 0); }
 function getTotalFarmed() { return minerInstances.reduce((sum, m) => sum + m.farmed, 0); }
@@ -42,56 +79,77 @@ function loadGame() {
   const save = localStorage.getItem(SAVE_KEY); if (save) {
     const data = JSON.parse(save); balance = data.balance || 10.0; lastTick = data.lastTick || Date.now(); minerInstances = data.minerInstances || [];
     nextInstanceId = data.nextInstanceId || 1; taskProgress = data.taskProgress || {};
-    lastDailyClaim = data.lastDailyClaim || 0; dailyStreak = data.dailyStreak || 0; // NEW
+    lastDailyClaim = data.lastDailyClaim || 0; dailyStreak = data.dailyStreak || 0; lastMinerClaim = data.lastMinerClaim || 0;
     minerInstances.forEach(m => { const template = minerTemplates.find(t => t.id === m.templateId); if (template) { m.img = template.img; m.rate = template.rate; } });
     const offlineSeconds = (Date.now() - lastTick) / 1000; minerInstances.forEach(m => { m.farmed += m.rate * offlineSeconds; });
-
-    // Reset streak if missed a day
     const daysSinceLastClaim = (Date.now() - lastDailyClaim) / 1000 / 3600 / 24;
     if(daysSinceLastClaim > 1.5 && lastDailyClaim > 0) dailyStreak = 0;
   }
   const taskSave = localStorage.getItem(TASK_KEY); if(taskSave) completedTasks = JSON.parse(taskSave); saveGame();
 }
 
-function saveGame() { localStorage.setItem(SAVE_KEY, JSON.stringify({ balance, lastTick: Date.now(), minerInstances, nextInstanceId, taskProgress, lastDailyClaim, dailyStreak })); localStorage.setItem(TASK_KEY, JSON.stringify(completedTasks)); }
+function saveGame() { localStorage.setItem(SAVE_KEY, JSON.stringify({ balance, lastTick: Date.now(), minerInstances, nextInstanceId, taskProgress, lastDailyClaim, dailyStreak, lastMinerClaim })); localStorage.setItem(TASK_KEY, JSON.stringify(completedTasks)); }
 function updateBalance() { const el = document.getElementById('balance'); if(el) el.innerText = `${balance.toFixed(4)} TON`; }
 
-function getDailyReward() {
-  return Math.min(0.001 + (dailyStreak * 0.007), 0.05); // Day 0=0.001, Day 6=0.05
-}
+function getDailyReward() { return Math.min(0.001 + (dailyStreak * 0.007), 0.05); }
 
 function claimDaily() {
   const now = Date.now();
   const hoursSinceLastClaim = (now - lastDailyClaim) / 1000 / 3600;
+  if(hoursSinceLastClaim < 20) { const hoursLeft = 20 - hoursSinceLastClaim; return showPopup('alert', 'Come Back Later', `Next claim in ${hoursLeft.toFixed(1)}h`); }
+  const daysSinceLastClaim = hoursSinceLastClaim / 24;
+  if(daysSinceLastClaim > 1.5) dailyStreak = 0;
+  dailyStreak = Math.min(dailyStreak + 1, 7); const reward = getDailyReward();
+  balance += reward; lastDailyClaim = now; updateBalance(); saveGame(); tg.HapticFeedback.impactOccurred('medium');
+  showPopup('success', 'Daily Reward!', `+${reward.toFixed(4)} TON\nStreak: ${dailyStreak} days 🔥`); renderHome();
+}
 
-  if(hoursSinceLastClaim < 20) { // 20h cooldown instead of 24h to be forgiving
-    const hoursLeft = 20 - hoursSinceLastClaim;
-    return showPopup('alert', 'Come Back Later', `Next claim in ${hoursLeft.toFixed(1)}h`);
+// CLAIM WITH GIGAPUB AD
+async function claimMiner() {
+  const now = Date.now();
+  const timeLeft = CLAIM_COOLDOWN - (now - lastMinerClaim);
+  if(timeLeft > 0) {
+    const hours = Math.floor(timeLeft / 3600000);
+    const mins = Math.floor((timeLeft % 3600000) / 60000);
+    return showPopup('alert', 'Too Early', `Next claim in ${hours}h ${mins}m`);
   }
 
-  const daysSinceLastClaim = hoursSinceLastClaim / 24;
-  if(daysSinceLastClaim > 1.5) dailyStreak = 0; // broke streak
+  const total = getTotalFarmed();
+  if(total < 0.000001) return showPopup('alert', 'Nothing to Claim', 'Your miners haven\'t mined anything yet');
 
-  dailyStreak = Math.min(dailyStreak + 1, 7);
-  const reward = getDailyReward();
+  try {
+    await showRewardedAd(); // Must watch GigaPub ad first
+    balance += total;
+    minerInstances.forEach(m => m.farmed = 0);
+    lastMinerClaim = now;
+    updateBalance(); saveGame(); tg.HapticFeedback.impactOccurred('medium');
+    showPopup('info', 'Claimed!', `${total.toFixed(6)} TON added to balance`);
+    renderHome();
+  } catch {
+    showPopup('error', 'Ad Skipped', 'You must watch the full ad to claim');
+  }
+}
 
-  balance += reward;
-  lastDailyClaim = now;
-  updateBalance(); saveGame(); tg.HapticFeedback.impactOccurred('medium');
-  showPopup('success', 'Daily Reward!', `+${reward.toFixed(4)} TON\nStreak: ${dailyStreak} days 🔥`);
-  renderHome();
+function getClaimCooldownText() {
+  const now = Date.now();
+  const timeLeft = CLAIM_COOLDOWN - (now - lastMinerClaim);
+  if(timeLeft <= 0) return "CLAIM NOW + WATCH AD";
+  const hours = Math.floor(timeLeft / 3600000);
+  const mins = Math.floor((timeLeft % 3600000) / 60000);
+  return `CLAIM IN ${hours}h ${mins}m`;
 }
 
 function renderHome() {
   const totalRate = getTotalRate(); const totalFarmed = getTotalFarmed();
   const reward = getDailyReward();
   const hoursSinceLastClaim = (Date.now() - lastDailyClaim) / 1000 / 3600;
-  const canClaim = hoursSinceLastClaim >= 20;
+  const canClaimDaily = hoursSinceLastClaim >= 20;
+  const canClaimMiner = (Date.now() - lastMinerClaim) >= CLAIM_COOLDOWN;
 
   let streakHtml = '<div class="streak-box">';
   for(let i=1; i<=7; i++) {
     const active = i <= dailyStreak? 'active' : '';
-    const today = i === dailyStreak + 1 && canClaim? 'today' : '';
+    const today = i === dailyStreak + 1 && canClaimDaily? 'today' : '';
     streakHtml += `<div class="streak-day ${active} ${today}">Day ${i}<br>${(0.001 + ((i-1)*0.007)).toFixed(3)}</div>`;
   }
   streakHtml += '</div>';
@@ -104,12 +162,22 @@ function renderHome() {
       <p style="color:var(--muted)">Claim every 20 hours. Streak increases reward!</p>
       ${streakHtml}
       <p>Next Reward: <b>${reward.toFixed(4)} TON</b></p>
-      <button class="btn" ${!canClaim? 'disabled' : ''} onclick="claimDaily()">
-        ${canClaim? `CLAIM ${reward.toFixed(4)} TON` : 'CLAIMED TODAY'}
+      <button class="btn" ${!canClaimDaily? 'disabled' : ''} onclick="claimDaily()">
+        ${canClaimDaily? `CLAIM ${reward.toFixed(4)} TON` : 'CLAIMED TODAY'}
       </button>
     </div>
 
-    <div class="card"><h3>⛏️ Farming</h3><p>Rate: <b>${(totalRate*86400).toFixed(4)} TON/day</b></p><p>Farmed: <b id="farmedTotal">${totalFarmed.toFixed(6)}</b> TON</p><div class="progress"><div class="progress-bar" style="width:100%"></div></div><button class="btn" style="margin-top:12px" onclick="claim()">Claim</button></div>
+    <div class="card">
+      <h3>⛏️ Mining Rewards</h3>
+      <p>Rate: <b>${(totalRate*86400).toFixed(4)} TON/day</b></p>
+      <p>Farmed: <b id="farmedTotal">${totalFarmed.toFixed(6)}</b> TON</p>
+      <div class="progress"><div class="progress-bar" style="width:100%"></div></div>
+      <button class="btn" style="margin-top:12px; background:linear-gradient(90deg,#fbbf24,#f59e0b)" ${!canClaimMiner? 'disabled' : ''} onclick="claimMiner()">
+        ${getClaimCooldownText()}
+      </button>
+      <p style="font-size:11px; color:var(--muted); text-align:center; margin-top:8px">Watch 1 GigaPub ad to claim</p>
+    </div>
+
     <div class="card"><h3>Your Miners</h3>${minerInstances.length > 0? minerInstances.map(m => `<div class="miner-unit" style="display:flex; align-items:center; gap:10px; margin-bottom:8px"><img src="${m.img}" class="miner-img" style="width:40px; height:40px"/><div><h4 style="margin:0">${m.name} #${m.instanceId}</h4><p style="color:var(--muted); font-size:12px; margin:0">${(m.rate*86400).toFixed(4)} TON/day • Farmed: <span id="farmed-${m.instanceId}">${m.farmed.toFixed(6)}</span> TON</p></div></div>`).join('') : '<p style="color:var(--muted)">No miners yet</p>'}</div>
   `;
 }
@@ -140,6 +208,5 @@ function buyMiner(templateId) { const template = minerTemplates.find(x => x.id =
 function renderShop() { document.getElementById('content').innerHTML = `<h2>Shop</h2>${minerTemplates.map(t => { const ownedCount = minerInstances.filter(m => m.templateId === t.id).length; const payout = (t.cost * (1 + t.bonus)).toFixed(2); const disabled = ownedCount >= 3? 'disabled' : ''; return `<div class="card miner"><img src="${t.img}" class="miner-img" /><div class="miner-info"><h3>${t.name}</h3><p>${(t.rate*86400).toFixed(4)} TON/day • Owned: ${ownedCount}/3</p><p>30d Payout: <b>${payout} TON</b> +${(t.bonus*100)}%</p><p><b>${t.cost} TON</b></p></div><button class="btn" style="width:80px" ${disabled} onclick="buyMiner(${t.id})">${disabled? 'MAX' : 'Buy'}</button></div>` }).join('')}`; }
 function renderReferral() { const refLink = `https://t.me/AdsPayU_bot?start=${user.id}`; document.getElementById('content').innerHTML = `<h2>Referral</h2><div class="card"><p>Earn 10% from friends mining</p><input value="${refLink}" readonly style="width:100%;padding:8px;border-radius:8px;background:#1e2a40;border:1px solid #333;color:var(--text)"/><button class="btn" onclick="navigator.clipboard.writeText('${refLink}')">Copy Link</button></div>`; }
 function renderProfile() { document.getElementById('content').innerHTML = `<h2>Profile</h2><div class="card"><p><b>Name:</b> ${user.first_name}</p><p><b>ID:</b> ${user.id}</p><p><b>Total Mined:</b> ${getTotalFarmed().toFixed(4)} TON</p><p><b>Daily Streak:</b> ${dailyStreak} days</p></div><div class="card"><h3>Developer Tools</h3><button class="btn" style="background:var(--danger)" onclick="resetTasks()">Reset All Tasks</button></div>`; }
-function claim() { const total = getTotalFarmed(); balance += total; minerInstances.forEach(m => m.farmed = 0); updateBalance(); saveGame(); tg.HapticFeedback.impactOccurred('medium'); showPopup('info', 'Claimed!', `${total.toFixed(4)} TON added to balance`); renderHome(); }
 
 loadGame(); updateBalance(); renderHome(); document.querySelector('.tabbar button[data-tab="home"]').classList.add('active'); setInterval(farmTick, 1000); setInterval(saveGame, 3000);
