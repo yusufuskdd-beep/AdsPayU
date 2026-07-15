@@ -50,7 +50,7 @@ function showRewardedAd() {
       return reject(false);
     }
     window.showGiga()
- .then(() => {
+.then(() => {
         adsWatchedToday++;
         balance += AD_REWARD;
         updateBalance();
@@ -58,14 +58,14 @@ function showRewardedAd() {
         tg.HapticFeedback.impactOccurred('light');
         resolve(true);
       })
- .catch(e => { reject(false); });
+.catch(e => { reject(false); });
   });
 }
 
 let tonConnectUI; try { tonConnectUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json' }); tonConnectUI.onStatusChange(() => { if(document.querySelector('.tabbar button.active')?.dataset.tab === 'wallet') renderWallet(); }); } catch(e){ console.error("TonConnect init error", e) }
 
 const tabs = { home: renderHome, shop: renderShop, tasks: renderTasks, referral: renderReferral, wallet: renderWallet, profile: renderProfile };
-document.addEventListener('DOMContentLoaded', () => { document.querySelectorAll('.tabbar button').forEach(btn => { btn.onclick = () => { document.querySelectorAll('.tabbar button').forEach(b => b.classList.remove('active')); btn.classList.add('active'); tabs[btn.dataset.tab](); } }); });
+document.addEventListener('DOMContentLoaded', () => { document.querySelectorAll('.tabbar button').forEach(btn => { btn.onclick = () => { document.querySelectorAll('.tabbar button').forEach(b => b.classList.remove('active')); btn.classList.add('active'); tabs[btn.dataset.tab](); } });
 
 function getTotalRate() { return minerInstances.reduce((sum, m) => sum + m.rate, 0); }
 function getTotalFarmed() { return minerInstances.reduce((sum, m) => sum + m.farmed, 0); }
@@ -205,7 +205,7 @@ function renderHome() {
   `;
 }
 
-function resetTasks() { if(confirm("Reset all tasks?")) { completedTasks = []; taskProgress = {}; adsWatchedToday = 0; saveGame(); showPopup('success', 'Reset Done', 'All tasks reset'); renderProfile(); } }
+function resetTasks() { if(confirm("Reset all tasks?")) { completedTasks = []; taskProgress = {}; adsWatchedToday = 0; saveGame(); showPopup('success', 'Reset Done', 'All tasks reset'); renderProfile(); }
 function isTaskComplete(task) { if(task.type === "join") return taskProgress[task.id] === true; if(task.type === "ad") return false; return false; }
 function completeTask(taskId, reward) {
   if(completedTasks.includes(taskId)) return showPopup('alert', 'Already Claimed', 'You already claimed this reward');
@@ -276,8 +276,17 @@ function renderReferral() { const refLink = `https://t.me/AdsPayU_bot?start=${us
 
 function renderWallet() { const isConnected = tonConnectUI && tonConnectUI.connected; const walletAddr = isConnected? tonConnectUI.account.address.slice(0,6) + "..." + tonConnectUI.account.address.slice(-4) : "Not Connected"; document.getElementById('content').innerHTML = `<h2>Wallet</h2><div class="card"><h3>Wallet Status</h3><p style="color:var(--muted); font-size:12px">Connected: <b>${walletAddr}</b></p><div id="ton-connect-button" style="margin-bottom:8px"></div>${!isConnected? `<button class="btn" onclick="connectWallet()">Connect Wallet</button>` : ''}${isConnected? `<button class="btn" style="background:var(--danger)" onclick="disconnectWallet()">Disconnect</button>` : ''}</div><div class="card"><h3>Deposit TON</h3><p style="color:var(--muted); font-size:12px">Send to: <b>${YOUR_WALLET_ADDRESS.slice(0,6)}...${YOUR_WALLET_ADDRESS.slice(-4)}</b></p><input id="depositAmount" type="number" placeholder="Amount in TON" step="0.1" min="0.1" style="width:100%;padding:12px;border-radius:12px;background:rgba(0,0,0,0.2);border:1px solid var(--card-border);color:var(--text);margin:8px 0"/><button class="btn" onclick="deposit()">Deposit Now</button></div>`; setTimeout(() => { if(tonConnectUI) tonConnectUI.mount('#ton-connect-button'); }, 100); }
 async function connectWallet() { if(tonConnectUI) await tonConnectUI.connectWallet(); } async function disconnectWallet() { await tonConnectUI.disconnect(); showPopup('info', 'Disconnected', 'Wallet disconnected'); renderWallet(); }
-async function deposit() { const amount = parseFloat(document.getElementById('depositAmount').value); if(!amount || amount < 0.1) return showPopup('error', 'Invalid Amount', 'Min deposit 0.1 TON'); if(!tonConnectUI ||!tonConnectUI.connected) return showPopup('error', 'No Wallet', 'Please connect wallet first'); try { const transaction = { validUntil: Math.floor(Date.now() / 1000) + 600, messages: [{ address: YOUR_WALLET_ADDRESS, amount: (amount * 1e9).toString() }] }; await tonConnectUI.sendTransaction(transaction); balance += amount; updateBalance(); saveGame(); showPopup('success', 'Deposit Successful!', `${amount} TON added to your balance`); document.getElementById('depositAmount').value = ''; } catch(e) { showPopup('error', 'Failed', 'Transaction cancelled or failed'); } }
+async function deposit() { const amount = parseFloat(document.getElementById('depositAmount').value); if(!amount || amount < 0.1) return showPopup('error', 'Invalid Amount', 'Min deposit 0.1 TON'); if(!tonConnectUI ||!tonConnectUI.connected) return showPopup('error', 'No Wallet', 'Please connect wallet first'); try { const transaction = { validUntil: Math.floor(Date.now() / 1000) + 600, messages: [{ address: YOUR_WALLET_ADDRESS, amount: (amount * 1e9).toString() }] }; await tonConnectUI.sendTransaction(transaction); balance += amount; updateBalance(); saveGame(); showPopup('success', 'Deposit Successful!', `${amount} TON added to your balance`); document.getElementById('depositAmount').value = ''; } catch(e) { showPopup('error', 'Failed', 'Transaction cancelled or failed'); }
 
 function farmTick() { const now = Date.now(); const delta = (now - lastTick) / 1000; lastTick = now; minerInstances.forEach(m => { m.farmed += m.rate * delta; }); const totalEl = document.getElementById('farmedTotal'); if (totalEl) totalEl.innerText = getTotalFarmed().toFixed(6); minerInstances.forEach(m => { const el = document.getElementById(`farmed-${m.instanceId}`); if (el) el.innerText = m.farmed.toFixed(6); }); }
 
-function renderProfile() { document.getElementById('content').innerHTML = `<h2>Profile</h2><div class="card"><p><b>Name:</b> ${user.first_name}</p><p><b>ID:</b> ${user.id}</p><p><b>Total Mined:</b> ${getTotalFarmed().toFixed(4)} TON</p><p><b>Daily Streak:</b> ${dailyStreak} days</p><p><b>Ads Watched:</b> ${adsWatchedToday}/${MAX_ADS_PER_DAY}</p></div><div class="card"><h3>Developer Tools</h3><button class=
+// FIXED THIS FUNCTION - was cut off
+function renderProfile() { 
+  document.getElementById('content').innerHTML = `
+    <h2>Profile</h2>
+    <div class="card">
+      <p><b>Name:</b> ${user.first_name}</p>
+      <p><b>ID:</b> ${user.id}</p>
+      <p><b>Total Mined:</b> ${getTotalFarmed().toFixed(4)} TON</p>
+      <p><b>Daily Streak:</b> ${dailyStreak} days</p>
+      <p><b>Ads Watched:</b> ${adsWatchedToday}/${MAX_ADS
