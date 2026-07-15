@@ -14,7 +14,7 @@ const AD_REWARD = 0.002;
 
 // UTC HELPERS
 function getUTCTimestamp() { return Date.now(); }
-function getUTCDateString(timestamp) { 
+function getUTCDateString(timestamp) {
   const d = new Date(timestamp);
   return `${d.getUTCFullYear()}-${d.getUTCMonth()+1}-${d.getUTCDate()}`;
 }
@@ -91,9 +91,9 @@ function getTotalFarmed() { return minerInstances.reduce((sum, m) => sum + m.far
 
 function checkDailyReset() { // UTC DAILY RESET
   const todayUTC = getUTCDateString(getUTCTimestamp());
-  if(lastAdResetDate !== todayUTC) { 
-    adsWatchedToday = 0; 
-    lastAdResetDate = todayUTC; 
+  if(lastAdResetDate!== todayUTC) {
+    adsWatchedToday = 0;
+    lastAdResetDate = todayUTC;
   }
 }
 
@@ -114,8 +114,8 @@ function loadGame() {
       const lastClaimDate = getUTCDateString(lastDailyClaim);
       const today = getUTCDateString(getUTCTimestamp());
       const yesterday = getUTCDateString(getUTCTimestamp() - 24*3600*1000);
-      
-      if(lastClaimDate !== today && lastClaimDate !== yesterday) {
+
+      if(lastClaimDate!== today && lastClaimDate!== yesterday) {
         dailyStreak = 0;
       }
     }
@@ -123,12 +123,12 @@ function loadGame() {
   const taskSave = localStorage.getItem(TASK_KEY); if(taskSave) completedTasks = JSON.parse(taskSave); saveGame();
 }
 
-function saveGame() { 
-  localStorage.setItem(SAVE_KEY, JSON.stringify({ 
-    balance, lastTick: getUTCTimestamp(), minerInstances, nextInstanceId, taskProgress, 
+function saveGame() {
+  localStorage.setItem(SAVE_KEY, JSON.stringify({
+    balance, lastTick: getUTCTimestamp(), minerInstances, nextInstanceId, taskProgress,
     lastDailyClaim, dailyStreak, lastMinerClaim, adsWatchedToday, lastAdResetDate
-  })); 
-  localStorage.setItem(TASK_KEY, JSON.stringify(completedTasks)); 
+  }));
+  localStorage.setItem(TASK_KEY, JSON.stringify(completedTasks));
 }
 
 function updateBalance() { const el = document.getElementById('balance'); if(el) el.innerText = `${balance.toFixed(4)} TON`; }
@@ -137,18 +137,217 @@ function getDailyReward() { return Math.min(0.001 + (dailyStreak * 0.007), 0.05)
 function claimDaily() {
   const now = getUTCTimestamp();
   const hoursSinceLastClaim = hoursBetween(lastDailyClaim, now);
-  if(hoursSinceLastClaim < 20) { 
-    const hoursLeft = 20 - hoursSinceLastClaim; 
-    return showPopup('alert', 'Come Back Later', `Next claim in ${hoursLeft.toFixed(1)}h`); 
+  if(hoursSinceLastClaim < 20) {
+    const hoursLeft = 20 - hoursSinceLastClaim;
+    return showPopup('alert', 'Come Back Later', `Next claim in ${hoursLeft.toFixed(1)}h`);
   }
 
   const lastClaimDate = getUTCDateString(lastDailyClaim);
   const today = getUTCDateString(now);
-  
-  if(lastClaimDate !== today) {
+
+  if(lastClaimDate!== today) {
     dailyStreak = Math.min(dailyStreak + 1, 7);
   }
 
   const reward = getDailyReward();
   balance += reward; lastDailyClaim = now; updateBalance(); saveGame(); tg.HapticFeedback.impactOccurred('medium');
-  showPopup('success', '
+  showPopup('success', 'Daily Reward!', `+${reward.toFixed(4)} TON\nStreak: ${dailyStreak} days 🔥`); renderHome();
+}
+
+async function claimMiner() {
+  const now = getUTCTimestamp();
+  const timeLeft = CLAIM_COOLDOWN - (now - lastMinerClaim);
+  if(timeLeft > 0) {
+    const hours = Math.floor(timeLeft / 3600000);
+    const mins = Math.floor((timeLeft % 3600000) / 60000);
+    return showPopup('alert', 'Too Early', `Next claim in ${hours}h ${mins}m`);
+  }
+  const total = getTotalFarmed();
+  if(total < 0.000001) return showPopup('alert', 'Nothing to Claim', 'Your miners haven\'t mined anything yet');
+  showPopup('info', 'Loading Ad', 'Please watch the ad to claim your rewards');
+  try {
+    await showRewardedAd();
+    balance += total;
+    minerInstances.forEach(m => m.farmed = 0);
+    lastMinerClaim = now;
+    updateBalance(); saveGame(); tg.HapticFeedback.impactOccurred('medium');
+    showPopup('info', 'Claimed!', `${total.toFixed(6)} TON added to balance`);
+    renderHome();
+  } catch {}
+}
+
+async function watchAdTask() {
+  checkDailyReset();
+  if(adsWatchedToday >= MAX_ADS_PER_DAY) {
+    return showPopup('alert', 'Daily Limit Reached', `You watched ${MAX_ADS_PER_DAY}/50 ads today. Resets at 00:00 UTC.`);
+  }
+  showPopup('info', 'Loading Ad', 'Please watch the ad to earn');
+  try {
+    await showRewardedAd();
+    adsWatchedToday++;
+    balance += AD_REWARD;
+    updateBalance(); saveGame(); tg.HapticFeedback.impactOccurred('light');
+    showPopup('success', 'Earned!', `+${AD_REWARD} TON\nProgress: ${adsWatchedToday}/${MAX_ADS_PER_DAY}`);
+    renderTasks();
+  } catch {
+    showPopup('error', 'Ad Skipped', 'You must watch the full ad to earn');
+  }
+}
+
+function getClaimCooldownText() {
+  const now = getUTCTimestamp();
+  const timeLeft = CLAIM_COOLDOWN - (now - lastMinerClaim);
+  if(timeLeft <= 0) return "CLAIM NOW + WATCH AD";
+  const hours = Math.floor(timeLeft / 3600000);
+  const mins = Math.floor((timeLeft % 3600000) / 60000);
+  return `CLAIM IN ${hours}h ${mins}m`;
+}
+
+function renderHome() {
+  const totalRate = getTotalRate(); const totalFarmed = getTotalFarmed();
+  const reward = getDailyReward();
+  const hoursSinceLastClaim = hoursBetween(lastDailyClaim, getUTCTimestamp());
+  const canClaimDaily = hoursSinceLastClaim >= 20;
+  const canClaimMiner = (getUTCTimestamp() - lastMinerClaim) >= CLAIM_COOLDOWN;
+
+  let streakHtml = '<div class="streak-box">';
+  for(let i=1; i<=7; i++) {
+    const active = i <= dailyStreak? 'active' : '';
+    const today = i === dailyStreak + 1 && canClaimDaily? 'today' : '';
+    streakHtml += `<div class="streak-day ${active} ${today}">Day ${i}<br>${(0.001 + ((i-1)*0.007)).toFixed(3)}</div>`;
+  }
+  streakHtml += '</div>';
+
+  document.getElementById('content').innerHTML = `
+    <div class="card"><h2>Welcome, ${user.first_name}</h2><p>All miners ROI in 30 days + bonus</p></div>
+    <div class="card">
+      <h3>🎁 Daily Reward</h3>
+      <p>Claim every 20 hours. Streak resets at 00:00 UTC</p>
+      ${streakHtml}
+      <p>Next Reward: <b>${reward.toFixed(4)} TON</b></p>
+      <button class="btn" ${!canClaimDaily? 'disabled' : ''} onclick="claimDaily()">
+        ${canClaimDaily? `CLAIM ${reward.toFixed(4)} TON` : 'CLAIMED TODAY'}
+      </button>
+    </div>
+    <div class="card">
+      <h3>⛏️ Mining Rewards</h3>
+      <p>Rate: <b>${(totalRate*86400).toFixed(4)} TON/day</b></p>
+      <p>Farmed: <b id="farmedTotal">${totalFarmed.toFixed(6)}</b> TON</p>
+      <div class="progress"><div class="progress-bar" style="width:100%"></div></div>
+      <button class="btn" style="margin-top:12px; background:linear-gradient(90deg,#fbbf24,#f59e0b)" ${!canClaimMiner? 'disabled' : ''} onclick="claimMiner()">
+        ${getClaimCooldownText()}
+      </button>
+      <p style="font-size:11px; color:var(--muted); text-align:center; margin-top:8px">Watch 1 GigaPub ad to claim</p>
+    </div>
+    <div class="card"><h3>Your Miners</h3>${minerInstances.length > 0? minerInstances.map(m => `<div class="miner-unit"><img src="${m.img}" class="miner-img" /><div class="miner-info"><h4>${m.name} #${m.instanceId}</h4><p>${(m.rate*86400).toFixed(4)} TON/day • Farmed: <span id="farmed-${m.instanceId}">${m.farmed.toFixed(6)}</span> TON</p></div></div>`).join('') : '<p style="color:var(--muted)">No miners yet</p>'}</div>
+  `;
+}
+
+function resetTasks() {
+  tg.showPopup({title: "Reset All Tasks?", message: "This cannot be undone", buttons: [{id: 'ok', type: 'destructive'}, {type: 'cancel'}]}, (btn) => {
+    if(btn === 'ok') { completedTasks = []; taskProgress = {}; adsWatchedToday = 0; saveGame(); showPopup('success', 'Reset Done', 'All tasks reset'); renderProfile(); }
+  });
+}
+
+function isTaskComplete(task) { if(task.type === "join") return taskProgress[task.id] === true; if(task.type === "ad") return false; return false; }
+function completeTask(taskId, reward) {
+  if(completedTasks.includes(taskId)) return showPopup('alert', 'Already Claimed', 'You already claimed this reward');
+  const task = Object.values(tasksData).flat().find(t => t.id === taskId); if(!isTaskComplete(task)) return showPopup('error', 'Not Done Yet', 'Please complete the task first');
+  completedTasks.push(taskId); balance += reward; updateBalance(); saveGame(); tg.HapticFeedback.impactOccurred('light'); showPopup('success', 'Reward Claimed!', `+${reward} TON added to balance`); renderTasks();
+}
+function markTaskProgress(taskId) { taskProgress[taskId] = true; saveGame(); showPopup('success', 'Verified!', 'You can now claim the reward'); renderTasks(); }
+
+function renderTasks() {
+  checkDailyReset();
+  const tabsHtml = ['oneTime', 'ads', 'partnership'].map(tab => { const label = tab === 'oneTime'? 'One Time' : tab === 'ads'? 'Ads' : 'Partnership'; const active = activeTaskTab === tab? 'active' : ''; return `<button class="subtab-btn ${active}" onclick="switchTaskTab('${tab}')">${label}</button>` }).join('');
+  const tasks = tasksData[activeTaskTab];
+
+  let tasksHtml = '';
+  if(activeTaskTab === 'ads') {
+    const progressPercent = (adsWatchedToday / MAX_ADS_PER_DAY) * 100;
+    const canWatch = adsWatchedToday < MAX_ADS_PER_DAY;
+    tasksHtml = `
+      <div class="card">
+        <h3>📺 Watch Ads & Earn</h3>
+        <p>Earn <b>${AD_REWARD} TON</b> per ad. Max ${MAX_ADS_PER_DAY}/day. Resets 00:00 UTC</p>
+        <div class="progress"><div class="progress-bar" style="width:${progressPercent}%"></div></div>
+        <p style="text-align:center; color:var(--muted); font-size:12px">${adsWatchedToday}/${MAX_ADS_PER_DAY} Ads Watched Today</p>
+        <button class="btn" ${!canWatch? 'disabled' : ''} onclick="watchAdTask()">
+          ${canWatch? `WATCH AD +${AD_REWARD} TON` : 'LIMIT REACHED'}
+        </button>
+      </div>
+    `;
+  } else {
+    tasksHtml = tasks.length === 0? `<div class="card"><p style="text-align:center; color:var(--muted)">No tasks here yet</p></div>` : tasks.map(t => {
+      const claimed = completedTasks.includes(t.id); const canClaim = isTaskComplete(t); const verifyBtn =!taskProgress[t.id] &&!claimed? `<button class="btn" style="width:80px; background:#fbbf24; color:#000; margin-right:8px" onclick="markTaskProgress('${t.id}')">Verify</button>` : '';
+      const actionBtn = `<button class="btn" style="width:70px; background:#1e2a40; margin-right:8px" onclick="tg.openTelegramLink('${t.link}'); setTimeout(() => markTaskProgress('${t.id}'), 1000)">Join</button>${verifyBtn}`;
+      let claimBtnText = 'Claim'; let claimBtnDisabled =!canClaim; let claimBtnStyle = canClaim? '' : 'opacity:0.4'; if(claimed) { claimBtnText = 'DONE'; claimBtnDisabled = true; claimBtnStyle = 'background:linear-gradient(90deg,#22c55e,#16a34a); opacity:1'; }
+      return `<div class="card miner"><div class="miner-info"><h3>${t.title}</h3><p>Reward: <b>${t.reward} TON</b></p><p style="font-size:11px; color:${claimed? '#22c55e' : canClaim? '#fbbf24' : 'var(--muted)'}">${claimed? 'Completed' : canClaim? 'Ready to claim' : 'Incomplete'}</p></div><div style="display:flex">${actionBtn}<button class="btn" style="width:80px; ${claimBtnStyle}" ${claimBtnDisabled? 'disabled' : ''} onclick="completeTask('${t.id}', ${t.reward})">${claimBtnText}</button></div></div>`
+    }).join('');
+  }
+  document.getElementById('content').innerHTML = `<h2>Tasks</h2><div class="subtabs">${tabsHtml}</div>${tasksHtml}`;
+}
+function switchTaskTab(tab) { activeTaskTab = tab; renderTasks(); }
+
+function renderWallet() {
+  const isConnected = tonConnectUI && tonConnectUI.connected;
+  const walletAddr = isConnected? tonConnectUI.account.address.slice(0,6) + "..." + tonConnectUI.account.address.slice(-4) : "Not Connected";
+  document.getElementById('content').innerHTML = `<h2>Wallet</h2><div class="card"><h3>Wallet Status</h3><p style="color:var(--muted); font-size:12px">Connected: <b>${walletAddr}</b></p><div id="ton-connect-button" style="margin-bottom:8px"></div>${!isConnected? `<button class="btn" onclick="connectWallet()">Connect Wallet</button>` : ''}${isConnected? `<button class="btn" style="background:var(--danger)" onclick="disconnectWallet()">Disconnect</button>` : ''}</div><div class="card"><h3>Deposit TON</h3><p style="color:var(--muted); font-size:12px">Send to: <b>${YOUR_WALLET_ADDRESS.slice(0,6)}...${YOUR_WALLET_ADDRESS.slice(-4)}</b></p><input id="depositAmount" type="number" placeholder="Amount in TON" step="0.1" min="0.1" style="width:100%;padding:12px;border-radius:8px;background:var(--card-2);border:1px solid var(--border);color:var(--text);margin:8px 0"/><button class="btn" onclick="deposit()">Deposit Now</button></div>`;
+  setTimeout(() => { if(tonConnectUI) tonConnectUI.mount('#ton-connect-button'); }, 100);
+}
+
+async function connectWallet() { if(tonConnectUI) await tonConnectUI.connectWallet(); }
+async function disconnectWallet() { await tonConnectUI.disconnect(); showPopup('info', 'Disconnected', 'Wallet disconnected'); renderWallet(); }
+
+async function deposit() {
+  const amount = parseFloat(document.getElementById('depositAmount').value);
+  if(!amount || amount < 0.1) return showPopup('error', 'Invalid Amount', 'Min deposit 0.1 TON');
+  if(!tonConnectUI ||!tonConnectUI.connected) return showPopup('error', 'No Wallet', 'Please connect wallet first');
+  try {
+    const transaction = { validUntil: Math.floor(getUTCTimestamp() / 1000) + 600, messages: [{ address: YOUR_WALLET_ADDRESS, amount: (amount * 1e9).toString() }] };
+    await tonConnectUI.sendTransaction(transaction);
+    balance += amount; updateBalance(); saveGame();
+    showPopup('success', 'Deposit Sent!', `${amount} TON transaction sent. Wait for confirmation`);
+    document.getElementById('depositAmount').value = '';
+  } catch(e) { showPopup('error', 'Failed', 'Transaction cancelled or failed'); }
+}
+
+function farmTick() {
+  const now = getUTCTimestamp();
+  const delta = (now - lastTick) / 1000; lastTick = now;
+  minerInstances.forEach(m => { m.farmed += m.rate * delta; });
+  const totalEl = document.getElementById('farmedTotal'); if (totalEl) totalEl.innerText = getTotalFarmed().toFixed(6);
+  minerInstances.forEach(m => { const el = document.getElementById(`farmed-${m.instanceId}`); if (el) el.innerText = m.farmed.toFixed(6); });
+}
+
+function buyMiner(templateId) {
+  const template = minerTemplates.find(x => x.id === templateId);
+  const ownedCount = minerInstances.filter(m => m.templateId === templateId).length;
+  if (ownedCount >= 3) return showPopup('alert', 'Limit Reached', `Max 3 ${template.name} reached`);
+  if (balance >= template.cost) {
+    balance -= template.cost;
+    minerInstances.push({ instanceId: nextInstanceId++, templateId: template.id, name: template.name, rate: template.rate, bonus: template.bonus, img: template.img, farmed: 0 });
+    updateBalance(); saveGame();
+    showPopup('success', 'Purchased!', `You bought ${template.name} for ${template.cost} TON`);
+    renderShop(); renderHome();
+  } else { showPopup('error', 'Not Enough TON', 'Not enough TON') }
+}
+
+function renderShop() {
+  document.getElementById('content').innerHTML = `<h2>Shop</h2>${minerTemplates.map(t => {
+    const ownedCount = minerInstances.filter(m => m.templateId === t.id).length;
+    const payout = (t.cost * (1 + t.bonus)).toFixed(2);
+    const disabled = ownedCount >= 3? 'disabled' : '';
+    return `<div class="card miner"><img src="${t.img}" class="miner-img" /><div class="miner-info"><h3>${t.name}</h3><p>${(t.rate*86400).toFixed(4)} TON/day • Owned: ${ownedCount}/3</p><p>30d Payout: <b>${payout} TON</b> +${(t.bonus*100)}%</p><p><b>${t.cost} TON</b></p></div><button class="btn" style="width:80px" ${disabled} onclick="buyMiner(${t.id})">${disabled? 'MAX' : 'Buy'}</button></div>`
+  }).join('')}`;
+}
+
+function renderReferral() {
+  const refLink = `https://t.me/AdsPayU_bot?start=${user.id}`;
+  document.getElementById('content').innerHTML = `<h2>Referral</h2><div class="card"><p>Earn 10% from friends mining</p><input value="${refLink}" readonly style="width:100%;padding:8px;border-radius:8px;background:var(--card-2);border:1px solid var(--border);color:var(--text)"/><button class="btn" onclick="copyRef('${refLink}')">Copy Link</button></div>`;
+}
+
+function copyRef(link) {
+  if(navigator.clipboard) navigator.clipboard.writeText(link);
+  else tg.showPopup({message: link});
+  showPopup('success', 'Copied', 'Referral link copi
