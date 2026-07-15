@@ -8,8 +8,8 @@ const TASK_KEY = `minerads_tasks_${user.id}`;
 const YOUR_WALLET_ADDRESS = "UQD63olQ9L4WryJy8YJ9kEfO4gaen-GkbtvLy5-co2hkI4kv";
 
 let balance = 10.0; let lastTick = Date.now(); let minerInstances = []; let nextInstanceId = 1;
-let completedTasks = []; let activeTaskTab = 'oneTime'; let taskProgress = {}; let lastDailySpin = 0; let isSpinning = false;
-let currentRotation = { wheel: 0, 'wheel-paid': 0 }; // track rotation so it doesn't reset
+let completedTasks = []; let activeTaskTab = 'oneTime'; let taskProgress = {};
+let lastDailyClaim = 0; let dailyStreak = 0; // NEW
 
 const minerTemplates = [
   { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000000424, img: "micro.png" },
@@ -22,21 +22,6 @@ const minerTemplates = [
 
 const tasksData = { oneTime: [ { id: 'join_channel', title: "Join Telegram Channel", reward: 0.1, link: "https://t.me/MinerAAds", type: "join" }, { id: 'join_chat', title: "Join Telegram Chat", reward: 0.1, link: "https://t.me/+EiLZpWqcoA8zYjU0", type: "join" } ], ads: [], partnership: [] };
 
-const dailyPrizes = [
-  { label: "0.01", value: 0.01, type: "ton" }, { label: "0.02", value: 0.02, type: "ton" },
-  { label: "Micro", value: 1, type: "miner" }, { label: "0.05", value: 0.05, type: "ton" },
-  { label: "0.03", value: 0.03, type: "ton" }, { label: "Basic", value: 2, type: "miner" },
-  { label: "0.10", value: 0.10, type: "ton" }, { label: "x", value: 0, type: "none" }
-];
-const paidPrizes = [
-  { label: "0.10", value: 0.10, type: "ton" }, { label: "0.20", value: 0.20, type: "ton" },
-  { label: "Pro", value: 3, type: "miner" }, { label: "0.50", value: 0.50, type: "ton" },
-  { label: "1 TON", value: 1.0, type: "ton" }, { label: "GPU", value: 4, type: "miner" },
-  { label: "0.30", value: 0.30, type: "ton" }, { label: "2xMicro", value: [1,1], type: "miner" }
-];
-const dailyColors = ['#00e5ff','#00b8d4','#22c55e','#00e5ff','#00b8d4','#22c55e','#00e5ff','#555'];
-const paidColors = ['#fbbf24','#f59e0b','#fbbf24','#f59e0b','#fbbf24','#fbbf24','#f59e0b','#fbbf24'];
-
 function showPopup(type, title, message) {
   const icons = { success: "✅", error: "❌", info: "💰", alert: "⚠️" };
   const popup = document.createElement('div');
@@ -47,7 +32,7 @@ function showPopup(type, title, message) {
 
 let tonConnectUI; try { tonConnectUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json' }); tonConnectUI.onStatusChange(() => { if(document.querySelector('.tabbar button.active')?.dataset.tab === 'wallet') renderWallet(); }); } catch(e){ console.error("TonConnect init error", e) }
 
-const tabs = { home: renderHome, wheel: renderWheel, shop: renderShop, tasks: renderTasks, referral: renderReferral, wallet: renderWallet, profile: renderProfile };
+const tabs = { home: renderHome, shop: renderShop, tasks: renderTasks, referral: renderReferral, wallet: renderWallet, profile: renderProfile };
 document.addEventListener('DOMContentLoaded', () => { document.querySelectorAll('.tabbar button').forEach(btn => { btn.onclick = () => { document.querySelectorAll('.tabbar button').forEach(b => b.classList.remove('active')); btn.classList.add('active'); tabs[btn.dataset.tab](); } }); });
 
 function getTotalRate() { return minerInstances.reduce((sum, m) => sum + m.rate, 0); }
@@ -56,95 +41,76 @@ function getTotalFarmed() { return minerInstances.reduce((sum, m) => sum + m.far
 function loadGame() {
   const save = localStorage.getItem(SAVE_KEY); if (save) {
     const data = JSON.parse(save); balance = data.balance || 10.0; lastTick = data.lastTick || Date.now(); minerInstances = data.minerInstances || [];
-    nextInstanceId = data.nextInstanceId || 1; taskProgress = data.taskProgress || {}; lastDailySpin = data.lastDailySpin || 0;
-    currentRotation = data.currentRotation || { wheel: 0, 'wheel-paid': 0 };
+    nextInstanceId = data.nextInstanceId || 1; taskProgress = data.taskProgress || {};
+    lastDailyClaim = data.lastDailyClaim || 0; dailyStreak = data.dailyStreak || 0; // NEW
     minerInstances.forEach(m => { const template = minerTemplates.find(t => t.id === m.templateId); if (template) { m.img = template.img; m.rate = template.rate; } });
     const offlineSeconds = (Date.now() - lastTick) / 1000; minerInstances.forEach(m => { m.farmed += m.rate * offlineSeconds; });
-  } const taskSave = localStorage.getItem(TASK_KEY); if(taskSave) completedTasks = JSON.parse(taskSave); saveGame();
+
+    // Reset streak if missed a day
+    const daysSinceLastClaim = (Date.now() - lastDailyClaim) / 1000 / 3600 / 24;
+    if(daysSinceLastClaim > 1.5 && lastDailyClaim > 0) dailyStreak = 0;
+  }
+  const taskSave = localStorage.getItem(TASK_KEY); if(taskSave) completedTasks = JSON.parse(taskSave); saveGame();
 }
 
-function saveGame() { localStorage.setItem(SAVE_KEY, JSON.stringify({ balance, lastTick: Date.now(), minerInstances, nextInstanceId, taskProgress, lastDailySpin, currentRotation })); localStorage.setItem(TASK_KEY, JSON.stringify(completedTasks)); }
+function saveGame() { localStorage.setItem(SAVE_KEY, JSON.stringify({ balance, lastTick: Date.now(), minerInstances, nextInstanceId, taskProgress, lastDailyClaim, dailyStreak })); localStorage.setItem(TASK_KEY, JSON.stringify(completedTasks)); }
 function updateBalance() { const el = document.getElementById('balance'); if(el) el.innerText = `${balance.toFixed(4)} TON`; }
 
-function addMinerById(id, count = 1) { for(let i=0; i<count; i++) { const template = minerTemplates.find(t => t.id === id); minerInstances.push({ instanceId: nextInstanceId++, templateId: template.id, name: template.name, rate: template.rate, bonus: template.bonus, img: template.img, farmed: 0 }); } showPopup('success', 'New Miner!', `You got ${count}x ${minerTemplates.find(t=>t.id===id).name}`); }
-
-function givePrize(prize) {
-  if(prize.type === "ton") { balance += prize.value; showPopup('success', 'You Won!', `${prize.label} TON added to balance`); }
-  if(prize.type === "miner") { if(Array.isArray(prize.value)) prize.value.forEach(id => addMinerById(id)); else addMinerById(prize.value); }
-  if(prize.type === "none") { showPopup('info', 'Better Luck Next Time', 'Try again tomorrow'); }
-  updateBalance(); saveGame(); renderHome();
+function getDailyReward() {
+  return Math.min(0.001 + (dailyStreak * 0.007), 0.05); // Day 0=0.001, Day 6=0.05
 }
 
-function spinWheel(type) {
-  if(isSpinning) return;
-  let prizes = type === 'daily'? dailyPrizes : paidPrizes; const cost = type === 'paid'? 0.5 : 0; const wheelId = type === 'daily'? 'wheel' : 'wheel-paid';
+function claimDaily() {
+  const now = Date.now();
+  const hoursSinceLastClaim = (now - lastDailyClaim) / 1000 / 3600;
 
-  if(type === 'daily') { const now = Date.now(); const hoursLeft = 24 - ((now - lastDailySpin) / 1000 / 3600); if(hoursLeft > 0) return showPopup('alert', 'Come Back Later', `Next free spin in ${hoursLeft.toFixed(1)}h`); lastDailySpin = now; }
-  if(balance < cost) return showPopup('error', 'Not Enough TON', `You need ${cost} TON to spin`);
+  if(hoursSinceLastClaim < 20) { // 20h cooldown instead of 24h to be forgiving
+    const hoursLeft = 20 - hoursSinceLastClaim;
+    return showPopup('alert', 'Come Back Later', `Next claim in ${hoursLeft.toFixed(1)}h`);
+  }
 
-  isSpinning = true; balance -= cost; updateBalance();
-  const prizeIndex = Math.floor(Math.random() * prizes.length); const prize = prizes[prizeIndex];
-  const segmentAngle = 360 / prizes.length;
+  const daysSinceLastClaim = hoursSinceLastClaim / 24;
+  if(daysSinceLastClaim > 1.5) dailyStreak = 0; // broke streak
 
-  // Calculate to land exactly on prize, with pointer at top
-  const targetAngle = 360 - (prizeIndex * segmentAngle) - segmentAngle/2;
-  currentRotation[wheelId] += 360 * 5 + targetAngle; // add 5 full spins
+  dailyStreak = Math.min(dailyStreak + 1, 7);
+  const reward = getDailyReward();
 
-  const wheelEl = document.getElementById(wheelId);
-  wheelEl.style.transform = `rotate(${currentRotation[wheelId]}deg)`;
-
-  // Counter-rotate labels so they stay upright
-  const labelsEl = document.getElementById(wheelId + '-labels');
-  labelsEl.style.transform = `rotate(${-currentRotation[wheelId]}deg)`;
-
-  tg.HapticFeedback.impactOccurred('medium');
-
-  setTimeout(() => { isSpinning = false; givePrize(prize); renderWheel(); }, 4500);
+  balance += reward;
+  lastDailyClaim = now;
+  updateBalance(); saveGame(); tg.HapticFeedback.impactOccurred('medium');
+  showPopup('success', 'Daily Reward!', `+${reward.toFixed(4)} TON\nStreak: ${dailyStreak} days 🔥`);
+  renderHome();
 }
 
-function createWheel(prizes, colors) {
-  const segmentAngle = 360 / prizes.length;
-  let gradient = 'conic-gradient(';
-  prizes.forEach((p, i) => { gradient += `${colors[i]} ${i*segmentAngle}deg ${(i+1)*segmentAngle}deg,`; });
-  gradient = gradient.slice(0,-1) + ')';
+function renderHome() {
+  const totalRate = getTotalRate(); const totalFarmed = getTotalFarmed();
+  const reward = getDailyReward();
+  const hoursSinceLastClaim = (Date.now() - lastDailyClaim) / 1000 / 3600;
+  const canClaim = hoursSinceLastClaim >= 20;
 
-  let labels = '';
-  prizes.forEach((p, i) => {
-    const angle = (i * segmentAngle) + segmentAngle/2;
-    const rad = angle * Math.PI / 180;
-    const x = 140 + 85 * Math.cos(rad);
-    const y = 140 + 85 * Math.sin(rad);
-    labels += `<div class="wheel-label" style="left:${x}px; top:${y}px; transform:translate(-50%,-50%) rotate(${angle}deg)">${p.label}</div>`;
-  });
-  return { gradient, labels };
-}
-
-function renderWheel() {
-  const now = Date.now(); const hoursLeft = 24 - ((now - lastDailySpin) / 1000 / 3600); const canSpinDaily = hoursLeft <= 0;
-  const dailyWheel = createWheel(dailyPrizes, dailyColors); const paidWheel = createWheel(paidPrizes, paidColors);
+  let streakHtml = '<div class="streak-box">';
+  for(let i=1; i<=7; i++) {
+    const active = i <= dailyStreak? 'active' : '';
+    const today = i === dailyStreak + 1 && canClaim? 'today' : '';
+    streakHtml += `<div class="streak-day ${active} ${today}">Day ${i}<br>${(0.001 + ((i-1)*0.007)).toFixed(3)}</div>`;
+  }
+  streakHtml += '</div>';
 
   document.getElementById('content').innerHTML = `
-    <h2>🎡 Lucky Wheel</h2>
-    <div class="card" style="text-align:center">
-      <h3>Daily Wheel - FREE</h3><p style="color:var(--muted)">Spin once every 24 hours</p>
-      <div class="wheel-container">
-        <div class="wheel-pointer"></div>
-        <div class="wheel" id="wheel" style="background:${dailyWheel.gradient}; transform:rotate(${currentRotation.wheel}deg)"></div>
-        <div class="wheel-labels" id="wheel-labels" style="transform:rotate(${-currentRotation.wheel}deg)">${dailyWheel.labels}</div>
-        <div class="wheel-center">🎁</div>
-      </div>
-      <button class="btn" ${!canSpinDaily || isSpinning? 'disabled' : ''} onclick="spinWheel('daily')">${canSpinDaily? 'SPIN NOW' : `Wait ${hoursLeft.toFixed(1)}h`}</button>
+    <div class="card"><h2>Welcome, ${user.first_name}</h2><p style="color:var(--muted)">All miners ROI in 30 days + bonus</p></div>
+
+    <div class="card">
+      <h3>🎁 Daily Reward</h3>
+      <p style="color:var(--muted)">Claim every 20 hours. Streak increases reward!</p>
+      ${streakHtml}
+      <p>Next Reward: <b>${reward.toFixed(4)} TON</b></p>
+      <button class="btn" ${!canClaim? 'disabled' : ''} onclick="claimDaily()">
+        ${canClaim? `CLAIM ${reward.toFixed(4)} TON` : 'CLAIMED TODAY'}
+      </button>
     </div>
-    <div class="card" style="text-align:center">
-      <h3>Premium Wheel - 0.5 TON</h3><p style="color:var(--muted)">Bigger prizes, spin anytime</p>
-      <div class="wheel-container">
-        <div class="wheel-pointer"></div>
-        <div class="wheel" id="wheel-paid" style="background:${paidWheel.gradient}; border-color:#fbbf24; transform:rotate(${currentRotation['wheel-paid']}deg)"></div>
-        <div class="wheel-labels" id="wheel-paid-labels" style="transform:rotate(${-currentRotation['wheel-paid']}deg)">${paidWheel.labels}</div>
-        <div class="wheel-center" style="border-color:#fbbf24">💎</div>
-      </div>
-      <button class="btn" style="background:#fbbf24; color:#000" ${isSpinning? 'disabled' : ''} onclick="spinWheel('paid')">SPIN FOR 0.5 TON</button>
-    </div>
+
+    <div class="card"><h3>⛏️ Farming</h3><p>Rate: <b>${(totalRate*86400).toFixed(4)} TON/day</b></p><p>Farmed: <b id="farmedTotal">${totalFarmed.toFixed(6)}</b> TON</p><div class="progress"><div class="progress-bar" style="width:100%"></div></div><button class="btn" style="margin-top:12px" onclick="claim()">Claim</button></div>
+    <div class="card"><h3>Your Miners</h3>${minerInstances.length > 0? minerInstances.map(m => `<div class="miner-unit" style="display:flex; align-items:center; gap:10px; margin-bottom:8px"><img src="${m.img}" class="miner-img" style="width:40px; height:40px"/><div><h4 style="margin:0">${m.name} #${m.instanceId}</h4><p style="color:var(--muted); font-size:12px; margin:0">${(m.rate*86400).toFixed(4)} TON/day • Farmed: <span id="farmed-${m.instanceId}">${m.farmed.toFixed(6)}</span> TON</p></div></div>`).join('') : '<p style="color:var(--muted)">No miners yet</p>'}</div>
   `;
 }
 
@@ -171,10 +137,9 @@ async function connectWallet() { if(tonConnectUI) await tonConnectUI.connectWall
 async function deposit() { const amount = parseFloat(document.getElementById('depositAmount').value); if(!amount || amount < 0.1) return showPopup('error', 'Invalid Amount', 'Min deposit 0.1 TON'); if(!tonConnectUI ||!tonConnectUI.connected) return showPopup('error', 'No Wallet', 'Please connect wallet first'); try { const transaction = { validUntil: Math.floor(Date.now() / 1000) + 600, messages: [{ address: YOUR_WALLET_ADDRESS, amount: (amount * 1e9).toString() }] }; await tonConnectUI.sendTransaction(transaction); balance += amount; updateBalance(); saveGame(); showPopup('success', 'Deposit Successful!', `${amount} TON added to your balance`); document.getElementById('depositAmount').value = ''; } catch(e) { showPopup('error', 'Failed', 'Transaction cancelled or failed'); } }
 function farmTick() { const now = Date.now(); const delta = (now - lastTick) / 1000; lastTick = now; minerInstances.forEach(m => { m.farmed += m.rate * delta; }); const totalEl = document.getElementById('farmedTotal'); if (totalEl) totalEl.innerText = getTotalFarmed().toFixed(6); minerInstances.forEach(m => { const el = document.getElementById(`farmed-${m.instanceId}`); if (el) el.innerText = m.farmed.toFixed(6); }); }
 function buyMiner(templateId) { const template = minerTemplates.find(x => x.id === templateId); const ownedCount = minerInstances.filter(m => m.templateId === templateId).length; if (ownedCount >= 3) return showPopup('alert', 'Limit Reached', `Max 3 ${template.name} reached`); if (balance >= template.cost) { balance -= template.cost; minerInstances.push({ instanceId: nextInstanceId++, templateId: template.id, name: template.name, rate: template.rate, bonus: template.bonus, img: template.img, farmed: 0 }); updateBalance(); saveGame(); showPopup('success', 'Purchased!', `You bought ${template.name} for ${template.cost} TON`); renderShop(); renderHome(); } else { showPopup('error', 'Not Enough TON', 'Not enough TON') } }
-function renderHome() { const totalRate = getTotalRate(); const totalFarmed = getTotalFarmed(); document.getElementById('content').innerHTML = `<div class="card"><h2>Welcome, ${user.first_name}</h2><p style="color:var(--muted)">All miners ROI in 30 days + bonus</p></div><div class="card"><h3>⛏️ Farming</h3><p>Rate: <b>${(totalRate*86400).toFixed(4)} TON/day</b></p><p>Farmed: <b id="farmedTotal">${totalFarmed.toFixed(6)}</b> TON</p><div class="progress"><div class="progress-bar" style="width:100%"></div></div><button class="btn" style="margin-top:12px" onclick="claim()">Claim</button></div><div class="card"><h3>Your Miners</h3>${minerInstances.length > 0? minerInstances.map(m => `<div class="miner-unit" style="display:flex; align-items:center; gap:10px; margin-bottom:8px"><img src="${m.img}" class="miner-img" style="width:40px; height:40px"/><div><h4 style="margin:0">${m.name} #${m.instanceId}</h4><p style="color:var(--muted); font-size:12px; margin:0">${(m.rate*86400).toFixed(4)} TON/day • Farmed: <span id="farmed-${m.instanceId}">${m.farmed.toFixed(6)}</span> TON</p></div></div>`).join('') : '<p style="color:var(--muted)">No miners yet</p>'}</div>`; }
 function renderShop() { document.getElementById('content').innerHTML = `<h2>Shop</h2>${minerTemplates.map(t => { const ownedCount = minerInstances.filter(m => m.templateId === t.id).length; const payout = (t.cost * (1 + t.bonus)).toFixed(2); const disabled = ownedCount >= 3? 'disabled' : ''; return `<div class="card miner"><img src="${t.img}" class="miner-img" /><div class="miner-info"><h3>${t.name}</h3><p>${(t.rate*86400).toFixed(4)} TON/day • Owned: ${ownedCount}/3</p><p>30d Payout: <b>${payout} TON</b> +${(t.bonus*100)}%</p><p><b>${t.cost} TON</b></p></div><button class="btn" style="width:80px" ${disabled} onclick="buyMiner(${t.id})">${disabled? 'MAX' : 'Buy'}</button></div>` }).join('')}`; }
 function renderReferral() { const refLink = `https://t.me/AdsPayU_bot?start=${user.id}`; document.getElementById('content').innerHTML = `<h2>Referral</h2><div class="card"><p>Earn 10% from friends mining</p><input value="${refLink}" readonly style="width:100%;padding:8px;border-radius:8px;background:#1e2a40;border:1px solid #333;color:var(--text)"/><button class="btn" onclick="navigator.clipboard.writeText('${refLink}')">Copy Link</button></div>`; }
-function renderProfile() { document.getElementById('content').innerHTML = `<h2>Profile</h2><div class="card"><p><b>Name:</b> ${user.first_name}</p><p><b>ID:</b> ${user.id}</p><p><b>Total Mined:</b> ${getTotalFarmed().toFixed(4)} TON</p></div><div class="card"><h3>Developer Tools</h3><button class="btn" style="background:var(--danger)" onclick="resetTasks()">Reset All Tasks</button></div>`; }
+function renderProfile() { document.getElementById('content').innerHTML = `<h2>Profile</h2><div class="card"><p><b>Name:</b> ${user.first_name}</p><p><b>ID:</b> ${user.id}</p><p><b>Total Mined:</b> ${getTotalFarmed().toFixed(4)} TON</p><p><b>Daily Streak:</b> ${dailyStreak} days</p></div><div class="card"><h3>Developer Tools</h3><button class="btn" style="background:var(--danger)" onclick="resetTasks()">Reset All Tasks</button></div>`; }
 function claim() { const total = getTotalFarmed(); balance += total; minerInstances.forEach(m => m.farmed = 0); updateBalance(); saveGame(); tg.HapticFeedback.impactOccurred('medium'); showPopup('info', 'Claimed!', `${total.toFixed(4)} TON added to balance`); renderHome(); }
 
 loadGame(); updateBalance(); renderHome(); document.querySelector('.tabbar button[data-tab="home"]').classList.add('active'); setInterval(farmTick, 1000); setInterval(saveGame, 3000);
