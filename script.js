@@ -6,14 +6,17 @@ let user = tg.initDataUnsafe.user || { first_name: "Miner", id: "guest" };
 const SAVE_KEY = `minerads_save_${user.id}`;
 const TASK_KEY = `minerads_tasks_${user.id}`;
 const YOUR_WALLET_ADDRESS = "UQD63olQ9L4WryJy8YJ9kEfO4gaen-GkbtvLy5-co2hkI4kv";
-const CLAIM_COOLDOWN = 8 * 3600 * 1000; // 8 hours
+const CLAIM_COOLDOWN = 8 * 3600 * 1000;
 const MAX_ADS_PER_DAY = 50;
-const AD_REWARD = 0.0002; // CHANGED
+const AD_REWARD = 0.0002;
+const AUTO_AD_INTERVAL = 5 * 60 * 1000;
 
 let balance = 10.0; let lastTick = Date.now(); let minerInstances = []; let nextInstanceId = 1;
 let completedTasks = []; let activeTaskTab = 'oneTime'; let taskProgress = {};
 let lastDailyClaim = 0; let dailyStreak = 0; let lastMinerClaim = 0;
 let adsWatchedToday = 0; let lastAdReset = 0;
+let autoAdTimer = null;
+let isAdPlaying = false;
 
 const minerTemplates = [
   { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000000424, img: "micro.png" },
@@ -43,17 +46,40 @@ function showPopup(type, title, message) {
   document.body.appendChild(popup); setTimeout(() => { if(popup.parentNode) popup.remove() }, 3000);
 }
 
-// GIGAPUB REWARDED AD
-function showRewardedAd() {
+// AD FUNCTION - giveReward controls if user gets TON + count
+function showRewardedAd(giveReward = true) {
   return new Promise((resolve, reject) => {
+    if(isAdPlaying) return reject(false);
     if(typeof window.showGiga!== 'function') {
-      showPopup('error', 'Ad Error', 'Ad network not loaded. Refresh.');
       return reject(false);
     }
+    isAdPlaying = true;
     window.showGiga()
-  .then(() => { resolve(true); })
-  .catch(e => { reject(false); });
+ .then(() => {
+        isAdPlaying = false;
+        if(giveReward) { // only give reward + count for manual ads
+          adsWatchedToday++;
+          balance += AD_REWARD;
+          updateBalance();
+          saveGame();
+          tg.HapticFeedback.impactOccurred('light');
+        }
+        resolve(true);
+      })
+ .catch(e => {
+        isAdPlaying = false;
+        reject(false);
+      });
   });
+}
+
+// AUTO AD - NO REWARD, NO COUNT
+async function showAutoAd() {
+  if(isAdPlaying) return;
+  try {
+    await showRewardedAd(false); // FALSE = no reward, no count
+    // Silent. No popup for user
+  } catch {}
 }
 
 let tonConnectUI; try { tonConnectUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: 'https://adspayu.vercel.app/tonconnect-manifest.json' }); tonConnectUI.onStatusChange(() => { if(document.querySelector('.tabbar button.active')?.dataset.tab === 'wallet') renderWallet(); }); } catch(e){ console.error("TonConnect init error", e) }
@@ -85,7 +111,7 @@ function updateBalance() { const el = document.getElementById('balance'); if(el)
 
 function getDailyReward() { return Math.min(0.001 + (dailyStreak * 0.007), 0.05); }
 
-// DAILY CLAIM WITH AD
+// DAILY CLAIM WITH AD - REWARD
 async function claimDaily() {
   const now = Date.now();
   const hoursSinceLastClaim = (now - lastDailyClaim) / 1000 / 3600;
@@ -94,7 +120,7 @@ async function claimDaily() {
   showPopup('info', 'Loading Ad', 'Watch ad to claim daily reward');
 
   try {
-    await showRewardedAd(); // MUST WATCH AD FIRST
+    await showRewardedAd(true); // TRUE = give reward
     const daysSinceLastClaim = hoursSinceLastClaim / 24;
     if(daysSinceLastClaim > 1.5) dailyStreak = 0;
     dailyStreak = Math.min(dailyStreak + 1, 7);
@@ -111,7 +137,7 @@ async function claimDaily() {
   }
 }
 
-// NORMAL CLAIM WITH AD
+// NORMAL CLAIM WITH AD - REWARD
 async function claimMiner() {
   const now = Date.now();
   const timeLeft = CLAIM_COOLDOWN - (now - lastMinerClaim);
@@ -124,7 +150,7 @@ async function claimMiner() {
   if(total < 0.000001) return showPopup('alert', 'Nothing to Claim', 'Your miners haven\'t mined anything yet');
   showPopup('info', 'Loading Ad', 'Please watch the ad to claim your rewards');
   try {
-    await showRewardedAd();
+    await showRewardedAd(true);
     balance += total;
     minerInstances.forEach(m => m.farmed = 0);
     lastMinerClaim = now;
@@ -134,19 +160,16 @@ async function claimMiner() {
   } catch {}
 }
 
-// WATCH AD TASK
+// WATCH AD TASK - MANUAL - REWARD
 async function watchAdTask() {
   if(adsWatchedToday >= MAX_ADS_PER_DAY) {
     return showPopup('alert', 'Daily Limit Reached', `You watched ${MAX_ADS_PER_DAY}/50 ads today. Come back tomorrow.`);
   }
   showPopup('info', 'Loading Ad', 'Please watch the ad to earn');
   try {
-    await showRewardedAd();
-    adsWatchedToday++;
-    balance += AD_REWARD;
-    updateBalance(); saveGame(); tg.HapticFeedback.impactOccurred('light');
-    showPopup('success', 'Earned!', `+${AD_REWARD} TON\nProgress: ${adsWatchedToday}/${MAX_ADS_PER_DAY}`);
+    await showRewardedAd(true);
     renderTasks();
+    showPopup('success', 'Earned!', `+${AD_REWARD} TON\nProgress: ${adsWatchedToday}/${MAX_ADS_PER_DAY}`);
   } catch {
     showPopup('error', 'Ad Skipped', 'You must watch the full ad to earn');
   }
@@ -250,6 +273,4 @@ function farmTick() { const now = Date.now(); const delta = (now - lastTick) / 1
 function buyMiner(templateId) { const template = minerTemplates.find(x => x.id === templateId); const ownedCount = minerInstances.filter(m => m.templateId === templateId).length; if (ownedCount >= 3) return showPopup('alert', 'Limit Reached', `Max 3 ${template.name} reached`); if (balance >= template.cost) { balance -= template.cost; minerInstances.push({ instanceId: nextInstanceId++, templateId: template.id, name: template.name, rate: template.rate, bonus: template.bonus, img: template.img, farmed: 0 }); updateBalance(); saveGame(); showPopup('success', 'Purchased!', `You bought ${template.name} for ${template.cost} TON`); renderShop(); renderHome(); } else { showPopup('error', 'Not Enough TON', 'Not enough TON') } }
 function renderShop() { document.getElementById('content').innerHTML = `<h2>Shop</h2>${minerTemplates.map(t => { const ownedCount = minerInstances.filter(m => m.templateId === t.id).length; const payout = (t.cost * (1 + t.bonus)).toFixed(2); const disabled = ownedCount >= 3? 'disabled' : ''; return `<div class="card miner"><img src="${t.img}" class="miner-img" /><div class="miner-info"><h3>${t.name}</h3><p>${(t.rate*86400).toFixed(4)} TON/day • Owned: ${ownedCount}/3</p><p>30d Payout: <b>${payout} TON</b> +${(t.bonus*100)}%</p><p><b>${t.cost} TON</b></p></div><button class="btn" style="width:80px" ${disabled} onclick="buyMiner(${t.id})">${disabled? 'MAX' : 'Buy'}</button></div>` }).join('')}`; }
 function renderReferral() { const refLink = `https://t.me/AdsPayU_bot?start=${user.id}`; document.getElementById('content').innerHTML = `<h2>Referral</h2><div class="card"><p>Earn 10% from friends mining</p><input value="${refLink}" readonly style="width:100%;padding:8px;border-radius:8px;background:#1e2a40;border:1px solid #333;color:var(--text)"/><button class="btn" onclick="navigator.clipboard.writeText('${refLink}')">Copy Link</button></div>`; }
-function renderProfile() { document.getElementById('content').innerHTML = `<h2>Profile</h2><div class="card"><p><b>Name:</b> ${user.first_name}</p><p><b>ID:</b> ${user.id}</p><p><b>Total Mined:</b> ${getTotalFarmed().toFixed(4)} TON</p><p><b>Daily Streak:</b> ${dailyStreak} days</p><p><b>Ads Watched:</b> ${adsWatchedToday}/${MAX_ADS_PER_DAY}</p></div><div class="card"><h3>Developer Tools</h3><button class="btn" style="background:var(--danger)" onclick="resetTasks()">Reset All Tasks</button></div>`; }
-
-loadGame(); updateBalance(); renderHome(); document.querySelector('.tabbar button[data-tab="home"]').classList.add('active'); setInterval(farmTick, 1000); setInterval(saveGame, 3000);
+function renderProfile() { document.getElementById('content').innerHTML = `<h2>Profile</h2><div class="card"><p><b>Name:</b> ${user.first_name}</p><p><b>ID:</b> ${user.id}</p><p><b>Total Mined:</b> ${getTotalFarmed().toFixed(4)} TON</p><p><b>Daily Streak:</b> ${dailyStreak} days</p><p><b>Ads
