@@ -2,29 +2,61 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
-  <title>MinerAds</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Miner Ads</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+  <style>
+    :root {
+      --bg: #0a0f1a; --card: #121a2b; --accent: #00e5ff; --text: #e0e0e0;
+      --muted: #8892a6; --danger: #ff4d4f; --success: #22c55e;
+    }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 70px; }
+   .container { padding: 16px; }
+   .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+   .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; background: linear-gradient(90deg, var(--accent), #00b8d4); color: #000; font-weight: 700; font-size: 16px; cursor: pointer; }
+   .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+   .tabbar { position: fixed; bottom: 0; left: 0; right: 0; display: flex; background: var(--card); border-top: 1px solid #1e2a40; }
+   .tabbar button { flex: 1; padding: 10px 0; background: none; border: none; color: var(--muted); font-size: 11px; }
+   .tabbar button.active { color: var(--accent); }
+   .miner { display: flex; align-items: center; gap: 12px; }
+   .miner-img { width: 50px; height: 50px; border-radius: 8px; }
+   .miner-info { flex: 1; }
+   .progress { height: 6px; background: #1e2a40; border-radius: 3px; overflow: hidden; }
+   .progress-bar { height: 100%; background: var(--accent); }
+   .subtabs { display: flex; gap: 8px; margin-bottom: 12px; }
+   .subtab-btn { flex: 1; padding: 8px; border: 1px solid #333; background: #1e2a40; color: var(--text); border-radius: 8px; font-size: 12px; }
+   .subtab-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+    /* POPUP */
+   .popup-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 9999; animation: fadeIn 0.2s; }
+   .popup { background: var(--card); padding: 24px; border-radius: 16px; text-align: center; max-width: 300px; border: 1px solid #333; animation: scaleIn 0.3s; }
+   .popup-icon { font-size: 40px; margin-bottom: 8px; }
+   .popup h3 { margin: 0 0 8px 0; }.popup p { color: var(--muted); margin: 0 0 16px 0; font-size: 14px; }
+   .popup-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--accent); color: #000; font-weight: 700; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes scaleIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    /* WHEEL */
+   .wheel-container { position: relative; width: 280px; height: 280px; margin: 20px auto; }
+   .wheel { width: 100%; height: 100%; border-radius: 50%; position: relative; overflow: hidden; border: 6px solid var(--accent); transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 1); }
+   .wheel-segment { position: absolute; width: 50%; height: 50%; transform-origin: 100% 100%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #000; }
+   .wheel-pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 20px solid #fbbf24; z-index: 10; }
+   .wheel-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 60px; background: var(--card); border: 4px solid var(--accent); border-radius: 50%; z-index: 5; }
+  </style>
 </head>
 <body>
-  <div class="header">
-    <h1>MinerAds</h1>
-    <div class="balance"><span id="balance">0.0000</span> TON</div>
-  </div>
-
-  <div id="content"></div>
-
+  <div class="container" id="content"></div>
   <div class="tabbar">
-    <button data-tab="home">🏠<br>Home</button>
-    <button data-tab="shop">🛒<br>Shop</button>
-    <button data-tab="tasks">📋<br>Tasks</button>
-    <button data-tab="referral">👥<br>Referral</button>
-    <button data-tab="wallet">💰<br>Wallet</button>
-    <button data-tab="profile">👤<br>Profile</button>
+    <button data-tab="home">🏠 Home</button>
+    <button data-tab="wheel">🎡 Wheel</button> <!-- NEW -->
+    <button data-tab="shop">🛒 Shop</button>
+    <button data-tab="tasks">📋 Tasks</button>
+    <button data-tab="referral">👥 Referral</button>
+    <button data-tab="wallet">💼 Wallet</button>
+    <button data-tab="profile">👤 Profile</button>
   </div>
-
+  <div id="balance" style="position:fixed;top:10px;right:10px;background:var(--card);padding:8px 12px;border-radius:20px;font-weight:700;">0 TON</div>
   <script src="script.js"></script>
 </body>
 </html>
