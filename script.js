@@ -9,6 +9,7 @@ const YOUR_WALLET_ADDRESS = "UQD63olQ9L4WryJy8YJ9kEfO4gaen-GkbtvLy5-co2hkI4kv";
 
 let balance = 10.0; let lastTick = Date.now(); let minerInstances = []; let nextInstanceId = 1;
 let completedTasks = []; let activeTaskTab = 'oneTime'; let taskProgress = {}; let lastDailySpin = 0; let isSpinning = false;
+let currentRotation = { wheel: 0, 'wheel-paid': 0 }; // track rotation so it doesn't reset
 
 const minerTemplates = [
   { id: 1, name: "Micro Miner", cost: 1, bonus: 0.10, rate: 0.000000424, img: "micro.png" },
@@ -56,12 +57,13 @@ function loadGame() {
   const save = localStorage.getItem(SAVE_KEY); if (save) {
     const data = JSON.parse(save); balance = data.balance || 10.0; lastTick = data.lastTick || Date.now(); minerInstances = data.minerInstances || [];
     nextInstanceId = data.nextInstanceId || 1; taskProgress = data.taskProgress || {}; lastDailySpin = data.lastDailySpin || 0;
+    currentRotation = data.currentRotation || { wheel: 0, 'wheel-paid': 0 };
     minerInstances.forEach(m => { const template = minerTemplates.find(t => t.id === m.templateId); if (template) { m.img = template.img; m.rate = template.rate; } });
     const offlineSeconds = (Date.now() - lastTick) / 1000; minerInstances.forEach(m => { m.farmed += m.rate * offlineSeconds; });
   } const taskSave = localStorage.getItem(TASK_KEY); if(taskSave) completedTasks = JSON.parse(taskSave); saveGame();
 }
 
-function saveGame() { localStorage.setItem(SAVE_KEY, JSON.stringify({ balance, lastTick: Date.now(), minerInstances, nextInstanceId, taskProgress, lastDailySpin })); localStorage.setItem(TASK_KEY, JSON.stringify(completedTasks)); }
+function saveGame() { localStorage.setItem(SAVE_KEY, JSON.stringify({ balance, lastTick: Date.now(), minerInstances, nextInstanceId, taskProgress, lastDailySpin, currentRotation })); localStorage.setItem(TASK_KEY, JSON.stringify(completedTasks)); }
 function updateBalance() { const el = document.getElementById('balance'); if(el) el.innerText = `${balance.toFixed(4)} TON`; }
 
 function addMinerById(id, count = 1) { for(let i=0; i<count; i++) { const template = minerTemplates.find(t => t.id === id); minerInstances.push({ instanceId: nextInstanceId++, templateId: template.id, name: template.name, rate: template.rate, bonus: template.bonus, img: template.img, farmed: 0 }); } showPopup('success', 'New Miner!', `You got ${count}x ${minerTemplates.find(t=>t.id===id).name}`); }
@@ -82,9 +84,20 @@ function spinWheel(type) {
 
   isSpinning = true; balance -= cost; updateBalance();
   const prizeIndex = Math.floor(Math.random() * prizes.length); const prize = prizes[prizeIndex];
-  const segmentAngle = 360 / prizes.length; const rotation = 360 * 5 + (360 - prizeIndex * segmentAngle - segmentAngle/2); // 5 spins
+  const segmentAngle = 360 / prizes.length;
 
-  const wheelEl = document.getElementById(wheelId); wheelEl.style.transform = `rotate(${rotation}deg)`; tg.HapticFeedback.impactOccurred('medium');
+  // Calculate to land exactly on prize, with pointer at top
+  const targetAngle = 360 - (prizeIndex * segmentAngle) - segmentAngle/2;
+  currentRotation[wheelId] += 360 * 5 + targetAngle; // add 5 full spins
+
+  const wheelEl = document.getElementById(wheelId);
+  wheelEl.style.transform = `rotate(${currentRotation[wheelId]}deg)`;
+
+  // Counter-rotate labels so they stay upright
+  const labelsEl = document.getElementById(wheelId + '-labels');
+  labelsEl.style.transform = `rotate(${-currentRotation[wheelId]}deg)`;
+
+  tg.HapticFeedback.impactOccurred('medium');
 
   setTimeout(() => { isSpinning = false; givePrize(prize); renderWheel(); }, 4500);
 }
@@ -97,8 +110,10 @@ function createWheel(prizes, colors) {
 
   let labels = '';
   prizes.forEach((p, i) => {
-    const angle = (i * segmentAngle) + segmentAngle/2; const rad = angle * Math.PI / 180;
-    const x = 140 + 80 * Math.cos(rad); const y = 140 + 80 * Math.sin(rad);
+    const angle = (i * segmentAngle) + segmentAngle/2;
+    const rad = angle * Math.PI / 180;
+    const x = 140 + 85 * Math.cos(rad);
+    const y = 140 + 85 * Math.sin(rad);
     labels += `<div class="wheel-label" style="left:${x}px; top:${y}px; transform:translate(-50%,-50%) rotate(${angle}deg)">${p.label}</div>`;
   });
   return { gradient, labels };
@@ -114,8 +129,8 @@ function renderWheel() {
       <h3>Daily Wheel - FREE</h3><p style="color:var(--muted)">Spin once every 24 hours</p>
       <div class="wheel-container">
         <div class="wheel-pointer"></div>
-        <div class="wheel" id="wheel" style="background:${dailyWheel.gradient}"></div>
-        <div class="wheel-labels">${dailyWheel.labels}</div>
+        <div class="wheel" id="wheel" style="background:${dailyWheel.gradient}; transform:rotate(${currentRotation.wheel}deg)"></div>
+        <div class="wheel-labels" id="wheel-labels" style="transform:rotate(${-currentRotation.wheel}deg)">${dailyWheel.labels}</div>
         <div class="wheel-center">🎁</div>
       </div>
       <button class="btn" ${!canSpinDaily || isSpinning? 'disabled' : ''} onclick="spinWheel('daily')">${canSpinDaily? 'SPIN NOW' : `Wait ${hoursLeft.toFixed(1)}h`}</button>
@@ -124,8 +139,8 @@ function renderWheel() {
       <h3>Premium Wheel - 0.5 TON</h3><p style="color:var(--muted)">Bigger prizes, spin anytime</p>
       <div class="wheel-container">
         <div class="wheel-pointer"></div>
-        <div class="wheel" id="wheel-paid" style="background:${paidWheel.gradient}; border-color:#fbbf24"></div>
-        <div class="wheel-labels">${paidWheel.labels}</div>
+        <div class="wheel" id="wheel-paid" style="background:${paidWheel.gradient}; border-color:#fbbf24; transform:rotate(${currentRotation['wheel-paid']}deg)"></div>
+        <div class="wheel-labels" id="wheel-paid-labels" style="transform:rotate(${-currentRotation['wheel-paid']}deg)">${paidWheel.labels}</div>
         <div class="wheel-center" style="border-color:#fbbf24">💎</div>
       </div>
       <button class="btn" style="background:#fbbf24; color:#000" ${isSpinning? 'disabled' : ''} onclick="spinWheel('paid')">SPIN FOR 0.5 TON</button>
