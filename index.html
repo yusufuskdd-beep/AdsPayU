@@ -6,8 +6,8 @@
 <title>AdsPayU Miner</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-<!-- TONCONNECT SDK - jsDelivr works in TG -->
-<script src="https://cdn.jsdelivr.net/npm/@tonconnect/sdk@2.2.0/dist/tonconnect-sdk.min.js"></script>
+<!-- TONCONNECT UI FOR VANILLA JS -->
+<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 
 <link rel="stylesheet" href="style.css">
 </head>
@@ -17,9 +17,7 @@
     <div class="balance" id="balance">0.0000 TON<br><span style="font-size:12px;color:#F59E0B">0 MAD</span></div>
   </div>
 
-  <div class="content" id="content">
-    <!-- Content loads here -->
-  </div>
+  <div class="content" id="content"></div>
 
   <div class="tabbar">
     <button data-tab="home">🏠<span>Home</span></button>
