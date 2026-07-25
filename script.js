@@ -61,15 +61,25 @@ async function depositTON(){
   try{
     await tonConnectUI.sendTransaction(transaction);
     showPopup("success","Sent","Transaction sent. Balance will update after confirmation");
-    // For testing: add instantly. In production verify on backend first
-    balance+=parseFloat(amount);
+    balance+=parseFloat(amount); // for testing. verify on backend in production
     updateBalance();saveGame();
   }catch(e){showPopup("error","Cancelled","Transaction cancelled")}
 }
 
+async function disconnectWallet(){
+  if(tonConnectUI){
+    await tonConnectUI.disconnect();
+    connectedWallet=null;
+    showPopup("success","Disconnected","Wallet disconnected");
+    renderWallet();
+  }
+}
+
 function renderWallet(){
   const c=document.getElementById("content");if(!c)return;
-  const walletAddr=connectedWallet?`${connectedWallet.account.address.slice(0,6)}...${connectedWallet.account.address.slice(-4)}`:"Not Connected";
+  const isConnected=!!connectedWallet;
+  const walletAddr=isConnected?`${connectedWallet.account.address.slice(0,6)}...${connectedWallet.account.address.slice(-4)}`:"Not Connected";
+  
   c.innerHTML=`<h2>Wallet</h2>
   <div class="card">
     <h3>💰 Game Balance</h3>
@@ -79,19 +89,22 @@ function renderWallet(){
   <div class="card">
     <h3>🔗 TON Connect</h3>
     <p style="font-size:12px;color:var(--muted);margin-bottom:8px">${walletAddr}</p>
-    <div id="ton-connect-button"></div>
+    <div id="ton-connect-button" style="${isConnected?'display:none':''}"></div>
+    ${isConnected?`<button class="btn" style="background:var(--danger)" onclick="disconnectWallet()">Disconnect Wallet</button>`:""}
   </div>
   <div class="card">
     <h3>📥 Deposit TON</h3>
-    <button class="btn" onclick="depositTON()">📥 Deposit TON</button>
+    <button class="btn" onclick="depositTON()" ${!isConnected?"disabled":""}>📥 Deposit TON</button>
     <p style="font-size:11px;color:var(--muted);margin-top:8px">Send to: ${YOUR_WALLET_ADDRESS.slice(0,10)}...</p>
   </div>`;
   
-  setTimeout(()=>{
-    if(tonConnectUI){
-      tonConnectUI.mount("#ton-connect-button")
-    }
-  },200)
+  if(!isConnected){
+    setTimeout(()=>{
+      if(tonConnectUI){
+        tonConnectUI.mount("#ton-connect-button")
+      }
+    },200)
+  }
 }
 
 function renderReferral(){document.getElementById("content").innerHTML=`<h2>Referral</h2><div class="card"><p>Your Link:</p><p style="word-break:break-all">https://t.me/AdsPayU_bot?start=${user.id}</p></div>`}
