@@ -12,7 +12,7 @@ const minerTemplates=[
 function showPopup(t,e,i){tg.showPopup({title:e,message:i,buttons:[{type:"ok"}]})}
 function showRewardedAd(){return new Promise((res,rej)=>{if(typeof window.showGiga!=="function"){showPopup("error","Ad Error","GigaPub loading...");rej();return}window.showGiga().then(res).catch(rej)})}
 
-// TONCONNECT UI V2 - NO AUTO BUTTON
+// TONCONNECT UI V2
 let tonConnectUI=null;
 try{
   tonConnectUI=new TON_CONNECT_UI.TonConnectUI({
@@ -86,6 +86,36 @@ async function depositTON(){
   }catch(e){showPopup("error","Cancelled","Transaction cancelled")}
 }
 
+async function withdrawTON(){
+  if(!connectedWallet)return showPopup("error","Connect First","Connect wallet first");
+  const amount=prompt(`Withdraw TON\nYour Balance: ${balance.toFixed(4)} TON\nMin: 1 TON\nEnter amount:`,`1`);
+  if(!amount||isNaN(amount))return;
+  const withdrawAmount=parseFloat(amount);
+  if(withdrawAmount<1)return showPopup("error","Min Withdraw","Minimum 1 TON");
+  if(withdrawAmount>balance)return showPopup("error","No Balance","Not enough TON");
+  
+  const transaction={
+    validUntil:Math.floor(getUTCTimestamp()/1000)+300,
+    messages:[{
+      address:connectedWallet.account.address,
+      amount:(withdrawAmount*1000000).toString()
+    }]
+  };
+  try{
+    await tonConnectUI.sendTransaction(transaction);
+    balance-=withdrawAmount; // Deduct from game balance
+    updateBalance();
+    saveGame();
+    showPopup("success","Withdraw Sent",`${withdrawAmount} TON sent to your wallet`);
+    renderWallet();
+  }catch(e){showPopup("error","Cancelled","Withdraw cancelled")}
+}
+
+function showWalletMenu(){
+  const menu=document.getElementById("wallet-menu");
+  menu.style.display = menu.style.display==='none'?'block':'none';
+}
+
 function renderWallet(){
   const c=document.getElementById("content");if(!c)return;
   const isConnected=!!connectedWallet;
@@ -117,13 +147,13 @@ function renderWallet(){
   </div>
   <div class="card">
     <h3>📥 Deposit TON</h3>
-    <button class="btn" onclick="depositTON()" ${!isConnected?"disabled":""}>📥 Deposit TON</button>
+    <button class="btn" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)" onclick="depositTON()" ${!isConnected?"disabled":""}>📥 Deposit TON</button>
+  </div>
+  <div class="card">
+    <h3>📤 Withdraw TON</h3>
+    <button class="btn" style="background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%)" onclick="withdrawTON()" ${!isConnected?"disabled":""}>📤 Withdraw TON</button>
+    <p style="font-size:11px;color:var(--muted);margin-top:8px">Min: 1 TON • Sends to connected wallet</p>
   </div>`;
-}
-
-function showWalletMenu(){
-  const menu=document.getElementById("wallet-menu");
-  menu.style.display = menu.style.display==='none'?'block':'none';
 }
 
 function renderReferral(){document.getElementById("content").innerHTML=`<h2>Referral</h2><div class="card"><p>Your Link:</p><p style="word-break:break-all">https://t.me/AdsPayU_bot?start=${user.id}</p></div>`}
