@@ -55,7 +55,7 @@ async function depositTON(){
     validUntil:Math.floor(getUTCTimestamp()/1000)+300,
     messages:[{
       address:YOUR_WALLET_ADDRESS,
-      amount:(parseFloat(amount)*1000000).toString()
+      amount:(parseFloat(amount)*1000000000).toString() // Fixed: 9 decimals for TON
     }]
   };
   try{
@@ -72,6 +72,12 @@ async function disconnectWallet(){
     connectedWallet=null;
     showPopup("success","Disconnected","Wallet disconnected");
     renderWallet();
+    // Remount connect button
+    setTimeout(()=>{
+      if(tonConnectUI){
+        tonConnectUI.mount("#ton-connect-button")
+      }
+    },300)
   }
 }
 
@@ -89,8 +95,8 @@ function renderWallet(){
   <div class="card">
     <h3>🔗 TON Connect</h3>
     <p style="font-size:12px;color:var(--muted);margin-bottom:8px">${walletAddr}</p>
-    <div id="ton-connect-button" style="${isConnected?'display:none':''}"></div>
-    ${isConnected?`<button class="btn" style="background:var(--danger)" onclick="disconnectWallet()">Disconnect Wallet</button>`:""}
+    <div id="ton-connect-button"></div>
+    ${isConnected?`<button class="btn" style="background:var(--danger);margin-top:8px" onclick="disconnectWallet()">Disconnect Wallet</button>`:""}
   </div>
   <div class="card">
     <h3>📥 Deposit TON</h3>
@@ -98,13 +104,12 @@ function renderWallet(){
     <p style="font-size:11px;color:var(--muted);margin-top:8px">Send to: ${YOUR_WALLET_ADDRESS.slice(0,10)}...</p>
   </div>`;
   
-  if(!isConnected){
-    setTimeout(()=>{
-      if(tonConnectUI){
-        tonConnectUI.mount("#ton-connect-button")
-      }
-    },200)
-  }
+  // Always mount. TON Connect UI handles show/hide
+  setTimeout(()=>{
+    if(tonConnectUI){
+      tonConnectUI.mount("#ton-connect-button")
+    }
+  },200)
 }
 
 function renderReferral(){document.getElementById("content").innerHTML=`<h2>Referral</h2><div class="card"><p>Your Link:</p><p style="word-break:break-all">https://t.me/AdsPayU_bot?start=${user.id}</p></div>`}
