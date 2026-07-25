@@ -10,15 +10,29 @@ const minerTemplates=[
 ];
 
 function showPopup(t,e,i){tg.showPopup({title:e,message:i,buttons:[{type:"ok"}]})}
-function showRewardedAd(){return new Promise((res,rej)=>{if(typeof window.showGiga!=="function"){showPopup("error","Ad Error","GigaPub loading...");rej();return}window.showGiga().then(res).catch(rej)})}
 
-// TONCONNECT UI INIT - Same as your React TonConnectUIProvider
+// FIXED: Load GigaPub properly + retry
+function loadGigaPub(){
+  if(typeof window.showGiga==="function"){gigaReady=true;renderHome();return}
+  const script=document.createElement('script');
+  script.src='https://cdn.gigapub.tech/sdk.js';
+  script.async=true;
+  script.onload=()=>{gigaReady=true;renderHome()};
+  script.onerror=()=>{setTimeout(loadGigaPub,3000)}; // retry in 3s
+  document.head.appendChild(script);
+}
+
+function showRewardedAd(){return new Promise((res,rej)=>{
+  if(!gigaReady){showPopup("error","Ad Error","Ads still loading...");rej();return}
+  window.showGiga().then(res).catch(()=>{showPopup("error","Ad Failed","Try again");rej()})
+})}
+
+// TONCONNECT UI INIT
 function initTonConnect(){
   try{
     tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-      manifestUrl: "https://adspayu.vercel.app/tonconnect-manifest.json", // <-- CHANGE TO YOUR DOMAIN
+      manifestUrl: "https://adspayu.vercel.app/tonconnect-manifest.json",
     });
-
     tonConnectUI.onStatusChange(wallet=>{
       connectedWallet=wallet;
       renderWallet();
@@ -34,7 +48,7 @@ function initTonConnect(){
 }
 
 const tabs={home:renderHome,shop:renderShop,tasks:renderTasks,referral:renderReferral,wallet:renderWallet,profile:renderProfile};
-document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll(".tabbar button").forEach(t=>{t.onclick=()=>{document.querySelectorAll(".tabbar button").forEach(e=>e.classList.remove("active"));t.classList.add("active");tabs[t.dataset.tab]()}});loadGame();updateBalance();renderHome();initTonConnect();document.querySelector('.tabbar button[data-tab="home"]').classList.add("active");setTimeout(()=>{gigaReady=typeof window.showGiga==="function";renderHome()},2000)});
+document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll(".tabbar button").forEach(t=>{t.onclick=()=>{document.querySelectorAll(".tabbar button").forEach(e=>e.classList.remove("active"));t.classList.add("active");tabs[t.dataset.tab]()}});loadGame();updateBalance();renderHome();initTonConnect();loadGigaPub();document.querySelector('.tabbar button[data-tab="home"]').classList.add("active")});
 
 function getTotalRate(){return minerInstances.reduce((t,e)=>t+e.rate,0)}function getTotalMadRate(){return minerInstances.reduce((t,e)=>t+e.madRate,0)}function getTotalFarmed(){return minerInstances.reduce((t,e)=>t+e.farmed,0)}
 
@@ -45,9 +59,9 @@ function formatTime(ms){if(ms<=0)return"CLAIM NOW";const s=Math.floor(ms/1000),m
 function getClaimCooldownText(){return formatTime(CLAIM_COOLDOWN-(getUTCTimestamp()-lastMinerClaim))}
 function getMadCooldownText(){return formatTime(CLAIM_COOLDOWN-(getUTCTimestamp()-lastMadClaim))}
 
-async function claimMiner(){const i=getTotalFarmed();if(i<.000001)return showPopup("alert","Empty","No TON");if(!gigaReady)return showPopup("alert","Loading","Wait 3s");await showRewardedAd();balance+=i;minerInstances.forEach(t=>t.farmed=0);lastMinerClaim=getUTCTimestamp();updateBalance();saveGame();showPopup("success","Claimed",`+${i.toFixed(6)} TON`);renderHome()}
-async function claimMad(){const i=getTotalMadRate();if(i<=0)return showPopup("alert","No Miners","Buy miners");if(!gigaReady)return showPopup("alert","Loading","Wait 3s");await showRewardedAd();madBalance+=i;lastMadClaim=getUTCTimestamp();updateBalance();saveGame();showPopup("success","MAD!",`+${i} MAD`);renderHome()}
-async function watchAdTask(){if(adsWatchedToday>=MAX_ADS_PER_DAY)return showPopup("alert","Limit","50/50 today");if(!gigaReady)return showPopup("alert","Loading","Wait 3s");await showRewardedAd();adsWatchedToday++;balance+=AD_REWARD;updateBalance();saveGame();showPopup("success","Earned",`+${AD_REWARD} TON`);renderTasks()}
+async function claimMiner(){const i=getTotalFarmed();if(i<.000001)return showPopup("alert","Empty","No TON");if(!gigaReady)return showPopup("alert","Loading","Wait for ads");await showRewardedAd();balance+=i;minerInstances.forEach(t=>t.farmed=0);lastMinerClaim=getUTCTimestamp();updateBalance();saveGame();showPopup("success","Claimed",`+${i.toFixed(6)} TON`);renderHome()}
+async function claimMad(){const i=getTotalMadRate();if(i<=0)return showPopup("alert","No Miners","Buy miners");if(!gigaReady)return showPopup("alert","Loading","Wait for ads");await showRewardedAd();madBalance+=i;lastMadClaim=getUTCTimestamp();updateBalance();saveGame();showPopup("success","MAD!",`+${i} MAD`);renderHome()}
+async function watchAdTask(){if(adsWatchedToday>=MAX_ADS_PER_DAY)return showPopup("alert","Limit","50/50 today");if(!gigaReady)return showPopup("alert","Loading","Wait for ads");await showRewardedAd();adsWatchedToday++;balance+=AD_REWARD;updateBalance();saveGame();showPopup("success","Earned",`+${AD_REWARD} TON`);renderTasks()}
 
 function renderHome(){const c=document.getElementById("content");const t=getTotalRate(),e=getTotalFarmed(),mad=getTotalMadRate();c.innerHTML=`<div class="card"><h2>Welcome ${user.first_name}</h2><p>ROI 5%-18% + MAD</p></div><div class="card"><h3>⛏️ TON Mining</h3><p>Rate: <b>${(t*86400).toFixed(4)}/day</b></p><p>Farmed: <b id="farmedTotal">${e.toFixed(6)}</b></p><button class="btn" ${!gigaReady?"disabled":""} onclick="claimMiner()">${gigaReady?getClaimCooldownText():'LOADING ADS...'}</button></div><div class="card"><h3>💎 MAD Mining</h3><p>Rate: <b>${mad}/hour</b></p><p>Balance: <b>${madBalance.toFixed(0)}</b></p><button class="btn" ${!gigaReady?"disabled":""} onclick="claimMad()">${gigaReady?getMadCooldownText():'LOADING ADS...'}</button></div><div class="card"><h3>Your Miners</h3>${minerInstances.length?minerInstances.map(t=>`<div class="miner-unit"><img src="${t.img}" class="miner-img" onerror="this.src='micro.png'"/><div class="miner-info"><h4>${t.name} #${t.instanceId}</h4><p>${(t.rate*86400).toFixed(4)}/d • ${t.madRate} MAD/h</p><p>Farmed: <span id="farmed-${t.instanceId}">${t.farmed.toFixed(6)}</span></p></div></div>`).join(""):'<p style="color:var(--muted)">No miners yet</p>'}<button class="btn" onclick="buyMiner(4)">Buy GPU Rig 10 TON</button></div>`}
 
@@ -58,7 +72,7 @@ function renderTasks(){document.getElementById("content").innerHTML=`<h2>Tasks</
 
 async function connectWallet(){
   if(!tonConnectUI)return showPopup("error","Error","SDK loading...");
-  await tonConnectUI.openModal(); // Opens wallet selector modal
+  await tonConnectUI.openModal();
 }
 
 async function disconnectWallet(){
@@ -104,18 +118,7 @@ async function depositTON(){
   showPopup("info","Sent","Waiting for confirmation ~10s");
 }
 
-async function withdrawTON(){
-  if(!connectedWallet)return showPopup("error","Connect First","Connect wallet first");
-  const amount=prompt(`Withdraw. Balance: ${balance.toFixed(4)}`,"1");
-  if(!amount)return;
-  if(parseFloat(amount)>balance)return showPopup("error","No Balance","Not enough");
-  await tonConnectUI.sendTransaction({
-    validUntil: Math.floor(Date.now()/1000)+300,
-    messages:[{address:connectedWallet.account.address,amount:(parseFloat(amount)*1000000).toString()}]
-  });
-  balance-=parseFloat(amount);updateBalance();saveGame();
-  showPopup("success","Withdraw Sent",`${amount} TON sent`);
-}
+// WITHDRAW FUNCTION REMOVED
 
 function renderWallet(){
   const c=document.getElementById("content");
@@ -131,11 +134,7 @@ function renderWallet(){
     <h3>📥 Deposit TON</h3>
     <p style="word-break:break-all;font-size:11px;background:#0f131a;padding:8px;border-radius:8px">${YOUR_WALLET_ADDRESS}</p>
     <button class="btn" onclick="depositTON()" ${!isConnected?"disabled":""}>📥 Deposit TON</button>
-  </div>
-  <div class="card">
-    <h3>📤 Withdraw TON</h3>
-    <button class="btn" onclick="withdrawTON()" ${!isConnected?"disabled":""}>📤 Withdraw TON</button>
-  </div>`;
+  </div>`; // WITHDRAW CARD REMOVED
 }
 
 function renderReferral(){document.getElementById("content").innerHTML=`<h2>Referral</h2><div class="card"><p>Your Link:</p><p style="word-break:break-all">https://t.me/AdsPayU_bot?start=${user.id}</p></div>`}
