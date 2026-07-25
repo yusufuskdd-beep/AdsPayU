@@ -77,7 +77,7 @@ async function depositTON(){
     validUntil:Math.floor(getUTCTimestamp()/1000)+300,
     messages:[{
       address:YOUR_WALLET_ADDRESS,
-      amount:(parseFloat(amount)*1000000).toString()
+      amount:(parseFloat(amount)*1000000000).toString()
     }]
   };
   try{
@@ -98,7 +98,7 @@ async function withdrawTON(){
     validUntil:Math.floor(getUTCTimestamp()/1000)+300,
     messages:[{
       address:connectedWallet.account.address,
-      amount:(withdrawAmount*1000000).toString()
+      amount:(withdrawAmount*1000000000).toString()
     }]
   };
   try{
