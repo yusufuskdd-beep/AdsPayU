@@ -1,4 +1,4 @@
-const tg=window.Telegram.WebApp;tg.ready();tg.expand();tg.setHeaderColor('#070A12');tg.setBackgroundColor('#070A12');let user=tg.initDataUnsafe.user||{first_name:"Miner",id:"guest"};const SAVE_KEY=`minerads_save_${user.id}`;const YOUR_WALLET_ADDRESS="UQD63olQ9L4WryJy8YJ9kEfO4gaen-GkbtvLy5-co2hkI4kv",CLAIM_COOLDOWN=3600000,MAX_ADS_PER_DAY=50,AD_REWARD=.002;const TONCENTER_API="https://toncenter.com/api/v2";let tonConnectUI=null,connectedWallet=null,depositInterval=null,processedTxs=JSON.parse(localStorage.getItem(`processed_txs_${user.id}`)||'[]');function getUTCTimestamp(){return Date.now()}let balance=10,madBalance=0,lastTick=getUTCTimestamp(),minerInstances=[],nextInstanceId=1,lastMinerClaim=0,lastMadClaim=0,adsWatchedToday=0;
+const tg=window.Telegram.WebApp;tg.ready();tg.expand();tg.setHeaderColor('#070A12');tg.setBackgroundColor('#070A12');let user=tg.initDataUnsafe.user||{first_name:"Miner",id:"guest"};const SAVE_KEY=`minerads_save_${user.id}`;const YOUR_WALLET_ADDRESS="UQD63olQ9L4WryJy8YJ9kEfO4gaen-GkbtvLy5-co2hkI4kv",CLAIM_COOLDOWN=3600000,MAX_ADS_PER_DAY=50,AD_REWARD=.0002;const TONCENTER_API="https://toncenter.com/api/v2";let tonConnectUI=null,connectedWallet=null,depositInterval=null,processedTxs=JSON.parse(localStorage.getItem(`processed_txs_${user.id}`)||'[]');function getUTCTimestamp(){return Date.now()}let balance=10,madBalance=0,lastTick=getUTCTimestamp(),minerInstances=[],nextInstanceId=1,lastMinerClaim=0,lastMadClaim=0,adsWatchedToday=0;
 
 const minerTemplates=[
   {id:1,name:"Micro Miner",cost:1,bonus:.05,rate:1*0.05/30/86400,madRate:5,img:"micro.png"},
@@ -24,7 +24,6 @@ function initTonConnect(){
     tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
       manifestUrl: "https://adspayu.vercel.app/tonconnect-manifest.json",
     });
-    // FIX: Don't render wallet on status change. Just update wallet var
     tonConnectUI.onStatusChange(wallet=>{
       connectedWallet=wallet;
       if(wallet){
@@ -38,7 +37,7 @@ function initTonConnect(){
   }catch(e){console.log("TonConnect error",e)}
 }
 
-// FORCE HOME ON START - NO FLICKER
+// FORCE HOME ON START
 const tabs={home:renderHome,shop:renderShop,tasks:renderTasks,referral:renderReferral,wallet:renderWallet,profile:renderProfile};
 document.addEventListener("DOMContentLoaded",()=>{
   document.querySelectorAll(".tabbar button").forEach(t=>{
@@ -51,12 +50,8 @@ document.addEventListener("DOMContentLoaded",()=>{
   loadGame();
   updateBalance();
   initTonConnect();
-  
-  // Set home as active and render it ONCE
   document.querySelector('.tabbar button[data-tab="home"]').classList.add("active");
   renderHome();
-  
-  // Refresh UI once GigaPub loads
   setTimeout(()=>{if(typeof window.showGiga==="function")renderHome()},2000)
 });
 
@@ -69,8 +64,12 @@ function formatTime(ms){if(ms<=0)return"CLAIM NOW";const s=Math.floor(ms/1000),m
 function getClaimCooldownText(){return formatTime(CLAIM_COOLDOWN-(getUTCTimestamp()-lastMinerClaim))}
 function getMadCooldownText(){return formatTime(CLAIM_COOLDOWN-(getUTCTimestamp()-lastMadClaim))}
 
+// CLAIMS DO NOT ADD TO TASK COUNT
 async function claimMiner(){const i=getTotalFarmed();if(i<.000001)return showPopup("alert","Empty","No TON");await showRewardedAd();balance+=i;minerInstances.forEach(t=>t.farmed=0);lastMinerClaim=getUTCTimestamp();updateBalance();saveGame();showPopup("success","Claimed",`+${i.toFixed(6)} TON`);renderHome()}
+
 async function claimMad(){const i=getTotalMadRate();if(i<=0)return showPopup("alert","No Miners","Buy miners");await showRewardedAd();madBalance+=i;lastMadClaim=getUTCTimestamp();updateBalance();saveGame();showPopup("success","MAD!",`+${i} MAD`);renderHome()}
+
+// TASK DOES ADD TO COUNT - REWARD 0.0002
 async function watchAdTask(){if(adsWatchedToday>=MAX_ADS_PER_DAY)return showPopup("alert","Limit","50/50 today");await showRewardedAd();adsWatchedToday++;balance+=AD_REWARD;updateBalance();saveGame();showPopup("success","Earned",`+${AD_REWARD} TON`);renderTasks()}
 
 function renderHome(){const c=document.getElementById("content");const t=getTotalRate(),e=getTotalFarmed(),mad=getTotalMadRate();const adsReady=typeof window.showGiga==="function";c.innerHTML=`<div class="card"><h2>Welcome ${user.first_name}</h2><p>ROI 5%-18% + MAD</p></div><div class="card"><h3>⛏️ TON Mining</h3><p>Rate: <b>${(t*86400).toFixed(4)}/day</b></p><p>Farmed: <b id="farmedTotal">${e.toFixed(6)}</b></p><button class="btn" ${!adsReady?"disabled":""} onclick="claimMiner()">${adsReady?getClaimCooldownText():'LOADING ADS...'}</button></div><div class="card"><h3>💎 MAD Mining</h3><p>Rate: <b>${mad}/hour</b></p><p>Balance: <b>${madBalance.toFixed(0)}</b></p><button class="btn" ${!adsReady?"disabled":""} onclick="claimMad()">${adsReady?getMadCooldownText():'LOADING ADS...'}</button></div><div class="card"><h3>Your Miners</h3>${minerInstances.length?minerInstances.map(t=>`<div class="miner-unit"><img src="${t.img}" class="miner-img" onerror="this.src='micro.png'"/><div class="miner-info"><h4>${t.name} #${t.instanceId}</h4><p>${(t.rate*86400).toFixed(4)}/d • ${t.madRate} MAD/h</p><p>Farmed: <span id="farmed-${t.instanceId}">${t.farmed.toFixed(6)}</span></p></div></div>`).join(""):'<p style="color:var(--muted)">No miners yet</p>'}<button class="btn" onclick="buyMiner(4)">Buy GPU Rig 10 TON</button></div>`}
@@ -78,6 +77,7 @@ function renderHome(){const c=document.getElementById("content");const t=getTota
 function renderShop(){const c=document.getElementById("content");c.innerHTML=`<h2>Shop</h2>${minerTemplates.map(t=>{const owned=minerInstances.filter(e=>e.templateId===t.id).length;return`<div class="card miner"><img src="${t.img}" class="miner-img" onerror="this.src='micro.png'"/><div class="miner-info"><h3>${t.name}</h3><p>${(t.rate*86400).toFixed(4)} TON/day • ${t.madRate} MAD/h</p><p><b>${t.cost} TON</b> • Owned: ${owned}/3</p></div><button class="btn" ${owned>=3?"disabled":""} onclick="buyMiner(${t.id})">${owned>=3?"MAX":"Buy"}</button></div>`}).join("")}`}
 
 function buyMiner(t){const e=minerTemplates.find(e=>e.id===t),i=minerInstances.filter(i=>i.templateId===t).length;if(i>=3)return showPopup("alert","Max","3 limit per type");if(balance<e.cost)return showPopup("error","No TON","Not enough");balance-=e.cost;minerInstances.push({instanceId:nextInstanceId++,templateId:e.id,name:e.name,rate:e.rate,bonus:e.bonus,madRate:e.madRate,img:e.img,farmed:0});updateBalance();saveGame();showPopup("success","Bought",`${e.name} for ${e.cost} TON`);renderShop();renderHome()}
+
 function renderTasks(){const adsReady=typeof window.showGiga==="function";document.getElementById("content").innerHTML=`<h2>Tasks</h2><div class="card"><h3>📺 Watch Ads</h3><p>Earn <b>${AD_REWARD} TON</b> per ad</p><p>${adsWatchedToday}/${MAX_ADS_PER_DAY}</p><button class="btn" ${!adsReady?"disabled":""} onclick="watchAdTask()">${adsReady?`WATCH +${AD_REWARD} TON`:'LOADING ADS...'}</button></div>`}
 
 async function connectWallet(){
@@ -111,7 +111,6 @@ async function checkDeposits(){
         updateBalance();
         saveGame();
         showPopup("success","Deposit Received!",`+${amount.toFixed(4)} TON`);
-        // Only re-render wallet if user is ON wallet tab
         if(document.querySelector('.tabbar button[data-tab="wallet"]').classList.contains("active")){
           renderWallet();
         }
@@ -126,7 +125,7 @@ async function depositTON(){
   if(!amount)return;
   await tonConnectUI.sendTransaction({
     validUntil: Math.floor(Date.now()/1000)+300,
-    messages:[{address:YOUR_WALLET_ADDRESS,amount:(parseFloat(amount)*1000000000).toString()}]
+    messages:[{address:YOUR_WALLET_ADDRESS,amount:(parseFloat(amount)*1000000).toString()}]
   });
   showPopup("info","Sent","Waiting for confirmation ~10s");
 }
@@ -147,7 +146,7 @@ function renderWallet(){
   </div>`;
 }
 
-function renderReferral(){document.getElementById("content").innerHTML=`<h2>Referral</h2><div class="card"><p>Your Link:</p><p style="word-break:break-all">https://t.me/AdsPayU_bot?start=${user.id}</p></div>`}
+function renderReferral(){document.getElementById("content").innerHTML=`<h2>Referral</h2><div class="card"><p>Your Link:</p><p style="word-break:break-all">https://t.me/MinerAds_bot?start=${user.id}</p></div>`}
 function renderProfile(){document.getElementById("content").innerHTML=`<h2>Profile</h2><div class="card"><p>Name: ${user.first_name}</p><p>TON: ${balance.toFixed(4)}</p><p>MAD: ${madBalance.toFixed(0)}</p></div>`}
 
 setInterval(()=>{const t=getUTCTimestamp(),e=(t-lastTick)/1e3;lastTick=t;minerInstances.forEach(i=>{i.farmed+=i.rate*e});const i=document.getElementById("farmedTotal");i&&(i.innerText=getTotalFarmed().toFixed(6))},1000);
