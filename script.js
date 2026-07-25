@@ -13,15 +13,17 @@ function showPopup(t,e,i){tg.showPopup({title:e,message:i,buttons:[{type:"ok"}]}
 function showRewardedAd(){return new Promise((res,rej)=>{if(typeof window.showGiga!=="function"){showPopup("error","Ad Error","GigaPub loading...");rej();return}window.showGiga().then(res).catch(rej)})}
 
 let tonConnectUI=null;
-try{
+function initTonConnect(){
   tonConnectUI=new TON_CONNECT_UI.TonConnectUI({
-    manifestUrl:"https://adspayu.vercel.app/tonconnect-manifest.json"
+    manifestUrl:"https://adspayu.vercel.app/tonconnect-manifest.json",
+    buttonRootId:"ton-connect-button" // This is the key fix
   });
   tonConnectUI.onStatusChange(wallet=>{
     connectedWallet=wallet;
     renderWallet();
   })
-}catch(e){console.log("TON Connect Error:",e)}
+}
+initTonConnect();
 
 const tabs={home:renderHome,shop:renderShop,tasks:renderTasks,referral:renderReferral,wallet:renderWallet,profile:renderProfile};
 document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll(".tabbar button").forEach(t=>{t.onclick=()=>{document.querySelectorAll(".tabbar button").forEach(e=>e.classList.remove("active"));t.classList.add("active");tabs[t.dataset.tab]()}});loadGame();updateBalance();renderHome();document.querySelector('.tabbar button[data-tab="home"]').classList.add("active");setTimeout(()=>{gigaReady=typeof window.showGiga==="function";renderHome()},2000)});
@@ -55,13 +57,13 @@ async function depositTON(){
     validUntil:Math.floor(getUTCTimestamp()/1000)+300,
     messages:[{
       address:YOUR_WALLET_ADDRESS,
-      amount:(parseFloat(amount)*1000000000).toString() // Fixed: 9 decimals for TON
+      amount:(parseFloat(amount)*1000000).toString() // 9 decimals
     }]
   };
   try{
     await tonConnectUI.sendTransaction(transaction);
-    showPopup("success","Sent","Transaction sent. Balance will update after confirmation");
-    balance+=parseFloat(amount); // for testing. verify on backend in production
+    showPopup("success","Sent","Transaction sent");
+    balance+=parseFloat(amount);
     updateBalance();saveGame();
   }catch(e){showPopup("error","Cancelled","Transaction cancelled")}
 }
@@ -70,14 +72,10 @@ async function disconnectWallet(){
   if(tonConnectUI){
     await tonConnectUI.disconnect();
     connectedWallet=null;
+    document.getElementById("ton-connect-button").innerHTML=""; // clear old button
+    initTonConnect(); // re-init to get button back
     showPopup("success","Disconnected","Wallet disconnected");
     renderWallet();
-    // Remount connect button
-    setTimeout(()=>{
-      if(tonConnectUI){
-        tonConnectUI.mount("#ton-connect-button")
-      }
-    },300)
   }
 }
 
@@ -103,13 +101,6 @@ function renderWallet(){
     <button class="btn" onclick="depositTON()" ${!isConnected?"disabled":""}>📥 Deposit TON</button>
     <p style="font-size:11px;color:var(--muted);margin-top:8px">Send to: ${YOUR_WALLET_ADDRESS.slice(0,10)}...</p>
   </div>`;
-  
-  // Always mount. TON Connect UI handles show/hide
-  setTimeout(()=>{
-    if(tonConnectUI){
-      tonConnectUI.mount("#ton-connect-button")
-    }
-  },200)
 }
 
 function renderReferral(){document.getElementById("content").innerHTML=`<h2>Referral</h2><div class="card"><p>Your Link:</p><p style="word-break:break-all">https://t.me/AdsPayU_bot?start=${user.id}</p></div>`}
