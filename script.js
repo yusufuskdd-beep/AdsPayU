@@ -22,9 +22,9 @@ try{
     connectedWallet=wallet;
     renderWallet();
     if(wallet){
-      checkDeposits(); // check once
+      checkDeposits();
       if(depositInterval) clearInterval(depositInterval);
-      depositInterval=setInterval(checkDeposits,10000); // check every 10s
+      depositInterval=setInterval(checkDeposits,10000);
     }else{
       if(depositInterval) clearInterval(depositInterval);
     }
@@ -90,7 +90,7 @@ async function checkDeposits(){
     if(!data.result || data.result.length===0) return;
 
     const latestTx = data.result[0];
-    if(latestTx.transaction_id.hash === lastTxHash) return; // already processed
+    if(latestTx.transaction_id.hash === lastTxHash) return;
     lastTxHash = latestTx.transaction_id.hash;
 
     const amount = latestTx.in_msg.value / 1000000000; // 9 decimals to TON
