@@ -1,4 +1,4 @@
-const tg=window.Telegram.WebApp;tg.ready();tg.expand();tg.setHeaderColor('#070A12');tg.setBackgroundColor('#070A12');let user=tg.initDataUnsafe.user||{first_name:"Miner",id:"guest"};const SAVE_KEY=`minerads_save_${user.id}`;const YOUR_WALLET_ADDRESS="UQD63olQ9L4WryJy8YJ9kEfO4gaen-GkbtvLy5-co2hkI4kv",CLAIM_COOLDOWN=3600000,MAX_ADS_PER_DAY=50,AD_REWARD=.002;let gigaReady=false,connectedWallet=null;function getUTCTimestamp(){return Date.now()}function getUTCDateString(t){const e=new Date(t);return`${e.getUTCFullYear()}-${e.getUTCMonth()+1}-${e.getUTCDate()}`}let balance=10,madBalance=0,lastTick=getUTCTimestamp(),minerInstances=[],nextInstanceId=1,lastDailyClaim=0,dailyStreak=0,lastMinerClaim=0,lastMadClaim=0,adsWatchedToday=0,lastAdResetDate="";
+const tg=window.Telegram.WebApp;tg.ready();tg.expand();tg.setHeaderColor('#070A12');tg.setBackgroundColor('#070A12');let user=tg.initDataUnsafe.user||{first_name:"Miner",id:"guest"};const SAVE_KEY=`minerads_save_${user.id}`;const YOUR_WALLET_ADDRESS="UQD63olQ9L4WryJy8YJ9kEfO4gaen-GkbtvLy5-co2hkI4kv",CLAIM_COOLDOWN=3600000,MAX_ADS_PER_DAY=50,AD_REWARD=.002;const TONCENTER_API="https://toncenter.com/api/v2";let gigaReady=false,connectedWallet=null,lastTxHash=null,depositInterval=null;function getUTCTimestamp(){return Date.now()}function getUTCDateString(t){const e=new Date(t);return`${e.getUTCFullYear()}-${e.getUTCMonth()+1}-${e.getUTCDate()}`}let balance=10,madBalance=0,lastTick=getUTCTimestamp(),minerInstances=[],nextInstanceId=1,lastDailyClaim=0,dailyStreak=0,lastMinerClaim=0,lastMadClaim=0,adsWatchedToday=0,lastAdResetDate="";
 
 const minerTemplates=[
   {id:1,name:"Micro Miner",cost:1,bonus:.05,rate:1*0.05/30/86400,madRate:5,img:"micro.png"},
@@ -21,6 +21,13 @@ try{
   tonConnectUI.onStatusChange(wallet=>{
     connectedWallet=wallet;
     renderWallet();
+    if(wallet){
+      checkDeposits(); // check once
+      if(depositInterval) clearInterval(depositInterval);
+      depositInterval=setInterval(checkDeposits,10000); // check every 10s
+    }else{
+      if(depositInterval) clearInterval(depositInterval);
+    }
   })
 }catch(e){console.log("TON Connect Error:",e)}
 
@@ -58,6 +65,7 @@ async function disconnectWallet(){
   if(tonConnectUI){
     await tonConnectUI.disconnect();
     connectedWallet=null;
+    if(depositInterval) clearInterval(depositInterval);
     renderWallet();
   }
 }
@@ -69,21 +77,36 @@ function copyAddress(){
   }
 }
 
+function copyDepositAddress(){
+  navigator.clipboard.writeText(YOUR_WALLET_ADDRESS);
+  showPopup("success","Copied","Deposit address copied");
+}
+
+async function checkDeposits(){
+  if(!connectedWallet) return;
+  try{
+    const res = await fetch(`${TONCENTER_API}/getTransactions?address=${YOUR_WALLET_ADDRESS}&limit=5`);
+    const data = await res.json();
+    if(!data.result || data.result.length===0) return;
+
+    const latestTx = data.result[0];
+    if(latestTx.transaction_id.hash === lastTxHash) return; // already processed
+    lastTxHash = latestTx.transaction_id.hash;
+
+    const amount = latestTx.in_msg.value / 1000000000; // 9 decimals to TON
+    if(amount > 0.001){
+      balance += amount;
+      updateBalance();
+      saveGame();
+      showPopup("success","Deposit Received!",`+${amount.toFixed(4)} TON added`);
+      renderWallet();
+    }
+  }catch(e){console.log("Deposit check error",e)}
+}
+
 async function depositTON(){
   if(!connectedWallet)return showPopup("error","Connect First","Connect wallet first");
-  const amount=prompt("How much TON to deposit?","1");
-  if(!amount||isNaN(amount))return;
-  const transaction={
-    validUntil:Math.floor(getUTCTimestamp()/1000)+300,
-    messages:[{
-      address:YOUR_WALLET_ADDRESS,
-      amount:(parseFloat(amount)*1000000000).toString()
-    }]
-  };
-  try{
-    await tonConnectUI.sendTransaction(transaction);
-    showPopup("success","Sent","Transaction sent");
-  }catch(e){showPopup("error","Cancelled","Transaction cancelled")}
+  showPopup("info","Deposit","Send TON to the address below. It will auto-detect in ~10s");
 }
 
 async function withdrawTON(){
@@ -93,7 +116,7 @@ async function withdrawTON(){
   const withdrawAmount=parseFloat(amount);
   if(withdrawAmount<1)return showPopup("error","Min Withdraw","Minimum 1 TON");
   if(withdrawAmount>balance)return showPopup("error","No Balance","Not enough TON");
-  
+
   const transaction={
     validUntil:Math.floor(getUTCTimestamp()/1000)+300,
     messages:[{
@@ -103,7 +126,7 @@ async function withdrawTON(){
   };
   try{
     await tonConnectUI.sendTransaction(transaction);
-    balance-=withdrawAmount; // Deduct from game balance
+    balance-=withdrawAmount;
     updateBalance();
     saveGame();
     showPopup("success","Withdraw Sent",`${withdrawAmount} TON sent to your wallet`);
@@ -120,7 +143,7 @@ function renderWallet(){
   const c=document.getElementById("content");if(!c)return;
   const isConnected=!!connectedWallet;
   const walletAddr=isConnected?`${connectedWallet.account.address.slice(0,4)}...${connectedWallet.account.address.slice(-4)}`:"Connect Wallet";
-  
+
   c.innerHTML=`<h2>Wallet</h2>
   <div class="card">
     <h3>💰 Game Balance</h3>
@@ -133,7 +156,7 @@ function renderWallet(){
         <span style="font-size:20px">💎</span>
         <div>
           <h3 style="margin:0">TON Wallet</h3>
-          <p style="margin:0;font-size:11px;color:var(--muted)">${isConnected?'Wallet connected. Ready to receive TON':'Not connected'}</p>
+          <p style="margin:0;font-size:11px;color:var(--muted)">${isConnected?'Wallet connected. Auto-deposit active':'Not connected'}</p>
         </div>
       </div>
       <button onclick="${isConnected?'showWalletMenu()':'connectWallet()'}" style="background:#fff;color:#000;border:none;border-radius:20px;padding:8px 16px;font-weight:600;cursor:pointer">
@@ -147,7 +170,9 @@ function renderWallet(){
   </div>
   <div class="card">
     <h3>📥 Deposit TON</h3>
-    <button class="btn" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)" onclick="depositTON()" ${!isConnected?"disabled":""}>📥 Deposit TON</button>
+    <p style="font-size:11px;color:var(--muted)">Send to this address. Auto-detects in ~10s</p>
+    <p style="word-break:break-all;background:#0f131a;padding:8px;border-radius:8px;font-size:11px">${YOUR_WALLET_ADDRESS}</p>
+    <button class="btn" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)" onclick="copyDepositAddress()">Copy Address</button>
   </div>
   <div class="card">
     <h3>📤 Withdraw TON</h3>
