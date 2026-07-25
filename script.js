@@ -24,9 +24,9 @@ function initTonConnect(){
     tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
       manifestUrl: "https://adspayu.vercel.app/tonconnect-manifest.json",
     });
+    // FIX: Don't render wallet on status change. Just update wallet var
     tonConnectUI.onStatusChange(wallet=>{
       connectedWallet=wallet;
-      renderWallet();
       if(wallet){
         checkDeposits();
         if(depositInterval) clearInterval(depositInterval);
@@ -38,7 +38,7 @@ function initTonConnect(){
   }catch(e){console.log("TonConnect error",e)}
 }
 
-// FORCE HOME ON START
+// FORCE HOME ON START - NO FLICKER
 const tabs={home:renderHome,shop:renderShop,tasks:renderTasks,referral:renderReferral,wallet:renderWallet,profile:renderProfile};
 document.addEventListener("DOMContentLoaded",()=>{
   document.querySelectorAll(".tabbar button").forEach(t=>{
@@ -51,7 +51,8 @@ document.addEventListener("DOMContentLoaded",()=>{
   loadGame();
   updateBalance();
   initTonConnect();
-  document.querySelectorAll(".tabbar button").forEach(e=>e.classList.remove("active"));
+  
+  // Set home as active and render it ONCE
   document.querySelector('.tabbar button[data-tab="home"]').classList.add("active");
   renderHome();
   
@@ -110,7 +111,10 @@ async function checkDeposits(){
         updateBalance();
         saveGame();
         showPopup("success","Deposit Received!",`+${amount.toFixed(4)} TON`);
-        renderWallet();
+        // Only re-render wallet if user is ON wallet tab
+        if(document.querySelector('.tabbar button[data-tab="wallet"]').classList.contains("active")){
+          renderWallet();
+        }
       }
     }
   }catch(e){console.log(e)}
@@ -122,7 +126,7 @@ async function depositTON(){
   if(!amount)return;
   await tonConnectUI.sendTransaction({
     validUntil: Math.floor(Date.now()/1000)+300,
-    messages:[{address:YOUR_WALLET_ADDRESS,amount:(parseFloat(amount)*1000000).toString()}]
+    messages:[{address:YOUR_WALLET_ADDRESS,amount:(parseFloat(amount)*1000000000).toString()}]
   });
   showPopup("info","Sent","Waiting for confirmation ~10s");
 }
