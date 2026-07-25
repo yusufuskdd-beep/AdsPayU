@@ -1,4 +1,4 @@
-const tg=window.Telegram.WebApp;tg.ready();tg.expand();tg.setHeaderColor('#070A12');tg.setBackgroundColor('#070A12');let user=tg.initDataUnsafe.user||{first_name:"Miner",id:"guest"};const SAVE_KEY=`minerads_save_${user.id}`;const YOUR_WALLET_ADDRESS="UQD63olQ9L4WryJy8YJ9kEfO4gaen-GkbtvLy5-co2hkI4kv",CLAIM_COOLDOWN=3600000,MAX_ADS_PER_DAY=50,AD_REWARD=.002;const TONCENTER_API="https://toncenter.com/api/v2";let gigaReady=false,connectedWallet=null,lastTxHash=null,depositInterval=null;function getUTCTimestamp(){return Date.now()}function getUTCDateString(t){const e=new Date(t);return`${e.getUTCFullYear()}-${e.getUTCMonth()+1}-${e.getUTCDate()}`}let balance=10,madBalance=0,lastTick=getUTCTimestamp(),minerInstances=[],nextInstanceId=1,lastDailyClaim=0,dailyStreak=0,lastMinerClaim=0,lastMadClaim=0,adsWatchedToday=0,lastAdResetDate="";
+const tg=window.Telegram.WebApp;tg.ready();tg.expand();tg.setHeaderColor('#070A12');tg.setBackgroundColor('#070A12');let user=tg.initDataUnsafe.user||{first_name:"Miner",id:"guest"};const SAVE_KEY=`minerads_save_${user.id}`;const YOUR_WALLET_ADDRESS="UQD63olQ9L4WryJy8YJ9kEfO4gaen-GkbtvLy5-co2hkI4kv",CLAIM_COOLDOWN=3600000,MAX_ADS_PER_DAY=50,AD_REWARD=.002;const TONCENTER_API="https://toncenter.com/api/v2";let gigaReady=false,connector=null,connectedWallet=null,depositInterval=null,processedTxs=JSON.parse(localStorage.getItem(`processed_txs_${user.id}`)||'[]');function getUTCTimestamp(){return Date.now()}function getUTCDateString(t){const e=new Date(t);return`${e.getUTCFullYear()}-${e.getUTCMonth()+1}-${e.getUTCDate()}`}let balance=10,madBalance=0,lastTick=getUTCTimestamp(),minerInstances=[],nextInstanceId=1,lastDailyClaim=0,dailyStreak=0,lastMinerClaim=0,lastMadClaim=0,adsWatchedToday=0,lastAdResetDate="";
 
 const minerTemplates=[
   {id:1,name:"Micro Miner",cost:1,bonus:.05,rate:1*0.05/30/86400,madRate:5,img:"micro.png"},
@@ -12,13 +12,12 @@ const minerTemplates=[
 function showPopup(t,e,i){tg.showPopup({title:e,message:i,buttons:[{type:"ok"}]})}
 function showRewardedAd(){return new Promise((res,rej)=>{if(typeof window.showGiga!=="function"){showPopup("error","Ad Error","GigaPub loading...");rej();return}window.showGiga().then(res).catch(rej)})}
 
-// TONCONNECT UI V2
-let tonConnectUI=null;
-try{
-  tonConnectUI=new TON_CONNECT_UI.TonConnectUI({
-    manifestUrl:"https://adspayu.vercel.app/tonconnect-manifest.json"
-  });
-  tonConnectUI.onStatusChange(wallet=>{
+// TONCONNECT SDK
+function initTonConnect(){
+  if(typeof TonConnect==="undefined"){console.log("TonConnect SDK not loaded");return}
+  connector=new TonConnect.TonConnect({manifestUrl:"https://adspayu.vercel.app/tonconnect-manifest.json"});
+  
+  connector.onStatusChange(wallet=>{
     connectedWallet=wallet;
     renderWallet();
     if(wallet){
@@ -28,11 +27,11 @@ try{
     }else{
       if(depositInterval) clearInterval(depositInterval);
     }
-  })
-}catch(e){console.log("TON Connect Error:",e)}
+  });
+}
 
 const tabs={home:renderHome,shop:renderShop,tasks:renderTasks,referral:renderReferral,wallet:renderWallet,profile:renderProfile};
-document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll(".tabbar button").forEach(t=>{t.onclick=()=>{document.querySelectorAll(".tabbar button").forEach(e=>e.classList.remove("active"));t.classList.add("active");tabs[t.dataset.tab]()}});loadGame();updateBalance();renderHome();document.querySelector('.tabbar button[data-tab="home"]').classList.add("active");setTimeout(()=>{gigaReady=typeof window.showGiga==="function";renderHome()},2000)});
+document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll(".tabbar button").forEach(t=>{t.onclick=()=>{document.querySelectorAll(".tabbar button").forEach(e=>e.classList.remove("active"));t.classList.add("active");tabs[t.dataset.tab]()}});loadGame();updateBalance();renderHome();initTonConnect();document.querySelector('.tabbar button[data-tab="home"]').classList.add("active");setTimeout(()=>{gigaReady=typeof window.showGiga==="function";renderHome()},2000)});
 
 function getTotalRate(){return minerInstances.reduce((t,e)=>t+e.rate,0)}function getTotalMadRate(){return minerInstances.reduce((t,e)=>t+e.madRate,0)}function getTotalFarmed(){return minerInstances.reduce((t,e)=>t+e.farmed,0)}
 
@@ -56,14 +55,16 @@ function buyMiner(t){const e=minerTemplates.find(e=>e.id===t),i=minerInstances.f
 function renderTasks(){document.getElementById("content").innerHTML=`<h2>Tasks</h2><div class="card"><h3>📺 Watch Ads</h3><p>Earn <b>${AD_REWARD} TON</b> per ad</p><p>${adsWatchedToday}/${MAX_ADS_PER_DAY}</p><button class="btn" ${!gigaReady?"disabled":""} onclick="watchAdTask()">${gigaReady?`WATCH +${AD_REWARD} TON`:'LOADING ADS...'}</button></div>`}
 
 async function connectWallet(){
-  if(tonConnectUI){
-    await tonConnectUI.connectWallet();
-  }
+  if(!connector)return showPopup("error","Error","SDK not loaded");
+  const wallets=await connector.getWallets();
+  const tgWallet=wallets.find(w=>w.name==="Tonkeeper")||wallets[0];
+  const link=connector.connect({universalLink:tgWallet.universalLink,bridgeUrl:tgWallet.bridgeUrl});
+  tg.openLink(link);
 }
 
 async function disconnectWallet(){
-  if(tonConnectUI){
-    await tonConnectUI.disconnect();
+  if(connector){
+    await connector.disconnect();
     connectedWallet=null;
     if(depositInterval) clearInterval(depositInterval);
     renderWallet();
@@ -85,28 +86,45 @@ function copyDepositAddress(){
 async function checkDeposits(){
   if(!connectedWallet) return;
   try{
-    const res = await fetch(`${TONCENTER_API}/getTransactions?address=${YOUR_WALLET_ADDRESS}&limit=5`);
+    const res = await fetch(`${TONCENTER_API}/getTransactions?address=${YOUR_WALLET_ADDRESS}&limit=10`);
     const data = await res.json();
     if(!data.result || data.result.length===0) return;
 
-    const latestTx = data.result[0];
-    if(latestTx.transaction_id.hash === lastTxHash) return;
-    lastTxHash = latestTx.transaction_id.hash;
-
-    const amount = latestTx.in_msg.value / 1000000000; // 9 decimals to TON
-    if(amount > 0.001){
-      balance += amount;
-      updateBalance();
-      saveGame();
-      showPopup("success","Deposit Received!",`+${amount.toFixed(4)} TON added`);
-      renderWallet();
+    for(const tx of data.result){
+      const hash = tx.transaction_id.hash;
+      if(processedTxs.includes(hash)) continue;
+      
+      const amount = tx.in_msg.value / 1000000;
+      if(amount > 0.001){
+        processedTxs.push(hash);
+        localStorage.setItem(`processed_txs_${user.id}`, JSON.stringify(processedTxs));
+        
+        balance += amount;
+        updateBalance();
+        saveGame();
+        showPopup("success","Deposit Received!",`+${amount.toFixed(4)} TON added`);
+        renderWallet();
+      }
     }
   }catch(e){console.log("Deposit check error",e)}
 }
 
 async function depositTON(){
   if(!connectedWallet)return showPopup("error","Connect First","Connect wallet first");
-  showPopup("info","Deposit","Send TON to the address below. It will auto-detect in ~10s");
+  const amount=prompt("How much TON to deposit?","1");
+  if(!amount||isNaN(amount))return;
+  
+  const transaction={
+    validUntil:Math.floor(getUTCTimestamp()/1000)+300,
+    messages:[{
+      address:YOUR_WALLET_ADDRESS,
+      amount:(parseFloat(amount)*1000000).toString()
+    }]
+  };
+  try{
+    await connector.sendTransaction(transaction);
+    showPopup("info","Sent","Transaction sent. Waiting for confirmation ~10s");
+  }catch(e){showPopup("error","Cancelled","Transaction cancelled")}
 }
 
 async function withdrawTON(){
@@ -121,11 +139,11 @@ async function withdrawTON(){
     validUntil:Math.floor(getUTCTimestamp()/1000)+300,
     messages:[{
       address:connectedWallet.account.address,
-      amount:(withdrawAmount*1000000000).toString()
+      amount:(withdrawAmount*1000000).toString()
     }]
   };
   try{
-    await tonConnectUI.sendTransaction(transaction);
+    await connector.sendTransaction(transaction);
     balance-=withdrawAmount;
     updateBalance();
     saveGame();
@@ -172,7 +190,7 @@ function renderWallet(){
     <h3>📥 Deposit TON</h3>
     <p style="font-size:11px;color:var(--muted)">Send to this address. Auto-detects in ~10s</p>
     <p style="word-break:break-all;background:#0f131a;padding:8px;border-radius:8px;font-size:11px">${YOUR_WALLET_ADDRESS}</p>
-    <button class="btn" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)" onclick="copyDepositAddress()">Copy Address</button>
+    <button class="btn" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)" onclick="depositTON()" ${!isConnected?"disabled":""}>📥 Deposit TON</button>
   </div>
   <div class="card">
     <h3>📤 Withdraw TON</h3>
