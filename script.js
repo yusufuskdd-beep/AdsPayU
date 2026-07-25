@@ -1,4 +1,4 @@
-const tg=window.Telegram.WebApp;tg.ready();tg.expand();tg.setHeaderColor('#070A12');tg.setBackgroundColor('#070A12');let user=tg.initDataUnsafe.user||{first_name:"Miner",id:"guest"};const SAVE_KEY=`minerads_save_${user.id}`;const YOUR_WALLET_ADDRESS="UQD63olQ9L4WryJy8YJ9kEfO4gaen-GkbtvLy5-co2hkI4kv",CLAIM_COOLDOWN=3600000,MAX_ADS_PER_DAY=50,AD_REWARD=.002;let gigaReady=false,connectedWallet=null;function getUTCTimestamp(){return Date.now()}function getUTCDateString(t){const e=new Date(t);return`${e.getUTCFullYear()}-${e.getUTCMonth()+1}-${e.getUTCDate()}`}let balance=10,madBalance=0,lastTick=getUTCTimestamp(),minerInstances=[],nextInstanceId=1,lastDailyClaim=0,dailyStreak=0,lastMinerClaim=0,lastMadClaim=0,adsWatchedToday=0,lastAdResetDate="";
+const tg=window.Telegram.WebApp;tg.ready();tg.expand();tg.setHeaderColor('#070A12');tg.setBackgroundColor('#070A12');let user=tg.initDataUnsafe.user||{first_name:"Miner",id:"guest"};const SAVE_KEY=`minerads_save_${user.id}`;const YOUR_WALLET_ADDRESS="UQD63olQ9L4WryJy8YJ9kEfO4gaen-GkbtvLy5-co2hkI4kv",CLAIM_COOLDOWN=3600000,MAX_ADS_PER_DAY=50,AD_REWARD=.002;let gigaReady=false;function getUTCTimestamp(){return Date.now()}function getUTCDateString(t){const e=new Date(t);return`${e.getUTCFullYear()}-${e.getUTCMonth()+1}-${e.getUTCDate()}`}let balance=10,madBalance=0,lastTick=getUTCTimestamp(),minerInstances=[],nextInstanceId=1,lastDailyClaim=0,dailyStreak=0,lastMinerClaim=0,lastMadClaim=0,adsWatchedToday=0,lastAdResetDate="";
 
 const minerTemplates=[
   {id:1,name:"Micro Miner",cost:1,bonus:.05,rate:1*0.05/30/86400,madRate:5,img:"micro.png"},
@@ -11,19 +11,6 @@ const minerTemplates=[
 
 function showPopup(t,e,i){tg.showPopup({title:e,message:i,buttons:[{type:"ok"}]})}
 function showRewardedAd(){return new Promise((res,rej)=>{if(typeof window.showGiga!=="function"){showPopup("error","Ad Error","GigaPub loading...");rej();return}window.showGiga().then(res).catch(rej)})}
-
-let tonConnectUI=null;
-function initTonConnect(){
-  tonConnectUI=new TON_CONNECT_UI.TonConnectUI({
-    manifestUrl:"https://adspayu.vercel.app/tonconnect-manifest.json",
-    buttonRootId:"ton-connect-button" // This is the key fix
-  });
-  tonConnectUI.onStatusChange(wallet=>{
-    connectedWallet=wallet;
-    renderWallet();
-  })
-}
-initTonConnect();
 
 const tabs={home:renderHome,shop:renderShop,tasks:renderTasks,referral:renderReferral,wallet:renderWallet,profile:renderProfile};
 document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll(".tabbar button").forEach(t=>{t.onclick=()=>{document.querySelectorAll(".tabbar button").forEach(e=>e.classList.remove("active"));t.classList.add("active");tabs[t.dataset.tab]()}});loadGame();updateBalance();renderHome();document.querySelector('.tabbar button[data-tab="home"]').classList.add("active");setTimeout(()=>{gigaReady=typeof window.showGiga==="function";renderHome()},2000)});
@@ -49,41 +36,8 @@ function renderShop(){const c=document.getElementById("content");if(!c)return;c.
 function buyMiner(t){const e=minerTemplates.find(e=>e.id===t),i=minerInstances.filter(i=>i.templateId===t).length;if(i>=3)return showPopup("alert","Max","3 limit per type");if(balance<e.cost)return showPopup("error","No TON","Not enough");balance-=e.cost;minerInstances.push({instanceId:nextInstanceId++,templateId:e.id,name:e.name,rate:e.rate,bonus:e.bonus,madRate:e.madRate,img:e.img,farmed:0});updateBalance();saveGame();showPopup("success","Bought",`${e.name} for ${e.cost} TON`);renderShop();renderHome()}
 function renderTasks(){document.getElementById("content").innerHTML=`<h2>Tasks</h2><div class="card"><h3>📺 Watch Ads</h3><p>Earn <b>${AD_REWARD} TON</b> per ad</p><p>${adsWatchedToday}/${MAX_ADS_PER_DAY}</p><button class="btn" ${!gigaReady?"disabled":""} onclick="watchAdTask()">${gigaReady?`WATCH +${AD_REWARD} TON`:'LOADING ADS...'}</button></div>`}
 
-async function depositTON(){
-  if(!connectedWallet)return showPopup("error","Connect First","Connect wallet first");
-  const amount=prompt("How much TON to deposit?","1");
-  if(!amount||isNaN(amount))return;
-  const transaction={
-    validUntil:Math.floor(getUTCTimestamp()/1000)+300,
-    messages:[{
-      address:YOUR_WALLET_ADDRESS,
-      amount:(parseFloat(amount)*1000000).toString() // 9 decimals
-    }]
-  };
-  try{
-    await tonConnectUI.sendTransaction(transaction);
-    showPopup("success","Sent","Transaction sent");
-    balance+=parseFloat(amount);
-    updateBalance();saveGame();
-  }catch(e){showPopup("error","Cancelled","Transaction cancelled")}
-}
-
-async function disconnectWallet(){
-  if(tonConnectUI){
-    await tonConnectUI.disconnect();
-    connectedWallet=null;
-    document.getElementById("ton-connect-button").innerHTML=""; // clear old button
-    initTonConnect(); // re-init to get button back
-    showPopup("success","Disconnected","Wallet disconnected");
-    renderWallet();
-  }
-}
-
 function renderWallet(){
   const c=document.getElementById("content");if(!c)return;
-  const isConnected=!!connectedWallet;
-  const walletAddr=isConnected?`${connectedWallet.account.address.slice(0,6)}...${connectedWallet.account.address.slice(-4)}`:"Not Connected";
-  
   c.innerHTML=`<h2>Wallet</h2>
   <div class="card">
     <h3>💰 Game Balance</h3>
@@ -91,16 +45,16 @@ function renderWallet(){
     <p style="font-size:16px;color:var(--gold)">${madBalance.toFixed(0)} MAD</p>
   </div>
   <div class="card">
-    <h3>🔗 TON Connect</h3>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:8px">${walletAddr}</p>
-    <div id="ton-connect-button"></div>
-    ${isConnected?`<button class="btn" style="background:var(--danger);margin-top:8px" onclick="disconnectWallet()">Disconnect Wallet</button>`:""}
-  </div>
-  <div class="card">
     <h3>📥 Deposit TON</h3>
-    <button class="btn" onclick="depositTON()" ${!isConnected?"disabled":""}>📥 Deposit TON</button>
-    <p style="font-size:11px;color:var(--muted);margin-top:8px">Send to: ${YOUR_WALLET_ADDRESS.slice(0,10)}...</p>
+    <p style="font-size:12px;color:var(--muted)">Send TON to this address:</p>
+    <p style="word-break:break-all;background:#1a1f2e;padding:8px;border-radius:8px;font-size:11px">${YOUR_WALLET_ADDRESS}</p>
+    <button class="btn" onclick="copyAddress()">Copy Address</button>
   </div>`;
+}
+
+function copyAddress(){
+  navigator.clipboard.writeText(YOUR_WALLET_ADDRESS);
+  showPopup("success","Copied","Wallet address copied");
 }
 
 function renderReferral(){document.getElementById("content").innerHTML=`<h2>Referral</h2><div class="card"><p>Your Link:</p><p style="word-break:break-all">https://t.me/AdsPayU_bot?start=${user.id}</p></div>`}
