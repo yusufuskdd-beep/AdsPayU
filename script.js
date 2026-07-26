@@ -1,6 +1,6 @@
 const tg=window.Telegram.WebApp;tg.ready();tg.expand();tg.setHeaderColor('#070A12');tg.setBackgroundColor('#070A12');let user=tg.initDataUnsafe.user||{first_name:"Miner",id:"guest"};
 
-const BOT_USERNAME = "AdsPayU_bot"; // <- YOUR BOT HERE
+const BOT_USERNAME = "AdsPayU_bot";
 const SAVE_KEY=`minerads_save_${user.id}`;const YOUR_WALLET_ADDRESS="UQD63olQ9L4WryJy8YJ9kEfO4gaen-GkbtvLy5-co2hkI4kv",CLAIM_COOLDOWN=3600000,MAX_ADS_PER_DAY=50,AD_REWARD=.0002,REF_BONUS_TON=.001,REF_BONUS_MAD=100;const TONCENTER_API="https://toncenter.com/api/v2";let tonConnectUI=null,connectedWallet=null,depositInterval=null,processedTxs=JSON.parse(localStorage.getItem(`processed_txs_${user.id}`)||'[]');function getUTCTimestamp(){return Date.now()}let balance=10,madBalance=0,lastTick=getUTCTimestamp(),minerInstances=[],nextInstanceId=1,lastMinerClaim=0,lastMadClaim=0,adsWatchedToday=0,lastLoginDay=0,loginStreak=0,depositHistory=[],referredBy=null,myReferrals=[];
 
 const minerTemplates=[
@@ -96,7 +96,8 @@ function renderHome(){
   <div class="card"><h3>Your Miners</h3>${minerInstances.length?minerInstances.map(t=>`<div class="miner-unit"><img src="${t.img}" class="miner-img" onerror="this.src='micro.png'"/><div class="miner-info"><h4>${t.name} #${t.instanceId}</h4><p>${(t.rate*86400).toFixed(4)}/d • ${t.madRate} MAD/h</p><p>Farmed: <span id="farmed-${t.instanceId}">${t.farmed.toFixed(6)}</span></p></div></div>`).join(""):'<p style="color:var(--muted)">No miners yet</p>'}<button class="btn" onclick="buyMiner(4)">Buy GPU Rig 10 TON</button></div>`
 }
 
-function renderShop(){const c=document.getElementById("content");c.innerHTML=`<h2>Shop</h2>${minerTemplates.map(t=>{const owned=minerInstances.filter(e=>e.templateId===t.id).length;const dayRate=(t.rate*86400).toFixed(4);const roi30=(t.cost*t.bonus*30 + t.cost).toFixed(4);const bonusPct=Math.round(t.bonus*100);return`<div class="miner-card"><img src="${t.img}" class="miner-img" onerror="this.src='micro.png'"/><div class="miner-info"><h3>${t.name}</h3><p>${dayRate} TON/day • ${t.madRate} MAD/h</p><p>30d ROI: <b>${roi30} TON</b> +${bonusPct}%</p><p><b>${t.cost} TON</b> • Owned: ${owned}/3</p></div><button class="miner-buy" ${owned>=3?"disabled":""} onclick="buyMiner(${t.id})">${owned>=3?"MAX":"Buy"}</button></div>`}).join("")}`;}
+// FIXED ROI HERE
+function renderShop(){const c=document.getElementById("content");c.innerHTML=`<h2>Shop</h2>${minerTemplates.map(t=>{const owned=minerInstances.filter(e=>e.templateId===t.id).length;const dayRate=(t.rate*86400).toFixed(4);const total30d=(t.cost * (1 + t.bonus)).toFixed(4);const profit30d=(t.cost * t.bonus).toFixed(4);const bonusPct=Math.round(t.bonus*100);return`<div class="miner-card"><img src="${t.img}" class="miner-img" onerror="this.src='micro.png'"/><div class="miner-info"><h3>${t.name}</h3><p>${dayRate} TON/day • ${t.madRate} MAD/h</p><p>30d Return: <b>${total30d} TON</b> <span style="color:#22C55E">+${profit30d} profit</span></p><p>Bonus: <b>+${bonusPct}%</b> • <b>${t.cost} TON</b> • Owned: ${owned}/3</p></div><button class="miner-buy" ${owned>=3?"disabled":""} onclick="buyMiner(${t.id})">${owned>=3?"MAX":"Buy"}</button></div>`}).join("")}`;}
 
 function buyMiner(t){const e=minerTemplates.find(e=>e.id===t),i=minerInstances.filter(i=>i.templateId===t).length;if(i>=3)return showPopup("alert","Max","3 limit per type");if(balance<e.cost)return showPopup("error","No TON","Not enough");balance-=e.cost;minerInstances.push({instanceId:nextInstanceId++,templateId:e.id,name:e.name,rate:e.rate,bonus:e.bonus,madRate:e.madRate,img:e.img,farmed:0});updateBalance();saveGame();showPopup("success","Bought",`${e.name} for ${e.cost} TON`);renderShop();renderHome()}
 function renderTasks(){const adsReady=typeof window.showGiga==="function";document.getElementById("content").innerHTML=`<h2>Tasks</h2><div class="card"><h3>📺 Watch Ads</h3><p>Earn <b>${AD_REWARD} TON</b> per ad</p><p>${adsWatchedToday}/${MAX_ADS_PER_DAY}</p><button class="btn" ${!adsReady?"disabled":""} onclick="watchAdTask()">${adsReady?`WATCH +${AD_REWARD} TON`:'LOADING ADS...'}</button></div>`}
@@ -130,7 +131,6 @@ function renderWallet(){
   <div class="card"><h3>📜 Deposit History</h3>${depositHTML}</div>`;
 }
 
-// REFERRAL TAB WITH YOUR BOT
 function renderReferral(){
   myReferrals = JSON.parse(localStorage.getItem(`refs_of_${user.id}`) || '[]');
   const earned = myReferrals.length * REF_BONUS_TON;
