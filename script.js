@@ -21,80 +21,54 @@ const DAILY_REWARDS=[
 
 function showPopup(t,e,i){tg.showPopup({title:e,message:i,buttons:[{type:"ok"}]})}
 
-// GIGAPUB AD FUNCTION
 function showRewardedAd(){return new Promise((res,rej)=>{
   if(typeof window.showGiga!=="function"){showPopup("error","Ad Error","GigaPub not loaded. Refresh app");rej();return}
-  window.showGiga()
-  .then(()=>{res()})
-  .catch(e=>{showPopup("error","Ad Failed","No ads available. Try in 30s");rej(e)})
+  window.showGiga().then(()=>{res()}).catch(e=>{showPopup("error","Ad Failed","No ads available. Try in 30s");rej(e)})
 })}
 
 function initTonConnect(){
   try{
-    tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-      manifestUrl: "https://adspayu.vercel.app/tonconnect-manifest.json",
-    });
+    tonConnectUI = new TON_CONNECT_UI.TonConnectUI({manifestUrl: "https://adspayu.vercel.app/tonconnect-manifest.json"});
     tonConnectUI.onStatusChange(wallet=>{
       connectedWallet=wallet;
-      if(wallet){
-        checkDeposits();
-        if(depositInterval) clearInterval(depositInterval);
-        depositInterval=setInterval(checkDeposits,10000);
-      }else{
-        if(depositInterval) clearInterval(depositInterval);
-      }
+      if(wallet){checkDeposits();if(depositInterval) clearInterval(depositInterval);depositInterval=setInterval(checkDeposits,10000);}
+      else{if(depositInterval) clearInterval(depositInterval);}
     });
   }catch(e){console.log("TonConnect error",e)}
 }
 
-// DAILY LOGIN CLAIM - MUST WATCH AD
 async function claimDailyLogin(){
   const today=Math.floor(getUTCTimestamp()/86400000);
   if(lastLoginDay===today)return showPopup("alert","Already Claimed","Come back tomorrow");
-  
   await showRewardedAd();
-  
-  if(lastLoginDay===today-1){
-    loginStreak++;
-  }else{
-    loginStreak=1;
-  }
+  if(lastLoginDay===today-1){loginStreak++;}else{loginStreak=1;}
   if(loginStreak>7)loginStreak=1;
   lastLoginDay=today;
-  
   const reward=DAILY_REWARDS[loginStreak-1];
   madBalance+=reward.mad;
   balance+=reward.ton;
-  
   updateBalance();
   saveGame();
   showPopup("success",`Day ${loginStreak} Bonus!`, `+${reward.mad} MAD ${reward.ton>0?`+ ${reward.ton} TON`:''}`);
   renderHome();
 }
 
-function canClaimDaily(){
-  const today=Math.floor(getUTCTimestamp()/86400000);
-  return lastLoginDay!==today;
-}
+function canClaimDaily(){const today=Math.floor(getUTCTimestamp()/86400000);return lastLoginDay!==today;}
 
 const tabs={home:renderHome,shop:renderShop,tasks:renderTasks,referral:renderReferral,wallet:renderWallet,profile:renderProfile};
 document.addEventListener("DOMContentLoaded",()=>{
   document.querySelectorAll(".tabbar button").forEach(t=>{
-    t.onclick=()=>{
-      document.querySelectorAll(".tabbar button").forEach(e=>e.classList.remove("active"));
-      t.classList.add("active");
-      tabs[t.dataset.tab]()
-    }
+    t.onclick=()=>{document.querySelectorAll(".tabbar button").forEach(e=>e.classList.remove("active"));t.classList.add("active");tabs[t.dataset.tab]()}
   });
-  loadGame();
-  updateBalance();
-  initTonConnect();
+  loadGame();updateBalance();initTonConnect();
   document.querySelector('.tabbar button[data-tab="home"]').classList.add("active");
   renderHome();
   setTimeout(()=>{if(typeof window.showGiga==="function")renderHome()},2000)
 });
 
-function getTotalRate(){return minerInstances.reduce((t,e)=>t+e.rate,0)}function getTotalMadRate(){return minerInstances.reduce((t,e)=>t+e.madRate,0)}function getTotalFarmed(){return minerInstances.reduce((t,e)=>t+e.farmed,0)}
+function getTotalRate(){return minerInstances.reduce((t,e)=>t+e.rate,0)}
+function getTotalMadRate(){return minerInstances.reduce((t,e)=>t+e.madRate,0)}
+function getTotalFarmed(){return minerInstances.reduce((t,e)=>t+e.farmed,0)}
 
 function loadGame(){try{const t=localStorage.getItem(SAVE_KEY);if(t){const e=JSON.parse(t);balance=e.balance||10;madBalance=e.madBalance||0;minerInstances=e.minerInstances||[];nextInstanceId=e.nextInstanceId||1;lastMinerClaim=e.lastMinerClaim||0;lastMadClaim=e.lastMadClaim||0;adsWatchedToday=e.adsWatchedToday||0;lastLoginDay=e.lastLoginDay||0;loginStreak=e.loginStreak||0;minerInstances.forEach(t=>{const tmp=minerTemplates.find(m=>m.id===t.templateId);if(tmp)t.img=tmp.img});const i=(getUTCTimestamp()-lastTick)/1e3;minerInstances.forEach(t=>{t.farmed+=t.rate*i})}}catch{}saveGame()}
 function saveGame(){localStorage.setItem(SAVE_KEY,JSON.stringify({balance,madBalance,lastTick:getUTCTimestamp(),minerInstances,nextInstanceId,lastMinerClaim,lastMadClaim,adsWatchedToday,lastLoginDay,loginStreak}))}
@@ -114,20 +88,32 @@ function renderHome(){
   const dailyReady=canClaimDaily();
   const nextReward=DAILY_REWARDS[loginStreak>=7?0:loginStreak];
   
-  c.innerHTML=`<div class="card"><h2>Welcome ${user.first_name}</h2><p>Day ${loginStreak}/7 Login Streak</p></div>
-  <div class="card">
-    <h3>🎁 Daily Login</h3>
-    <p>Day ${loginStreak+1}: <b>${nextReward.mad} MAD ${nextReward.ton>0?`+ ${nextReward.ton} TON`:''}</b></p>
-    <button class="btn" ${!adsReady||!dailyReady?"disabled":""} onclick="claimDailyLogin()">
-      ${!dailyReady?'CLAIMED TODAY':adsReady?'WATCH AD TO CLAIM':'LOADING ADS...'}
-    </button>
+  let gridHTML = '';
+  DAILY_REWARDS.forEach((r,idx)=>{
+    const dayNum = idx+1;
+    let cls = '';
+    if(dayNum < loginStreak+1) cls = 'done';
+    else if(dayNum === loginStreak+1 && dailyReady) cls = 'active';
+    const icon = r.ton > 0 ? '💎' : '🪙';
+    const amt = r.ton > 0 ? r.ton : r.mad;
+    const label = r.ton > 0 ? 'TON' : 'MAD';
+    gridHTML += `<div class="daily-item ${cls}"><div class="daily-icon">${icon}</div><div class="daily-amt">${amt}${label}</div></div>`;
+  });
+  
+  c.innerHTML=`<div class="card"><h2>Welcome ${user.first_name}</h2><p>Keep mining to earn more</p></div>
+  <div class="daily-card">
+    <div class="daily-header"><h3>🎁 Daily Rewards</h3><div class="daily-streak">Day ${loginStreak}/7</div></div>
+    <div class="daily-grid">${gridHTML}</div>
+    <div class="daily-reward">
+      <div class="daily-info"><p>Next Reward</p><b>${nextReward.mad} MAD ${nextReward.ton>0?`+ ${nextReward.ton} TON`:''}</b></div>
+      <button class="daily-btn" ${!adsReady||!dailyReady?"disabled":""} onclick="claimDailyLogin()">${!dailyReady?'Claimed':adsReady?'Watch Ad':'Loading...'}</button>
+    </div>
   </div>
   <div class="card"><h3>⛏️ TON Mining</h3><p>Rate: <b>${(t*86400).toFixed(4)}/day</b></p><p>Farmed: <b id="farmedTotal">${e.toFixed(6)}</b></p><button class="btn" ${!adsReady?"disabled":""} onclick="claimMiner()">${adsReady?getClaimCooldownText():'LOADING ADS...'}</button></div>
   <div class="card"><h3>💎 MAD Mining</h3><p>Rate: <b>${mad}/hour</b></p><p>Balance: <b>${madBalance.toFixed(0)}</b></p><button class="btn" ${!adsReady?"disabled":""} onclick="claimMad()">${adsReady?getMadCooldownText():'LOADING ADS...'}</button></div>
   <div class="card"><h3>Your Miners</h3>${minerInstances.length?minerInstances.map(t=>`<div class="miner-unit"><img src="${t.img}" class="miner-img" onerror="this.src='micro.png'"/><div class="miner-info"><h4>${t.name} #${t.instanceId}</h4><p>${(t.rate*86400).toFixed(4)}/d • ${t.madRate} MAD/h</p><p>Farmed: <span id="farmed-${t.instanceId}">${t.farmed.toFixed(6)}</span></p></div></div>`).join(""):'<p style="color:var(--muted)">No miners yet</p>'}<button class="btn" onclick="buyMiner(4)">Buy GPU Rig 10 TON</button></div>`
 }
 
-// NEW SHOP DESIGN MATCHING SCREENSHOT
 function renderShop(){
   const c=document.getElementById("content");
   c.innerHTML=`<h2>Shop</h2>${minerTemplates.map(t=>{
@@ -143,9 +129,7 @@ function renderShop(){
         <p>30d ROI: <b>${roi30} TON</b> +${bonusPct}%</p>
         <p><b>${t.cost} TON</b> • Owned: ${owned}/3</p>
       </div>
-      <button class="miner-buy" ${owned>=3?"disabled":""} onclick="buyMiner(${t.id})">
-        ${owned>=3?"MAX":"Buy"}
-      </button>
+      <button class="miner-buy" ${owned>=3?"disabled":""} onclick="buyMiner(${t.id})">${owned>=3?"MAX":"Buy"}</button>
     </div>`
   }).join("")}`
 }
