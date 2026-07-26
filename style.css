@@ -19,20 +19,22 @@ body{background:var(--bg);color:var(--text);padding-bottom:80px}
 .btn{width:100%;padding:14px;border:none;border-radius:12px;background:var(--gradient);color:#fff;font-weight:600;font-size:16px;cursor:pointer}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 
-/* FIXED SHOP LAYOUT */
-.miner{display:flex;align-items:center;gap:12px}
+/* SHOP CARD - MATCHES YOUR SCREENSHOT */
+.miner-card{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:16px;padding:14px;margin-bottom:12px;border:1px solid #1A1F29}
 .miner-img{
-  width:72px;        /* was 56px */
-  height:72px;       /* was 56px */
+  width:64px;
+  height:64px;
   border-radius:12px;
   object-fit:cover;
   flex-shrink:0;
   border:2px solid #1A1F29
 }
 .miner-info{flex:1;min-width:0}
-.miner-info h3{font-size:15px;margin-bottom:4px}
-.miner-info p{font-size:12px;color:var(--muted);line-height:1.4}
-.miner .btn{width:120px;padding:10px 0;font-size:14px;flex-shrink:0}
+.miner-info h3{font-size:16px;font-weight:600;margin-bottom:6px}
+.miner-info p{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:2px}
+.miner-info p b{color:var(--text);font-weight:600}
+.miner-buy{width:88px;height:40px;border-radius:12px;border:none;background:var(--gradient);color:#fff;font-weight:700;font-size:15px;cursor:pointer;flex-shrink:0}
+.miner-buy:disabled{opacity:.4;cursor:not-allowed}
 
 /* HOME MINER UNITS */
 .miner-unit{display:flex;align-items:center;gap:10px;background:#0A0D14;padding:10px;border-radius:12px;margin-bottom:8px}
