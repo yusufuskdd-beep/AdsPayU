@@ -19,16 +19,9 @@ body{background:var(--bg);color:var(--text);padding-bottom:80px}
 .btn{width:100%;padding:14px;border:none;border-radius:12px;background:var(--gradient);color:#fff;font-weight:600;font-size:16px;cursor:pointer}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 
-/* SHOP CARD - MATCHES YOUR SCREENSHOT */
+/* SHOP CARD */
 .miner-card{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:16px;padding:14px;margin-bottom:12px;border:1px solid #1A1F29}
-.miner-img{
-  width:64px;
-  height:64px;
-  border-radius:12px;
-  object-fit:cover;
-  flex-shrink:0;
-  border:2px solid #1A1F29
-}
+.miner-img{width:64px;height:64px;border-radius:12px;object-fit:cover;flex-shrink:0;border:2px solid #1A1F29}
 .miner-info{flex:1;min-width:0}
 .miner-info h3{font-size:16px;font-weight:600;margin-bottom:6px}
 .miner-info p{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:2px}
@@ -39,6 +32,68 @@ body{background:var(--bg);color:var(--text);padding-bottom:80px}
 /* HOME MINER UNITS */
 .miner-unit{display:flex;align-items:center;gap:10px;background:#0A0D14;padding:10px;border-radius:12px;margin-bottom:8px}
 .miner-unit .miner-img{width:48px;height:48px}
+
+/* PREMIUM DAILY LOGIN CARD WITH ICONS */
+.daily-card{
+  background:linear-gradient(135deg,#1A1F29 0%,#0F131A 100%);
+  border:1px solid #2A3342;
+  border-radius:20px;
+  padding:16px;
+  margin-bottom:16px;
+  position:relative;
+  overflow:hidden;
+}
+.daily-card::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:2px;
+  background:var(--gradient);
+}
+.daily-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.daily-header h3{font-size:16px;font-weight:700;display:flex;align-items:center;gap:6px}
+.daily-streak{font-size:12px;background:var(--gradient);padding:4px 10px;border-radius:20px;font-weight:600}
+
+.daily-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:14px}
+.daily-item{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  padding:6px 2px;
+  background:#1A1F29;
+  border-radius:10px;
+  border:1px solid #222A36;
+  transition:.2s;
+}
+.daily-item.done{background:linear-gradient(135deg,#3B82F6,#8B5CF6);border-color:#3B82F6}
+.daily-item.active{
+  background:linear-gradient(135deg,#3B82F6,#8B5CF6);
+  border-color:#3B82F6;
+  box-shadow:0 0 12px rgba(59,130,246,.6);
+  transform:scale(1.05)
+}
+.daily-icon{font-size:16px}
+.daily-amt{font-size:9px;font-weight:700;line-height:1}
+.daily-item.done .daily-amt, .daily-item.active .daily-amt{color:#fff}
+.daily-item .daily-amt{color:var(--muted)}
+
+.daily-reward{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.daily-info{flex:1}
+.daily-info p{font-size:12px;color:var(--muted);margin-bottom:4px}
+.daily-info b{font-size:14px;color:var(--text)}
+.daily-btn{
+  padding:12px 20px;
+  border:none;
+  border-radius:12px;
+  background:var(--gradient);
+  color:#fff;
+  font-weight:700;
+  font-size:14px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.daily-btn:disabled{opacity:.4;background:#1A1F29;color:var(--muted)}
 
 .tabbar{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid #1A1F29;justify-content:space-around;padding:8px 0}
 .tabbar button{background:none;border:none;color:var(--muted);font-size:11px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
