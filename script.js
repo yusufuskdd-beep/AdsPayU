@@ -1,4 +1,7 @@
-const tg=window.Telegram.WebApp;tg.ready();tg.expand();tg.setHeaderColor('#070A12');tg.setBackgroundColor('#070A12');let user=tg.initDataUnsafe.user||{first_name:"Miner",id:"guest"};const SAVE_KEY=`minerads_save_${user.id}`;const YOUR_WALLET_ADDRESS="UQD63olQ9L4WryJy8YJ9kEfO4gaen-GkbtvLy5-co2hkI4kv",CLAIM_COOLDOWN=3600000,MAX_ADS_PER_DAY=50,AD_REWARD=.0002,REF_BONUS_TON=.001,REF_BONUS_MAD=100;const TONCENTER_API="https://toncenter.com/api/v2";let tonConnectUI=null,connectedWallet=null,depositInterval=null,processedTxs=JSON.parse(localStorage.getItem(`processed_txs_${user.id}`)||'[]');function getUTCTimestamp(){return Date.now()}let balance=10,madBalance=0,lastTick=getUTCTimestamp(),minerInstances=[],nextInstanceId=1,lastMinerClaim=0,lastMadClaim=0,adsWatchedToday=0,lastLoginDay=0,loginStreak=0,depositHistory=[],referredBy=null,myReferrals=[];
+const tg=window.Telegram.WebApp;tg.ready();tg.expand();tg.setHeaderColor('#070A12');tg.setBackgroundColor('#070A12');let user=tg.initDataUnsafe.user||{first_name:"Miner",id:"guest"};
+
+const BOT_USERNAME = "AdsPayU_bot"; // <- YOUR BOT HERE
+const SAVE_KEY=`minerads_save_${user.id}`;const YOUR_WALLET_ADDRESS="UQD63olQ9L4WryJy8YJ9kEfO4gaen-GkbtvLy5-co2hkI4kv",CLAIM_COOLDOWN=3600000,MAX_ADS_PER_DAY=50,AD_REWARD=.0002,REF_BONUS_TON=.001,REF_BONUS_MAD=100;const TONCENTER_API="https://toncenter.com/api/v2";let tonConnectUI=null,connectedWallet=null,depositInterval=null,processedTxs=JSON.parse(localStorage.getItem(`processed_txs_${user.id}`)||'[]');function getUTCTimestamp(){return Date.now()}let balance=10,madBalance=0,lastTick=getUTCTimestamp(),minerInstances=[],nextInstanceId=1,lastMinerClaim=0,lastMadClaim=0,adsWatchedToday=0,lastLoginDay=0,loginStreak=0,depositHistory=[],referredBy=null,myReferrals=[];
 
 const minerTemplates=[
   {id:1,name:"Micro Miner",cost:1,bonus:.05,rate:1*0.05/30/86400,madRate:5,img:"micro.png"},
@@ -21,7 +24,6 @@ function showRewardedAd(){return new Promise((res,rej)=>{
 })}
 function initTonConnect(){try{tonConnectUI=new TON_CONNECT_UI.TonConnectUI({manifestUrl:"https://adspayu.vercel.app/tonconnect-manifest.json"});tonConnectUI.onStatusChange(wallet=>{connectedWallet=wallet;if(wallet){checkDeposits();if(depositInterval) clearInterval(depositInterval);depositInterval=setInterval(checkDeposits,10000);}else{if(depositInterval) clearInterval(depositInterval);}});}catch(e){console.log("TonConnect error",e)}}
 
-// ADD DEPOSIT TO HISTORY ONLY
 function addDeposit(amount,hash=""){
   depositHistory.unshift({amount:amount,time:getUTCTimestamp(),hash:hash});
   if(depositHistory.length>20) depositHistory=depositHistory.slice(0,20);
@@ -43,7 +45,7 @@ async function claimDailyLogin(){
 function canClaimDaily(){const today=Math.floor(getUTCTimestamp()/86400000);return lastLoginDay!==today;}
 const tabs={home:renderHome,shop:renderShop,tasks:renderTasks,referral:renderReferral,wallet:renderWallet,profile:renderProfile};
 document.addEventListener("DOMContentLoaded",()=>{
-  handleReferral(); // CHECK REF ON START
+  handleReferral();
   document.querySelectorAll(".tabbar button").forEach(t=>{t.onclick=()=>{document.querySelectorAll(".tabbar button").forEach(e=>e.classList.remove("active"));t.classList.add("active");tabs[t.dataset.tab]()}});
   loadGame();updateBalance();initTonConnect();
   document.querySelector('.tabbar button[data-tab="home"]').classList.add("active");renderHome();
@@ -54,25 +56,20 @@ function getTotalRate(){return minerInstances.reduce((t,e)=>t+e.rate,0)}
 function getTotalMadRate(){return minerInstances.reduce((t,e)=>t+e.madRate,0)}
 function getTotalFarmed(){return minerInstances.reduce((t,e)=>t+e.farmed,0)}
 
-// REFERRAL SYSTEM
 function handleReferral(){
   const startParam = tg.initDataUnsafe.start_param;
   const claimed = localStorage.getItem(`claimed_ref_${user.id}`);
   if(startParam && startParam !== user.id.toString() && !claimed){
-    // NEW USER JOINED VIA REF
     balance += REF_BONUS_TON;
     madBalance += REF_BONUS_MAD;
     referredBy = startParam;
     localStorage.setItem(`claimed_ref_${user.id}`, startParam);
     addDeposit(REF_BONUS_TON);
-    
-    // TELL THE INVITER - save to their localStorage
     let inviterRefs = JSON.parse(localStorage.getItem(`refs_of_${startParam}`) || '[]');
     if(!inviterRefs.includes(user.id)){
       inviterRefs.push(user.id);
       localStorage.setItem(`refs_of_${startParam}`, JSON.stringify(inviterRefs));
     }
-    
     saveGame();
     setTimeout(()=>showPopup("success","Welcome! 🎉",`+${REF_BONUS_TON} TON + ${REF_BONUS_MAD} MAD for joining!`),1000);
   }
@@ -106,10 +103,9 @@ function renderTasks(){const adsReady=typeof window.showGiga==="function";docume
 
 async function connectWallet(){if(!tonConnectUI)return showPopup("error","Error","SDK loading...");await tonConnectUI.openModal();}
 async function disconnectWallet(){if(tonConnectUI){await tonConnectUI.disconnect();connectedWallet=null;if(depositInterval) clearInterval(depositInterval);renderWallet();}}
-async function checkDeposits(){if(!connectedWallet) return;try{const res=await fetch(`${TONCENTER_API}/getTransactions?address=${YOUR_WALLET_ADDRESS}&limit=10`);const data=await res.json();if(!data.result) return;for(const tx of data.result){const hash=tx.transaction_id.hash;if(processedTxs.includes(hash)) continue;const amount=tx.in_msg.value/1000000000;if(amount>0.001){processedTxs.push(hash);localStorage.setItem(`processed_txs_${user.id}`,JSON.stringify(processedTxs));balance+=amount;addDeposit(amount,hash);updateBalance();saveGame();showPopup("success","Deposit Received!",`+${amount.toFixed(4)} TON`);if(document.querySelector('.tabbar button[data-tab="wallet"]').classList.contains("active")){renderWallet();}}}}catch(e){console.log(e)}}
-async function depositTON(){if(!connectedWallet)return showPopup("error","Connect First","Connect wallet first");const amount=prompt("How much TON to deposit?","1");if(!amount)return;await tonConnectUI.sendTransaction({validUntil:Math.floor(Date.now()/1000)+300,messages:[{address:YOUR_WALLET_ADDRESS,amount:(parseFloat(amount)*1000000).toString()}]});showPopup("info","Sent","Waiting for confirmation ~10s");}
+async function checkDeposits(){if(!connectedWallet) return;try{const res=await fetch(`${TONCENTER_API}/getTransactions?address=${YOUR_WALLET_ADDRESS}&limit=10`);const data=await res.json();if(!data.result) return;for(const tx of data.result){const hash=tx.transaction_id.hash;if(processedTxs.includes(hash)) continue;const amount=tx.in_msg.value/1000000;if(amount>0.001){processedTxs.push(hash);localStorage.setItem(`processed_txs_${user.id}`,JSON.stringify(processedTxs));balance+=amount;addDeposit(amount,hash);updateBalance();saveGame();showPopup("success","Deposit Received!",`+${amount.toFixed(4)} TON`);if(document.querySelector('.tabbar button[data-tab="wallet"]').classList.contains("active")){renderWallet();}}}}catch(e){console.log(e)}}
+async function depositTON(){if(!connectedWallet)return showPopup("error","Connect First","Connect wallet first");const amount=prompt("How much TON to deposit?","1");if(!amount)return;await tonConnectUI.sendTransaction({validUntil:Math.floor(Date.now()/1000)+300,messages:[{address:YOUR_WALLET_ADDRESS,amount:(parseFloat(amount)*1000000000).toString()}]});showPopup("info","Sent","Waiting for confirmation ~10s");}
 
-// WALLET WITH DEPOSIT HISTORY
 function renderWallet(){
   const c=document.getElementById("content");
   const isConnected=!!connectedWallet;
@@ -134,11 +130,11 @@ function renderWallet(){
   <div class="card"><h3>📜 Deposit History</h3>${depositHTML}</div>`;
 }
 
-// REFERRAL TAB
+// REFERRAL TAB WITH YOUR BOT
 function renderReferral(){
   myReferrals = JSON.parse(localStorage.getItem(`refs_of_${user.id}`) || '[]');
   const earned = myReferrals.length * REF_BONUS_TON;
-  const link = `https://t.me/MinerAds_bot?start=${user.id}`;
+  const link = `https://t.me/${BOT_USERNAME}?start=${user.id}`;
   
   document.getElementById("content").innerHTML=`<h2>👥 Referral</h2>
   <div class="card"><h3>Invite Friends</h3><p>Earn <b>${REF_BONUS_TON} TON + ${REF_BONUS_MAD} MAD</b> per friend!</p>
@@ -147,7 +143,7 @@ function renderReferral(){
   
   <div class="card"><h3>Your Stats</h3><p>👥 Invited: <b>${myReferrals.length}</b></p><p>💰 Earned: <b>${earned.toFixed(4)} TON</b></p></div>
   
-  <div class="card"><h3>How it works</h3><p style="font-size:13px;color:var(--muted)">1. Share your link<br>2. Friend joins the bot<br>3. Both get instant bonus</p></div>`;
+  <div class="card"><h3>How it works</h3><p style="font-size:13px;color:var(--muted)">1. Share your link<br>2. Friend joins @${BOT_USERNAME}<br>3. Both get instant bonus</p></div>`;
 }
 
 function renderProfile(){document.getElementById("content").innerHTML=`<h2>Profile</h2><div class="card"><p>Name: ${user.first_name}</p><p>Streak: Day ${loginStreak}/7</p><p>TON: ${balance.toFixed(4)}</p><p>MAD: ${madBalance.toFixed(0)}</p>${referredBy?`<p>Invited by: ${referredBy}</p>`:''}</div>`}
