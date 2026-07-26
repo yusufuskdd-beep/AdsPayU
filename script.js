@@ -1,4 +1,4 @@
-const tg=window.Telegram.WebApp;tg.ready();tg.expand();tg.setHeaderColor('#070A12');tg.setBackgroundColor('#070A12');let user=tg.initDataUnsafe.user||{first_name:"Miner",id:"guest"};const SAVE_KEY=`minerads_save_${user.id}`;const YOUR_WALLET_ADDRESS="UQD63olQ9L4WryJy8YJ9kEfO4gaen-GkbtvLy5-co2hkI4kv",CLAIM_COOLDOWN=3600000,MAX_ADS_PER_DAY=50,AD_REWARD=.0002;const TONCENTER_API="https://toncenter.com/api/v2";let tonConnectUI=null,connectedWallet=null,depositInterval=null,processedTxs=JSON.parse(localStorage.getItem(`processed_txs_${user.id}`)||'[]');function getUTCTimestamp(){return Date.now()}let balance=10,madBalance=0,lastTick=getUTCTimestamp(),minerInstances=[],nextInstanceId=1,lastMinerClaim=0,lastMadClaim=0,adsWatchedToday=0,lastLoginDay=0,loginStreak=0,depositHistory=[];
+const tg=window.Telegram.WebApp;tg.ready();tg.expand();tg.setHeaderColor('#070A12');tg.setBackgroundColor('#070A12');let user=tg.initDataUnsafe.user||{first_name:"Miner",id:"guest"};const SAVE_KEY=`minerads_save_${user.id}`;const YOUR_WALLET_ADDRESS="UQD63olQ9L4WryJy8YJ9kEfO4gaen-GkbtvLy5-co2hkI4kv",CLAIM_COOLDOWN=3600000,MAX_ADS_PER_DAY=50,AD_REWARD=.0002,REF_BONUS_TON=.001,REF_BONUS_MAD=100;const TONCENTER_API="https://toncenter.com/api/v2";let tonConnectUI=null,connectedWallet=null,depositInterval=null,processedTxs=JSON.parse(localStorage.getItem(`processed_txs_${user.id}`)||'[]');function getUTCTimestamp(){return Date.now()}let balance=10,madBalance=0,lastTick=getUTCTimestamp(),minerInstances=[],nextInstanceId=1,lastMinerClaim=0,lastMadClaim=0,adsWatchedToday=0,lastLoginDay=0,loginStreak=0,depositHistory=[],referredBy=null,myReferrals=[];
 
 const minerTemplates=[
   {id:1,name:"Micro Miner",cost:1,bonus:.05,rate:1*0.05/30/86400,madRate:5,img:"micro.png"},
@@ -23,12 +23,8 @@ function initTonConnect(){try{tonConnectUI=new TON_CONNECT_UI.TonConnectUI({mani
 
 // ADD DEPOSIT TO HISTORY ONLY
 function addDeposit(amount,hash=""){
-  depositHistory.unshift({
-    amount:amount,
-    time:getUTCTimestamp(),
-    hash:hash
-  });
-  if(depositHistory.length>20) depositHistory=depositHistory.slice(0,20); // keep last 20
+  depositHistory.unshift({amount:amount,time:getUTCTimestamp(),hash:hash});
+  if(depositHistory.length>20) depositHistory=depositHistory.slice(0,20);
 }
 
 async function claimDailyLogin(){
@@ -47,6 +43,7 @@ async function claimDailyLogin(){
 function canClaimDaily(){const today=Math.floor(getUTCTimestamp()/86400000);return lastLoginDay!==today;}
 const tabs={home:renderHome,shop:renderShop,tasks:renderTasks,referral:renderReferral,wallet:renderWallet,profile:renderProfile};
 document.addEventListener("DOMContentLoaded",()=>{
+  handleReferral(); // CHECK REF ON START
   document.querySelectorAll(".tabbar button").forEach(t=>{t.onclick=()=>{document.querySelectorAll(".tabbar button").forEach(e=>e.classList.remove("active"));t.classList.add("active");tabs[t.dataset.tab]()}});
   loadGame();updateBalance();initTonConnect();
   document.querySelector('.tabbar button[data-tab="home"]').classList.add("active");renderHome();
@@ -57,8 +54,32 @@ function getTotalRate(){return minerInstances.reduce((t,e)=>t+e.rate,0)}
 function getTotalMadRate(){return minerInstances.reduce((t,e)=>t+e.madRate,0)}
 function getTotalFarmed(){return minerInstances.reduce((t,e)=>t+e.farmed,0)}
 
-function loadGame(){try{const t=localStorage.getItem(SAVE_KEY);if(t){const e=JSON.parse(t);balance=e.balance||10;madBalance=e.madBalance||0;minerInstances=e.minerInstances||[];nextInstanceId=e.nextInstanceId||1;lastMinerClaim=e.lastMinerClaim||0;lastMadClaim=e.lastMadClaim||0;adsWatchedToday=e.adsWatchedToday||0;lastLoginDay=e.lastLoginDay||0;loginStreak=e.loginStreak||0;depositHistory=e.depositHistory||[];minerInstances.forEach(t=>{const tmp=minerTemplates.find(m=>m.id===t.templateId);if(tmp)t.img=tmp.img});const i=(getUTCTimestamp()-lastTick)/1e3;minerInstances.forEach(t=>{t.farmed+=t.rate*i})}}catch{}saveGame()}
-function saveGame(){localStorage.setItem(SAVE_KEY,JSON.stringify({balance,madBalance,lastTick:getUTCTimestamp(),minerInstances,nextInstanceId,lastMinerClaim,lastMadClaim,adsWatchedToday,lastLoginDay,loginStreak,depositHistory}))}
+// REFERRAL SYSTEM
+function handleReferral(){
+  const startParam = tg.initDataUnsafe.start_param;
+  const claimed = localStorage.getItem(`claimed_ref_${user.id}`);
+  if(startParam && startParam !== user.id.toString() && !claimed){
+    // NEW USER JOINED VIA REF
+    balance += REF_BONUS_TON;
+    madBalance += REF_BONUS_MAD;
+    referredBy = startParam;
+    localStorage.setItem(`claimed_ref_${user.id}`, startParam);
+    addDeposit(REF_BONUS_TON);
+    
+    // TELL THE INVITER - save to their localStorage
+    let inviterRefs = JSON.parse(localStorage.getItem(`refs_of_${startParam}`) || '[]');
+    if(!inviterRefs.includes(user.id)){
+      inviterRefs.push(user.id);
+      localStorage.setItem(`refs_of_${startParam}`, JSON.stringify(inviterRefs));
+    }
+    
+    saveGame();
+    setTimeout(()=>showPopup("success","Welcome! 🎉",`+${REF_BONUS_TON} TON + ${REF_BONUS_MAD} MAD for joining!`),1000);
+  }
+}
+
+function loadGame(){try{const t=localStorage.getItem(SAVE_KEY);if(t){const e=JSON.parse(t);balance=e.balance||10;madBalance=e.madBalance||0;minerInstances=e.minerInstances||[];nextInstanceId=e.nextInstanceId||1;lastMinerClaim=e.lastMinerClaim||0;lastMadClaim=e.lastMadClaim||0;adsWatchedToday=e.adsWatchedToday||0;lastLoginDay=e.lastLoginDay||0;loginStreak=e.loginStreak||0;depositHistory=e.depositHistory||[];referredBy=e.referredBy||null;minerInstances.forEach(t=>{const tmp=minerTemplates.find(m=>m.id===t.templateId);if(tmp)t.img=tmp.img});const i=(getUTCTimestamp()-lastTick)/1e3;minerInstances.forEach(t=>{t.farmed+=t.rate*i})}}catch{}saveGame()}
+function saveGame(){localStorage.setItem(SAVE_KEY,JSON.stringify({balance,madBalance,lastTick:getUTCTimestamp(),minerInstances,nextInstanceId,lastMinerClaim,lastMadClaim,adsWatchedToday,lastLoginDay,loginStreak,depositHistory,referredBy}))}
 function updateBalance(){const el=document.getElementById("balance");if(el)el.innerHTML=`${balance.toFixed(4)} TON<br><span style="font-size:12px;color:#F59E0B">${madBalance.toFixed(0)} MAD</span>`}
 function formatTime(ms){if(ms<=0)return"CLAIM NOW";const s=Math.floor(ms/1000),m=Math.floor(s%3600/60),sec=s%60;return`WAIT ${m}m ${sec}s`}
 function getClaimCooldownText(){return formatTime(CLAIM_COOLDOWN-(getUTCTimestamp()-lastMinerClaim))}
@@ -85,10 +106,10 @@ function renderTasks(){const adsReady=typeof window.showGiga==="function";docume
 
 async function connectWallet(){if(!tonConnectUI)return showPopup("error","Error","SDK loading...");await tonConnectUI.openModal();}
 async function disconnectWallet(){if(tonConnectUI){await tonConnectUI.disconnect();connectedWallet=null;if(depositInterval) clearInterval(depositInterval);renderWallet();}}
-async function checkDeposits(){if(!connectedWallet) return;try{const res=await fetch(`${TONCENTER_API}/getTransactions?address=${YOUR_WALLET_ADDRESS}&limit=10`);const data=await res.json();if(!data.result) return;for(const tx of data.result){const hash=tx.transaction_id.hash;if(processedTxs.includes(hash)) continue;const amount=tx.in_msg.value/1000000;if(amount>0.001){processedTxs.push(hash);localStorage.setItem(`processed_txs_${user.id}`,JSON.stringify(processedTxs));balance+=amount;addDeposit(amount,hash);updateBalance();saveGame();showPopup("success","Deposit Received!",`+${amount.toFixed(4)} TON`);if(document.querySelector('.tabbar button[data-tab="wallet"]').classList.contains("active")){renderWallet();}}}}catch(e){console.log(e)}}
+async function checkDeposits(){if(!connectedWallet) return;try{const res=await fetch(`${TONCENTER_API}/getTransactions?address=${YOUR_WALLET_ADDRESS}&limit=10`);const data=await res.json();if(!data.result) return;for(const tx of data.result){const hash=tx.transaction_id.hash;if(processedTxs.includes(hash)) continue;const amount=tx.in_msg.value/1000000000;if(amount>0.001){processedTxs.push(hash);localStorage.setItem(`processed_txs_${user.id}`,JSON.stringify(processedTxs));balance+=amount;addDeposit(amount,hash);updateBalance();saveGame();showPopup("success","Deposit Received!",`+${amount.toFixed(4)} TON`);if(document.querySelector('.tabbar button[data-tab="wallet"]').classList.contains("active")){renderWallet();}}}}catch(e){console.log(e)}}
 async function depositTON(){if(!connectedWallet)return showPopup("error","Connect First","Connect wallet first");const amount=prompt("How much TON to deposit?","1");if(!amount)return;await tonConnectUI.sendTransaction({validUntil:Math.floor(Date.now()/1000)+300,messages:[{address:YOUR_WALLET_ADDRESS,amount:(parseFloat(amount)*1000000).toString()}]});showPopup("info","Sent","Waiting for confirmation ~10s");}
 
-// WALLET WITH DEPOSIT HISTORY ONLY
+// WALLET WITH DEPOSIT HISTORY
 function renderWallet(){
   const c=document.getElementById("content");
   const isConnected=!!connectedWallet;
@@ -113,8 +134,23 @@ function renderWallet(){
   <div class="card"><h3>📜 Deposit History</h3>${depositHTML}</div>`;
 }
 
-function renderReferral(){document.getElementById("content").innerHTML=`<h2>Referral</h2><div class="card"><p>Your Link:</p><p style="word-break:break-all">https://t.me/MinerAds_bot?start=${user.id}</p></div>`}
-function renderProfile(){document.getElementById("content").innerHTML=`<h2>Profile</h2><div class="card"><p>Name: ${user.first_name}</p><p>Streak: Day ${loginStreak}/7</p><p>TON: ${balance.toFixed(4)}</p><p>MAD: ${madBalance.toFixed(0)}</p></div>`}
+// REFERRAL TAB
+function renderReferral(){
+  myReferrals = JSON.parse(localStorage.getItem(`refs_of_${user.id}`) || '[]');
+  const earned = myReferrals.length * REF_BONUS_TON;
+  const link = `https://t.me/MinerAds_bot?start=${user.id}`;
+  
+  document.getElementById("content").innerHTML=`<h2>👥 Referral</h2>
+  <div class="card"><h3>Invite Friends</h3><p>Earn <b>${REF_BONUS_TON} TON + ${REF_BONUS_MAD} MAD</b> per friend!</p>
+  <div style="background:#0A0D14;padding:12px;border-radius:10px;margin:10px 0"><p style="font-size:12px;color:var(--muted)">Your Link:</p><p style="word-break:break-all;font-size:13px">${link}</p></div>
+  <button class="btn" onclick="navigator.clipboard.writeText('${link}');showPopup('success','Copied!','Link copied')">📋 Copy Link</button></div>
+  
+  <div class="card"><h3>Your Stats</h3><p>👥 Invited: <b>${myReferrals.length}</b></p><p>💰 Earned: <b>${earned.toFixed(4)} TON</b></p></div>
+  
+  <div class="card"><h3>How it works</h3><p style="font-size:13px;color:var(--muted)">1. Share your link<br>2. Friend joins the bot<br>3. Both get instant bonus</p></div>`;
+}
+
+function renderProfile(){document.getElementById("content").innerHTML=`<h2>Profile</h2><div class="card"><p>Name: ${user.first_name}</p><p>Streak: Day ${loginStreak}/7</p><p>TON: ${balance.toFixed(4)}</p><p>MAD: ${madBalance.toFixed(0)}</p>${referredBy?`<p>Invited by: ${referredBy}</p>`:''}</div>`}
 
 setInterval(()=>{const t=getUTCTimestamp(),e=(t-lastTick)/1e3;lastTick=t;minerInstances.forEach(i=>{i.farmed+=i.rate*e});const i=document.getElementById("farmedTotal");i&&(i.innerText=getTotalFarmed().toFixed(6))},1000);
 setInterval(saveGame,10000);
