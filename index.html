@@ -6,26 +6,61 @@
 <title>MinerAds</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+<script src='//jsc.gigapub.tech?subId=AdsPayU'></script>
 
-<!-- YOUR GIGAPUB SCRIPT -->
-<script src="https://ad.gigapub.tech/script?id=7204"></script>
+<style>
+:root{
+  --bg:#070A12;--card:#11151F;--card2:#0F131A;--text:#E5E7EB;--muted:#9CA3AF;
+  --accent:#3B82F6;--accent2:#22C55E;--gold:#F59E0B;--border:#1F2937;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{background:var(--bg);color:var(--text);padding-bottom:80px}
+.container{padding:16px;max-width:600px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px}
+h2{font-size:20px;margin-bottom:12px}
+h3{font-size:16px;margin-bottom:8px}
+.btn{width:100%;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:600;cursor:pointer}
+.btn:disabled{background:#374151;opacity:.6}
+.tabbar{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:8px 0}
+.tabbar button{flex:1;background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;padding:6px}
+.tabbar button.active{color:var(--accent);font-weight:600}
 
-<link rel="stylesheet" href="style.css">
+/* Daily */
+.daily-card{background:linear-gradient(135deg,#1E293B 0%,#0F172A 100%);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px}
+.daily-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.daily-streak{background:var(--gold);color:#000;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700}
+.daily-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:12px}
+.daily-item{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:8px 4px;text-align:center;opacity:.5}
+.daily-item.active{border-color:var(--accent);opacity:1;box-shadow:0 0 0 2px rgba(59,130,246,.3)}
+.daily-item.done{background:var(--accent2);border-color:var(--accent2);opacity:1}
+.daily-icon{font-size:18px;margin-bottom:4px}
+.daily-amt{font-size:10px;font-weight:600}
+.daily-reward{display:flex;justify-content:space-between;align-items:center;background:var(--card2);padding:12px;border-radius:12px}
+.daily-btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-weight:600;font-size:13px}
+.daily-btn:disabled{background:#374151}
+</style>
 </head>
 <body>
-  <div class="header">
-    <h1>MinerAds</h1>
-    <div class="balance" id="balance">0.0000 TON<br><span style="font-size:12px;color:#F59E0B">0 MAD</span></div>
+<div class="container">
+  <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <div style="font-size:12px;color:var(--muted)">Balance</div>
+      <div id="balance" style="font-size:18px;font-weight:700">0.0000 TON</div>
+    </div>
   </div>
-  <div class="content" id="content"></div>
-  <div class="tabbar">
-    <button data-tab="home">🏠<span>Home</span></button>
-    <button data-tab="shop">🛒<span>Shop</span></button>
-    <button data-tab="tasks">📋<span>Tasks</span></button>
-    <button data-tab="wallet">💰<span>Wallet</span></button>
-    <button data-tab="referral">👥<span>Refer</span></button>
-    <button data-tab="profile">👤<span>Profile</span></button>
-  </div>
-<script src="script.js?v=5"></script>
+  
+  <div id="content"></div>
+</div>
+
+<!-- UPDATED TABBAR: NO SHOP -->
+<div class="tabbar">
+  <button data-tab="home">🏠 Home</button>
+  <button data-tab="tasks">📺 Earn</button>
+  <button data-tab="referral">👥 Refer</button>
+  <button data-tab="wallet">💰 Wallet</button>
+  <button data-tab="profile">👤 Profile</button>
+</div>
+
+<script src="script.js?v=18"></script>
 </body>
 </html>
