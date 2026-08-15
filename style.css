@@ -60,13 +60,10 @@ body {
 .btn:active { transform: scale(0.97); }
 .btn:disabled { background: #334155; opacity: 0.5; box-shadow: none; }
 
-.miner { display: flex; align-items: center; gap: 12px; }
-.miner-unit { display:flex; align-items:center; gap:10px; margin-bottom:8px } /* FIX */
-.miner-img { width: 50px; height: 50px; border-radius: 12px; background: var(--card-2); object-fit: cover; }
-.miner-info { flex: 1; }
-.miner-info h3 { font-size: 15px; margin-bottom: 4px; }
-.miner-info h4 { font-size: 14px; margin-bottom: 2px; }
-.miner-info p { font-size: 12px; }
+.btn-ad {
+  background: linear-gradient(90deg, #FBBF24, #F59E0B);
+  box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+}
 
 .progress {
   height: 8px; background: var(--card-2);
@@ -103,7 +100,7 @@ body {
   background: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(12px);
   border-top: 1px solid var(--border);
-  padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); /* FIX iOS */
+  padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
 }
 .tabbar button {
   background: none; border: none; color: var(--muted);
